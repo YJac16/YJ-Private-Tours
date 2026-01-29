@@ -4,6 +4,7 @@ import cors from 'cors'
 import bodyParser from 'body-parser'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import { existsSync } from 'fs'
 import enquiryRoutes from './routes/enquiryRoutes.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -11,6 +12,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const app = express()
 const PORT = process.env.PORT || 5000
 const isProduction = process.env.NODE_ENV === 'production'
+const clientDist = path.join(__dirname, '../client/dist')
+const hasClientBuild = existsSync(clientDist)
 
 // CORS: allow frontend origin (Vite dev + production domains)
 const allowedOrigins = [
@@ -42,14 +45,15 @@ app.get('/health', (req, res) => {
 // API routes
 app.use('/api', enquiryRoutes)
 
-// Production: serve built client (React SPA)
-if (isProduction) {
-  const clientDist = path.join(__dirname, '../client/dist')
+// Production: serve built client (React SPA) if dist exists
+if (isProduction && hasClientBuild) {
   app.use(express.static(clientDist))
   app.get('*', (req, res, next) => {
     if (req.path.startsWith('/api')) return next()
     res.sendFile(path.join(clientDist, 'index.html'))
   })
+} else if (isProduction && !hasClientBuild) {
+  console.warn('Production mode but client/dist not found — serving API only')
 }
 
 // 404 (only hit if not serving SPA)

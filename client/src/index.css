@@ -27,6 +27,9 @@
     scroll-behavior: smooth;
   }
   body {
-    @apply bg-brand-cream text-brand-green antialiased;
+    background-color: var(--color-brand-cream);
+    color: var(--color-brand-green);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }
