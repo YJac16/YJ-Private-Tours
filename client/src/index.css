@@ -1,0 +1,11 @@
+@import "tailwindcss";
+
+/* KhayrCape Experiences — theme matches full logo: cream #EDEAE2 + forest green #4D5B4A */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-brand-cream text-brand-green antialiased;
+  }
+}

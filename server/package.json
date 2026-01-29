@@ -1,0 +1,21 @@
+{
+  "name": "khayrcape-experiences-server",
+  "version": "1.0.0",
+  "description": "Backend API for KhayrCape Experiences enquiry form",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^2.2.2",
+    "cors": "^2.8.6",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "nodemailer": "^7.0.13"
+  }
+}

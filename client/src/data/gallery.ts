@@ -1,0 +1,17 @@
+export const galleryImages = [
+  { src: '/blouberg-1.JPG', alt: 'Blouberg' },
+  { src: '/blouberg.JPG', alt: 'Blouberg Beach' },
+  { src: '/bo-kaap-table-mountain.JPG', alt: 'Bo-Kaap and Table Mountain' },
+  { src: '/bo-kaap.jpg', alt: 'Bo-Kaap' },
+  { src: '/boulders-beach.jpg', alt: 'Boulders Beach' },
+  { src: '/campsbay-1.JPG', alt: 'Camps Bay' },
+  { src: '/campsbay.JPG', alt: 'Camps Bay' },
+  { src: '/cape-point.jpg', alt: 'Cape Point' },
+  { src: '/cape-town-banner.jpg', alt: 'Cape Town' },
+  { src: '/chapmans-peak.jpg', alt: "Chapman's Peak" },
+  { src: '/clifton.JPG', alt: 'Clifton' },
+  { src: '/kirstenbosch-botanical-gardens.jpg', alt: 'Kirstenbosch Botanical Gardens' },
+  { src: '/muizenberg.jpg', alt: 'Muizenberg' },
+  { src: '/proteas.jpg', alt: 'Proteas' },
+  { src: '/winelands.jpg', alt: 'Cape Winelands' },
+]
