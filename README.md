@@ -81,8 +81,21 @@ Set `VITE_API_URL` to your backend URL (e.g. `https://your-api.onrender.com`) so
 
 ## Deployment
 
+### Railway (recommended — single service)
+
+From the **project root** (not `client` or `server`):
+
+- **Build command:** `npm run build`  
+  (installs and builds client, installs server deps)
+- **Start command:** `npm start`  
+  (runs Express; serves the built client and API on `PORT`)
+
+Set env vars in Railway: `PORT` (set automatically), `BUSINESS_EMAIL`, `SMTP_*`, and any `FRONTEND_URL` if needed. No `VITE_API_URL` needed — frontend and API are on the same origin.
+
+### Other options
+
 - **Frontend (Vercel):** Connect the repo, set root to `client`, build command `npm run build`, output directory `dist`. Set `VITE_API_URL` to your backend URL.
-- **Backend (Render / Fly.io):** Set root to `server`, start command `npm start`. Add env vars (`PORT`, `BUSINESS_EMAIL`, `SMTP_*`, `FRONTEND_URL`). Ensure `FRONTEND_URL` matches your Vercel URL for CORS.
+- **Backend (Render / Fly.io):** Set root to `server`, start command `npm start`. Add env vars (`PORT`, `BUSINESS_EMAIL`, `SMTP_*`, `FRONTEND_URL`). Ensure `FRONTEND_URL` matches your frontend URL for CORS.
 
 ---
 

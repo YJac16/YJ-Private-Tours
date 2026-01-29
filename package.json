@@ -1,0 +1,12 @@
+{
+  "name": "yj-private-tours",
+  "private": true,
+  "description": "KhayrCape Experiences — YJ Private Tours",
+  "scripts": {
+    "build": "cd client && npm ci && npm run build && cd ../server && npm ci",
+    "start": "cd server && node index.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
