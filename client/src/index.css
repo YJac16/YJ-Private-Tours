@@ -1,6 +1,27 @@
 @import "tailwindcss";
 
 /* KhayrCape Experiences — theme matches full logo: cream #EDEAE2 + forest green #4D5B4A */
+@theme {
+  /* Brand palette */
+  --color-brand-cream: #EDEAE2;
+  --color-brand-cream-light: #F5F3EF;
+  --color-brand-cream-dark: #E2DED4;
+  --color-brand-green: #4D5B4A;
+  --color-brand-green-dark: #3D4A3B;
+  --color-brand-green-light: #5C6B59;
+  /* Stone (for any remaining usage) */
+  --color-stone-50: #fafaf9;
+  --color-stone-100: #f5f5f4;
+  --color-stone-200: #e7e5e4;
+  --color-stone-300: #d6d3d1;
+  --color-stone-400: #a8a29e;
+  --color-stone-500: #78716c;
+  --color-stone-600: #57534e;
+  --color-stone-700: #44403c;
+  --color-stone-800: #292524;
+  --color-stone-900: #1c1917;
+}
+
 @layer base {
   html {
     scroll-behavior: smooth;
