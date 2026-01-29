@@ -13,7 +13,7 @@ const items = [
 export default function MobileStickyNav() {
   return (
     <nav
-      className="sticky top-16 z-40 md:hidden bg-white border-b border-brand-cream-dark shadow-sm"
+      className="sticky top-16 z-40 md:hidden bg-brand-cream border-b border-brand-cream-dark shadow-sm"
       aria-label="Quick links"
     >
       <div className="grid grid-cols-4 gap-0 max-w-full">

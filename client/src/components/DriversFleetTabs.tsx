@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { HiOutlineUser, HiOutlineTruck, HiOutlineMap, HiOutlineClock } from 'react-icons/hi'
 import { FaWhatsapp } from 'react-icons/fa'
 import { tours } from '../data/tours'
@@ -98,14 +99,12 @@ export default function DriversFleetTabs() {
                       <HiOutlineClock className="text-lg flex-shrink-0" />
                       {tour.duration}
                     </p>
-                    <a
-                      href={`/tour/${tour.id}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <Link
+                      to={`/tour/${tour.id}`}
                       className="block w-full text-center px-4 py-3 bg-brand-green hover:bg-brand-green-dark text-brand-cream font-medium rounded-lg transition-colors shadow-md ring-2 ring-brand-green/30"
                     >
                       View details
-                    </a>
+                    </Link>
                   </div>
                 </article>
               ))}

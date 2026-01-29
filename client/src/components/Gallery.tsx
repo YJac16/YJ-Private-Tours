@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { galleryImages } from '../data/gallery'
 
 const PREVIEW_COUNT = 3
@@ -30,14 +31,12 @@ export default function Gallery() {
           ))}
         </div>
         <div className="text-center">
-          <a
-            href="/gallery"
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            to="/gallery"
             className="inline-flex items-center justify-center px-6 py-3 bg-brand-green hover:bg-brand-green-dark text-brand-cream font-medium rounded-lg transition-colors shadow-md"
           >
             View full gallery
-          </a>
+          </Link>
         </div>
       </div>
     </section>

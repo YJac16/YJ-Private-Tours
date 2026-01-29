@@ -26,21 +26,21 @@ const packages = [
 
 export default function TourPackages() {
   return (
-    <section id="tours" className="py-16 md:py-24 bg-stone-100 px-4 scroll-mt-20">
+    <section id="tours" className="py-16 md:py-24 bg-brand-cream-light px-4 scroll-mt-20">
       <div className="max-w-6xl mx-auto">
-        <h2 className="text-3xl md:text-4xl font-bold text-stone-800 mb-4 text-center">
+        <h2 className="text-3xl md:text-4xl font-bold text-brand-green mb-4 text-center">
           Tour Packages
         </h2>
-        <p className="text-stone-600 text-center mb-12 max-w-2xl mx-auto">
+        <p className="text-brand-green/90 text-center mb-12 max-w-2xl mx-auto">
           All tours are private and tailored to your pace and interests.
         </p>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {packages.map((pkg) => (
             <article
               key={pkg.id}
-              className="bg-white rounded-xl shadow-md overflow-hidden border border-stone-200 hover:shadow-lg transition-shadow flex flex-col"
+              className="bg-brand-cream rounded-xl shadow-md overflow-hidden border border-brand-cream-dark hover:shadow-lg transition-shadow flex flex-col"
             >
-              <div className="aspect-[4/3] overflow-hidden bg-stone-200">
+              <div className="aspect-[4/3] overflow-hidden bg-brand-cream-dark/30">
                 <img
                   src={pkg.image}
                   alt=""
@@ -48,23 +48,23 @@ export default function TourPackages() {
                 />
               </div>
               <div className="p-6 flex-1 flex flex-col">
-                <span className="inline-flex items-center gap-1 text-sm font-medium text-stone-600 mb-2">
+                <span className="inline-flex items-center gap-1 text-sm font-medium text-brand-green/80 mb-2">
                   <HiOutlineUserGroup className="text-lg" />
                   Private Tour
                 </span>
-                <h3 className="text-xl font-bold text-stone-800 mb-3">
+                <h3 className="text-xl font-bold text-brand-green mb-3">
                   {pkg.title}
                 </h3>
-                <p className="text-stone-600 mb-4 flex-1">
+                <p className="text-brand-green/90 mb-4 flex-1">
                   {pkg.description}
                 </p>
-                <p className="flex items-center gap-2 text-stone-500 text-sm mb-6">
+                <p className="flex items-center gap-2 text-brand-green/80 text-sm mb-6">
                   <HiOutlineClock className="text-lg flex-shrink-0" />
                   {pkg.duration}
                 </p>
                 <a
                   href="#enquiry"
-                  className="block w-full text-center px-4 py-3 bg-stone-700 hover:bg-stone-800 text-white font-medium rounded-lg transition-colors"
+                  className="block w-full text-center px-4 py-3 bg-brand-green hover:bg-brand-green-dark text-brand-cream font-medium rounded-lg transition-colors"
                 >
                   Enquiry
                 </a>

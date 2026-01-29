@@ -30,7 +30,7 @@ export default function Hero() {
           </a>
           <a
             href="#enquiry"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-white hover:bg-brand-cream text-brand-green font-medium rounded-lg transition-colors shadow-lg border-2 border-white min-w-[200px] justify-center"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-brand-cream hover:bg-brand-cream-light text-brand-green font-medium rounded-lg transition-colors shadow-lg border-2 border-brand-cream-dark min-w-[200px] justify-center"
           >
             <HiOutlineMail className="text-xl" />
             Enquire Now
