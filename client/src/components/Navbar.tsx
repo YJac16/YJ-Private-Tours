@@ -3,12 +3,12 @@ import { Link } from 'react-router-dom'
 import { HiMenu, HiX } from 'react-icons/hi'
 
 const navLinks = [
-  { href: '#tours', label: 'Tours' },
-  { href: '#drivers', label: 'Drivers' },
-  { href: '#fleet', label: 'Fleet' },
-  { href: '#gallery', label: 'Gallery' },
-  { href: '#about', label: 'About' },
-  { href: '#enquiry', label: 'Enquiry' },
+  { hash: 'tours', label: 'Tours' },
+  { hash: 'drivers', label: 'Drivers' },
+  { hash: 'fleet', label: 'Fleet' },
+  { hash: 'gallery', label: 'Gallery' },
+  { hash: 'about', label: 'About' },
+  { hash: 'enquiry', label: 'Enquiry' },
 ]
 
 export default function Navbar() {
@@ -25,22 +25,22 @@ export default function Navbar() {
           aria-label="KhayrCape Experiences home"
         >
           <img
-            src="/KhayrCape%20Experiences%20Logo.png"
+            src="/logo vector.png"
             alt="KhayrCape Experiences"
-            className="h-10 md:h-11 w-auto object-contain max-w-[180px] md:max-w-[200px]"
+            className="h-10 md:h-11 w-auto object-contain"
           />
         </Link>
 
         {/* Desktop nav — tabs on the right */}
         <nav className="hidden md:flex items-center gap-1 ml-auto">
           {navLinks.map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
+            <Link
+              key={link.hash}
+              to={`/#${link.hash}`}
               className="px-3 py-2 text-brand-green hover:text-brand-green-dark hover:bg-brand-cream-dark/50 rounded-lg text-sm font-medium transition-colors"
             >
               {link.label}
-            </a>
+            </Link>
           ))}
         </nav>
 
@@ -71,14 +71,14 @@ export default function Navbar() {
             Home
           </Link>
           {navLinks.map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
+            <Link
+              key={link.hash}
+              to={`/#${link.hash}`}
               onClick={() => setMobileOpen(false)}
               className="py-3 text-brand-green hover:bg-brand-cream-dark/50 rounded-lg px-2 font-medium"
             >
               {link.label}
-            </a>
+            </Link>
           ))}
         </nav>
       </div>

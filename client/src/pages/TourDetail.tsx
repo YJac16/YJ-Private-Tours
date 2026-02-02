@@ -2,6 +2,7 @@ import { useParams, Link } from 'react-router-dom'
 import { HiOutlineClock, HiOutlineCurrencyDollar } from 'react-icons/hi'
 import { FaWhatsapp } from 'react-icons/fa'
 import { tours } from '../data/tours'
+import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 
 const BOOK_WHATSAPP_URL = 'https://wa.link/d96tsl'
@@ -25,6 +26,7 @@ export default function TourDetail() {
 
   return (
     <>
+      <Navbar />
       <main className="min-h-screen bg-brand-cream">
         <div className="max-w-2xl mx-auto px-4 py-8 md:py-12">
           <Link to="/" className="inline-flex text-brand-green hover:underline text-sm mb-6">

@@ -4,11 +4,13 @@ import ThankYou from './pages/ThankYou'
 import TourDetail from './pages/TourDetail'
 import GalleryPage from './pages/GalleryPage'
 import ScrollToTop from './components/ScrollToTop'
+import ScrollToHash from './components/ScrollToHash'
 import FloatingWhatsApp from './components/FloatingWhatsApp'
 
 function App() {
   return (
     <BrowserRouter>
+      <ScrollToHash />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/thank-you" element={<ThankYou />} />

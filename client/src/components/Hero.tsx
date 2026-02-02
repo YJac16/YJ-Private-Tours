@@ -11,7 +11,13 @@ export default function Hero() {
       <div className="absolute inset-0 bg-brand-green/75" aria-hidden />
       <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/30" aria-hidden />
       <div className="relative z-10 max-w-4xl mx-auto text-center">
-        <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)] [text-shadow:0_1px_3px_rgba(0,0,0,0.8)]">
+        {/* Main logo */}
+        <img
+          src="/Full logo.png"
+          alt="KhayrCape Experiences"
+          className="mx-auto h-20 md:h-28 w-auto object-contain drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)] mb-6"
+        />
+        <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)] [text-shadow:0_1px_3px_rgba(0,0,0,0.8)]">
           Private & Muslim-Friendly Tours of Cape Town
         </h1>
         <p className="text-xl md:text-2xl text-white font-medium mb-2 drop-shadow-[0_2px_6px_rgba(0,0,0,0.5)] [text-shadow:0_1px_2px_rgba(0,0,0,0.8)]">

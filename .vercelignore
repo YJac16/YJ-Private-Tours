@@ -1,0 +1,5 @@
+# Vercel uses Root Directory = client, so this file is at repo root for reference.
+# Ignore server and root-level files when Vercel might scan the repo.
+server/
+*.md
+!client/README.md

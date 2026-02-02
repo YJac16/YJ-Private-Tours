@@ -1,10 +1,12 @@
 import { Link } from 'react-router-dom'
 import { galleryImages } from '../data/gallery'
+import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 
 export default function GalleryPage() {
   return (
     <>
+      <Navbar />
       <main className="min-h-screen bg-brand-cream">
         <div className="max-w-6xl mx-auto px-4 py-8 md:py-12">
           <Link to="/" className="inline-flex text-brand-green hover:underline text-sm mb-6">

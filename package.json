@@ -4,7 +4,9 @@
   "description": "KhayrCape Experiences — YJ Private Tours",
   "scripts": {
     "build": "cd client && npm ci && npm run build && cd ../server && npm ci",
-    "start": "cd server && node index.js"
+    "start": "cd server && node index.js",
+    "deploy": "cd client && npx vercel --prod",
+    "deploy:preview": "cd client && npx vercel"
   },
   "engines": {
     "node": ">=18"

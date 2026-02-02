@@ -118,7 +118,7 @@ export default function DriversFleetTabs() {
               <div className="aspect-[4/5] md:aspect-auto md:min-h-[320px] bg-brand-cream-dark/30">
                 <img
                   src="/driver-yaseen.JPG"
-                  alt="Yaseen â€” Your guide"
+                  alt="Yaseen — Your guide"
                   className="w-full h-full object-cover object-top"
                 />
               </div>
@@ -135,7 +135,7 @@ export default function DriversFleetTabs() {
                   className="inline-flex items-center gap-2 justify-center px-4 py-3 bg-brand-green hover:bg-brand-green-dark text-brand-cream font-medium rounded-lg transition-colors w-fit"
                 >
                   <FaWhatsapp className="text-xl" />
-                  Book â€” +27 82 327 7446
+                  Book — +27 82 327 7446
                 </a>
               </div>
             </div>
