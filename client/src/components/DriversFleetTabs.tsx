@@ -15,8 +15,45 @@ const tabs: { id: TabId; label: string; icon: React.ReactNode }[] = [
 ]
 
 const fleetVehicles = [
-  { name: 'Suzuki XL6', image: '/Suzuki XL6.jpg', description: 'Spacious and comfortable for families and small groups.' },
-  { name: 'Toyota Corolla Cross', image: '/Toyota Corolla Cross.jpg', description: 'Reliable and comfortable for your journey.' },
+  {
+    name: 'Suzuki XL6',
+    image: '/Suzuki XL6.jpg',
+    subtitle: 'Spacious Comfort for Families',
+    intro: 'The Suzuki XL6 is the ideal people mover for families or small groups who want space, comfort, and reliability while exploring the Western Cape.',
+    features: [
+      'Seats up to 5 passengers comfortably',
+      'Ample luggage space for airport transfers or day tours',
+      'Smooth, comfortable ride for long scenic drives',
+      'Perfect for family holidays, Cape Peninsula tours & Winelands trips',
+    ],
+    tagline: 'A practical and comfortable choice for relaxed family adventures.',
+  },
+  {
+    name: 'Toyota Corolla Cross GR',
+    image: '/Toyota Corolla Cross.jpg',
+    subtitle: 'Sporty Comfort with a Personal Touch',
+    intro: 'For couples or small groups seeking a more personal and stylish travel experience, the Corolla Cross GR offers sporty elegance with everyday comfort.',
+    features: [
+      'Ideal for up to 3 passengers',
+      'Modern, sleek design with a dynamic presence',
+      'Comfortable interior for private tours',
+      'Great for Winelands, city tours & romantic scenic drives',
+    ],
+    tagline: 'Perfect for guests who want comfort with a slightly more exclusive feel.',
+  },
+  {
+    name: 'Mercedes-Benz GLC 220 Coupe (Black)',
+    image: '/Mercedes Benz.png',
+    subtitle: 'Premium Luxury Experience',
+    intro: 'Experience the Western Cape in refined luxury with our black Mercedes-Benz GLC 220 Coupe — designed for guests who appreciate comfort, class, and exclusivity.',
+    features: [
+      'Accommodates up to 3 passengers',
+      'Premium leather interior',
+      'Smooth, powerful, and quiet ride',
+      'Ideal for executive travel, honeymoon tours & VIP transfers',
+    ],
+    tagline: 'The perfect vehicle for clients seeking a first-class touring experience.',
+  },
 ]
 
 export default function DriversFleetTabs() {
@@ -143,13 +180,13 @@ export default function DriversFleetTabs() {
         )}
 
         {activeTab === 'fleet' && (
-          <div className="space-y-6">
+          <div className="space-y-8">
             {fleetVehicles.map((vehicle) => (
               <div
                 key={vehicle.name}
                 className="bg-brand-cream rounded-xl shadow-md border border-brand-cream-dark overflow-hidden flex flex-col md:flex-row"
               >
-                <div className="md:w-1/2 aspect-video md:aspect-auto md:min-h-[240px] bg-brand-cream-dark/30">
+                <div className="md:w-1/2 aspect-video md:aspect-auto md:min-h-[280px] bg-brand-cream-dark/30">
                   <img
                     src={vehicle.image}
                     alt={vehicle.name}
@@ -157,8 +194,18 @@ export default function DriversFleetTabs() {
                   />
                 </div>
                 <div className="p-6 md:p-8 flex flex-col justify-center md:w-1/2">
-                  <h3 className="text-xl font-bold text-brand-green mb-2">{vehicle.name}</h3>
-                  <p className="text-brand-green/90">{vehicle.description}</p>
+                  <h3 className="text-xl font-bold text-brand-green mb-1">{vehicle.name}</h3>
+                  <p className="text-brand-green/80 font-medium text-sm mb-2">{vehicle.subtitle}</p>
+                  <p className="text-brand-green/90 text-sm mb-3">{vehicle.intro}</p>
+                  <ul className="space-y-1.5 mb-3 text-brand-green/90 text-sm">
+                    {vehicle.features.map((feature, i) => (
+                      <li key={i} className="flex items-start gap-2">
+                        <span className="text-brand-green shrink-0" aria-hidden>✔</span>
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="text-brand-green/80 text-sm italic">{vehicle.tagline}</p>
                 </div>
               </div>
             ))}
