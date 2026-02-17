@@ -6,6 +6,7 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import { existsSync } from 'fs'
 import enquiryRoutes from './routes/enquiryRoutes.js'
+import checkoutRoutes from './routes/checkoutRoutes.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -44,6 +45,7 @@ app.get('/health', (req, res) => {
 
 // API routes
 app.use('/api', enquiryRoutes)
+app.use('/api', checkoutRoutes)
 
 // Production: serve built client (React SPA) if dist exists
 if (isProduction && hasClientBuild) {

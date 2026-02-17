@@ -28,6 +28,7 @@ Create a `.env` file in `server/` (see `server/.env` for placeholders):
 
 - `PORT` — server port (default `5000`)
 - `BUSINESS_EMAIL` — where enquiries are sent
+- `YOCO_SECRET_KEY` — Yoco payment gateway secret key (use `sk_test_...` for testing, `sk_live_...` for production)
 - `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` — email (Nodemailer)
 
 For real email, use your SMTP provider (e.g. Gmail with App Password, SendGrid). The default `.env` uses placeholder SMTP; replace with real values for production.
@@ -71,6 +72,7 @@ Then open `http://localhost:5173` in your browser.
 | `PORT`           | Server port (default `5000`)         |
 | `FRONTEND_URL`   | Frontend origin for CORS (production)|
 | `BUSINESS_EMAIL` | Recipient of enquiry emails          |
+| `YOCO_SECRET_KEY`| Yoco payment secret (test/live)      |
 | `SMTP_*`         | Nodemailer SMTP config               |
 
 ### Client (production)
@@ -118,6 +120,21 @@ Submit an enquiry from the contact form.
 - `200` — Enquiry sent; backend emails `BUSINESS_EMAIL`.
 - `400` — Validation error (e.g. missing name/email/tourInterest).
 - `500` — Server or email error.
+
+### `POST /api/checkout`
+
+Create a Yoco checkout session for tour payment.
+
+**Body (JSON):**
+
+- `amountCents` (number, required) — amount in ZAR cents
+- `tourId` (string, optional)
+- `tourTitle` (string, optional)
+- `customerName` (string, optional)
+- `customerEmail` (string, optional)
+- `customerPhone` (string, optional)
+
+**Response:** `{ redirectUrl, checkoutId }` — redirect the customer to `redirectUrl` to complete payment.
 
 ---
 

@@ -1,5 +1,5 @@
 import { useParams, Link } from 'react-router-dom'
-import { HiOutlineClock, HiOutlineCurrencyDollar } from 'react-icons/hi'
+import { HiOutlineClock, HiOutlineCurrencyDollar, HiOutlineCreditCard } from 'react-icons/hi'
 import { FaWhatsapp } from 'react-icons/fa'
 import { tours } from '../data/tours'
 import Navbar from '../components/Navbar'
@@ -67,15 +67,24 @@ export default function TourDetail() {
             </div>
           </div>
 
-          <a
-            href={bookUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 w-full py-4 px-6 bg-brand-green hover:bg-brand-green-dark text-brand-cream font-medium rounded-lg transition-colors shadow-lg"
-          >
-            <FaWhatsapp className="text-2xl" />
-            Book — WhatsApp +27 82 327 7446
-          </a>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Link
+              to={`/checkout/${tour.id}`}
+              className="flex items-center justify-center gap-2 flex-1 py-4 px-6 bg-brand-green hover:bg-brand-green-dark text-brand-cream font-medium rounded-lg transition-colors shadow-lg"
+            >
+              <HiOutlineCreditCard className="text-2xl" />
+              Book & Pay — {tour.price}
+            </Link>
+            <a
+              href={bookUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 flex-1 py-4 px-6 bg-white border-2 border-brand-green text-brand-green hover:bg-brand-green/5 font-medium rounded-lg transition-colors"
+            >
+              <FaWhatsapp className="text-2xl" />
+              Enquire on WhatsApp
+            </a>
+          </div>
         </div>
       </main>
       <Footer />

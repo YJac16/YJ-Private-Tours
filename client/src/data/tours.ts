@@ -6,6 +6,8 @@ export type Tour = {
   itinerary: string[]
   duration: string
   price: string
+  /** Price in ZAR cents for payment gateway */
+  priceAmountCents: number
   image: string
 }
 
@@ -25,7 +27,8 @@ export const tours: Tour[] = [
       'Return to Cape Town with drop-off at your location',
     ],
     duration: 'Half-day (approx. 4–5 hours)',
-    price: 'Price on request',
+    price: 'R 2,500',
+    priceAmountCents: 250000,
     image: '/cape-point.jpg',
   },
   {
@@ -43,7 +46,8 @@ export const tours: Tour[] = [
       'Return to your accommodation or drop-off in the city',
     ],
     duration: 'Half-day (approx. 3–4 hours)',
-    price: 'Price on request',
+    price: 'R 1,800',
+    priceAmountCents: 180000,
     image: '/bo-kaap.jpg',
   },
   {
@@ -61,7 +65,8 @@ export const tours: Tour[] = [
       'Return to Cape Town with drop-off at your location',
     ],
     duration: 'Full day (approx. 6–8 hours)',
-    price: 'Price on request',
+    price: 'R 3,500',
+    priceAmountCents: 350000,
     image: '/winelands.jpg',
   },
 ]
