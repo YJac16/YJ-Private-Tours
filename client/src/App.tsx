@@ -4,6 +4,7 @@ import ThankYou from './pages/ThankYou'
 import TourDetail from './pages/TourDetail'
 import Checkout from './pages/Checkout'
 import GalleryPage from './pages/GalleryPage'
+import TermsPage from './pages/TermsPage'
 import ScrollToTop from './components/ScrollToTop'
 import ScrollToHash from './components/ScrollToHash'
 import FloatingWhatsApp from './components/FloatingWhatsApp'
@@ -18,6 +19,7 @@ function App() {
         <Route path="/tour/:tourId" element={<TourDetail />} />
         <Route path="/checkout/:tourId" element={<Checkout />} />
         <Route path="/gallery" element={<GalleryPage />} />
+        <Route path="/terms" element={<TermsPage />} />
       </Routes>
       <ScrollToTop />
       <FloatingWhatsApp />
