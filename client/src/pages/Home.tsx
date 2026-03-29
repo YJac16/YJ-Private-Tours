@@ -5,7 +5,6 @@ import About from '../components/About'
 import DriversFleetTabs from '../components/DriversFleetTabs'
 import Gallery from '../components/Gallery'
 import WhyChooseUs from '../components/WhyChooseUs'
-import ContactEnquiry from '../components/ContactEnquiry'
 import Footer from '../components/Footer'
 
 export default function Home() {
@@ -18,7 +17,6 @@ export default function Home() {
       <DriversFleetTabs />
       <Gallery />
       <WhyChooseUs />
-      <ContactEnquiry />
       <Footer />
     </>
   )

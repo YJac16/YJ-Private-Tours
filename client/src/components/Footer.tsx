@@ -1,4 +1,4 @@
-import { HiOutlineLocationMarker, HiOutlineClock } from 'react-icons/hi'
+import { HiOutlineLocationMarker } from 'react-icons/hi'
 
 export default function Footer() {
   return (
@@ -8,13 +8,9 @@ export default function Footer() {
           KhayrCape Experiences
         </p>
         <p className="text-brand-cream/90 italic">Private Journeys, Thoughtfully Guided.</p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center text-brand-cream/80">
+        <div className="flex justify-center items-center text-brand-cream/80">
           <span className="inline-flex items-center gap-2">
-            <HiOutlineClock className="text-lg" />
-            Operating hours: 08:00 – 15:00
-          </span>
-          <span className="inline-flex items-center gap-2">
-            <HiOutlineLocationMarker className="text-lg" />
+            <HiOutlineLocationMarker className="text-lg flex-shrink-0" />
             Cape Town, South Africa
           </span>
         </div>

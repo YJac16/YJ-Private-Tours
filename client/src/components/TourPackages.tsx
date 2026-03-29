@@ -1,4 +1,10 @@
 import { HiOutlineClock, HiOutlineUserGroup } from 'react-icons/hi'
+import { FaWhatsapp } from 'react-icons/fa'
+import { whatsappWithMessage } from '../lib/whatsappLinks'
+
+const BOOK_WA = whatsappWithMessage(
+  "Hi, I'd like to book a tour with KhayrCape Experiences."
+)
 
 const packages = [
   {
@@ -63,10 +69,13 @@ export default function TourPackages() {
                   {pkg.duration}
                 </p>
                 <a
-                  href="#enquiry"
-                  className="block w-full text-center px-4 py-3 bg-brand-green hover:bg-brand-green-dark text-brand-cream font-medium rounded-lg transition-colors"
+                  href={BOOK_WA}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-2 w-full min-h-[48px] px-4 py-3 bg-[#25D366] hover:bg-[#20BD5A] text-white font-semibold rounded-lg transition-colors"
                 >
-                  Enquiry
+                  <FaWhatsapp className="text-xl" />
+                  Book on WhatsApp
                 </a>
               </div>
             </article>

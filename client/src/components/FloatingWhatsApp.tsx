@@ -1,6 +1,9 @@
 import { FaWhatsapp } from 'react-icons/fa'
+import { whatsappWithMessage } from '../lib/whatsappLinks'
 
-const BOOK_WHATSAPP_URL = 'https://wa.link/d96tsl'
+const BOOK_WHATSAPP_URL = whatsappWithMessage(
+  "Hi, I'd like to book with KhayrCape Experiences."
+)
 
 export default function FloatingWhatsApp() {
   return (

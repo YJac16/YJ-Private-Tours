@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { HiMenu, HiX } from 'react-icons/hi'
+import { FaWhatsapp } from 'react-icons/fa'
+import { whatsappWithMessage } from '../lib/whatsappLinks'
 
 const navLinks = [
   { hash: 'tours', label: 'Tours' },
@@ -8,8 +10,11 @@ const navLinks = [
   { hash: 'fleet', label: 'Fleet' },
   { hash: 'gallery', label: 'Gallery' },
   { hash: 'about', label: 'About' },
-  { hash: 'enquiry', label: 'Enquiry' },
 ]
+
+const BOOK_WA = whatsappWithMessage(
+  "Hi, I'd like to book a tour with KhayrCape Experiences."
+)
 
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -17,7 +22,6 @@ export default function Navbar() {
   return (
     <header className="sticky top-0 z-50 bg-brand-cream/95 backdrop-blur border-b border-brand-cream-dark shadow-sm">
       <div className="max-w-6xl mx-auto px-4 flex items-center justify-between h-16 md:h-18">
-        {/* KhayrCape Experiences Logo — links to home */}
         <Link
           to="/"
           onClick={() => setMobileOpen(false)}
@@ -31,7 +35,6 @@ export default function Navbar() {
           />
         </Link>
 
-        {/* Desktop nav — tabs on the right */}
         <nav className="hidden md:flex items-center gap-1 ml-auto">
           {navLinks.map((link) => (
             <Link
@@ -42,9 +45,17 @@ export default function Navbar() {
               {link.label}
             </Link>
           ))}
+          <a
+            href={BOOK_WA}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 px-3 py-2 ml-1 bg-[#25D366] hover:bg-[#20BD5A] text-white rounded-lg text-sm font-semibold transition-colors"
+          >
+            <FaWhatsapp className="text-base" />
+            Book
+          </a>
         </nav>
 
-        {/* Mobile menu button */}
         <button
           type="button"
           onClick={() => setMobileOpen((o) => !o)}
@@ -56,10 +67,9 @@ export default function Navbar() {
         </button>
       </div>
 
-      {/* Mobile dropdown */}
       <div
         className={`md:hidden overflow-hidden transition-all duration-200 ease-out ${
-          mobileOpen ? 'max-h-80 opacity-100' : 'max-h-0 opacity-0'
+          mobileOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
         }`}
       >
         <nav className="px-4 pb-4 pt-2 bg-brand-cream border-t border-brand-cream-dark flex flex-col gap-1">
@@ -80,6 +90,16 @@ export default function Navbar() {
               {link.label}
             </Link>
           ))}
+          <a
+            href={BOOK_WA}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => setMobileOpen(false)}
+            className="inline-flex items-center justify-center gap-2 py-3.5 mt-1 bg-[#25D366] text-white font-semibold rounded-lg min-h-[48px]"
+          >
+            <FaWhatsapp className="text-xl" />
+            Book on WhatsApp
+          </a>
         </nav>
       </div>
     </header>

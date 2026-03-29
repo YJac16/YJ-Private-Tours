@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
-import { HiOutlineUser, HiOutlineTruck, HiOutlineMap, HiOutlineClock } from 'react-icons/hi'
+import { HiOutlineUser, HiOutlineTruck, HiOutlineMap } from 'react-icons/hi'
 import { FaWhatsapp } from 'react-icons/fa'
-import { tours } from '../data/tours'
+import { whatsappWithMessage } from '../lib/whatsappLinks'
 
-const BOOK_WHATSAPP_URL = 'https://wa.link/d96tsl'
+const BOOK_WHATSAPP_URL = whatsappWithMessage(
+  "Hi, I'd like to book with KhayrCape Experiences."
+)
 
 type TabId = 'tours' | 'drivers' | 'fleet'
 
@@ -12,6 +13,66 @@ const tabs: { id: TabId; label: string; icon: React.ReactNode }[] = [
   { id: 'tours', label: 'Tours', icon: <HiOutlineMap className="text-lg" /> },
   { id: 'drivers', label: 'Drivers', icon: <HiOutlineUser className="text-lg" /> },
   { id: 'fleet', label: 'Fleet', icon: <HiOutlineTruck className="text-lg" /> },
+]
+
+type TimeSlotTour = {
+  image: string
+  title: string
+  timeBadge?: string
+  limitedTag?: string
+  duration: string
+  price: string
+  bullets: string[]
+  buttonText: string
+  whatsappPrefill: string
+}
+
+const timeSlotTours: TimeSlotTour[] = [
+  {
+    image: '/bo-kaap.jpg',
+    title: 'Cape Town City & Culture Experience',
+    timeBadge: '08:00 Start',
+    duration: '3–4 hours',
+    price: 'From R1500',
+    bullets: ['Bo-Kaap', 'city highlights', 'viewpoints', 'optional coffee stop'],
+    buttonText: 'Book 08:00 via WhatsApp',
+    whatsappPrefill: "Hi, I'd like to book the 08:00 City & Culture tour",
+  },
+  {
+    image: '/cape-point.jpg',
+    title: 'Cape Peninsula Highlights (Express)',
+    timeBadge: '12:30 Start',
+    duration: '3.5–4.5 hours',
+    price: 'From R2800',
+    bullets: ["Chapman's Peak", 'Cape Point', 'Penguins'],
+    buttonText: 'Book 12:30 via WhatsApp',
+    whatsappPrefill: "Hi, I'd like to book the 12:30 Peninsula tour",
+  },
+  {
+    image: '/campsbay.JPG',
+    title: 'Ocean Sunset Experience',
+    timeBadge: '16:30 Start — MOST POPULAR',
+    duration: '2–3 hours',
+    price: 'From R1800',
+    bullets: ['Atlantic Seaboard', 'Camps Bay', 'sunset viewpoints'],
+    buttonText: 'Book Sunset via WhatsApp',
+    whatsappPrefill: "Hi, I'd like to book the Sunset tour",
+  },
+  {
+    image: '/winelands.jpg',
+    title: 'Halal-Friendly Winelands Experience',
+    limitedTag: 'Limited Availability',
+    duration: '5–6 hours',
+    price: 'From R4000',
+    bullets: [
+      'Scenic winelands',
+      'halal-friendly stops',
+      'flexible pace for your group',
+    ],
+    buttonText: 'Check Availability on WhatsApp',
+    whatsappPrefill:
+      "Hi, I'd like to check availability for the Winelands tour",
+  },
 ]
 
 const fleetVehicles = [
@@ -42,10 +103,10 @@ const fleetVehicles = [
     tagline: 'Perfect for guests who want comfort with a slightly more exclusive feel.',
   },
   {
-    name: 'Mercedes-Benz GLC 220 Coupe (Black)',
+    name: 'Mercedes-Benz GLC 250 Coupe (Black)',
     image: '/Mercedes Benz.png',
     subtitle: 'Premium Luxury Experience',
-    intro: 'Experience the Western Cape in refined luxury with our black Mercedes-Benz GLC 220 Coupe — designed for guests who appreciate comfort, class, and exclusivity.',
+    intro: 'Experience the Western Cape in refined luxury with our black Mercedes-Benz GLC 250 Coupe — designed for guests who appreciate comfort, class, and exclusivity.',
     features: [
       'Accommodates up to 3 passengers',
       'Premium leather interior',
@@ -75,26 +136,25 @@ export default function DriversFleetTabs() {
   }, [])
 
   return (
-    <section id="tours-drivers-fleet" className="py-16 md:py-24 bg-brand-cream-light px-4 scroll-mt-20">
+    <section id="tours-drivers-fleet" className="py-10 md:py-24 bg-brand-cream-light px-4 scroll-mt-20">
       <span id="tours" className="block -mt-24 pt-24" aria-hidden />
       <span id="drivers" className="block -mt-24 pt-24" aria-hidden />
       <span id="fleet" className="block -mt-24 pt-24" aria-hidden />
       <div className="max-w-6xl mx-auto">
-        <h2 className="text-3xl md:text-4xl font-bold text-brand-green mb-4 text-center">
+        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-brand-green mb-3 text-center leading-tight">
           Tours, Drivers & Fleet
         </h2>
-        <p className="text-brand-green/90 text-center mb-10 max-w-2xl mx-auto">
+        <p className="text-brand-green/90 text-center mb-8 md:mb-10 max-w-2xl mx-auto text-sm sm:text-base leading-snug">
           Meet your guide, see our vehicles, and explore tour options below.
         </p>
 
-        {/* Tab buttons */}
-        <div className="flex flex-wrap justify-center gap-2 mb-10">
+        <div className="flex flex-wrap justify-center gap-2 mb-8 md:mb-10">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               type="button"
               onClick={() => setActiveTab(tab.id)}
-              className={`inline-flex items-center gap-2 px-5 py-3 rounded-lg font-medium transition-colors ${
+              className={`inline-flex items-center gap-2 px-4 py-2.5 sm:px-5 sm:py-3 rounded-lg font-medium transition-colors min-h-[44px] ${
                 activeTab === tab.id
                   ? 'bg-brand-green text-brand-cream shadow-md'
                   : 'bg-brand-cream text-brand-green hover:bg-brand-cream-dark/50 border border-brand-cream-dark'
@@ -106,42 +166,66 @@ export default function DriversFleetTabs() {
           ))}
         </div>
 
-        {/* Tours tab: all tour packages */}
         {activeTab === 'tours' && (
-          <div id="tours-panel" className="space-y-8">
-            <p className="text-brand-green/90 text-center max-w-2xl mx-auto">
-              All tours are private and tailored to your pace and interests.
-            </p>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {tours.map((tour) => (
+          <div id="tours-panel" className="space-y-5 max-w-xl mx-auto md:max-w-none">
+            <div className="text-center md:max-w-2xl md:mx-auto mb-2">
+              <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-brand-green">
+                Choose Your Time & Experience
+              </h3>
+              <p className="text-brand-green/90 text-sm sm:text-base mt-2 leading-snug">
+                Pick a time slot and message to check availability.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 md:gap-6 md:max-w-4xl md:mx-auto">
+              {timeSlotTours.map((tour) => (
                 <article
-                  key={tour.id}
-                  className="bg-brand-cream rounded-xl shadow-md overflow-hidden border border-brand-cream-dark hover:shadow-lg transition-shadow flex flex-col"
+                  key={tour.title}
+                  className="bg-brand-cream rounded-xl shadow-md overflow-hidden border border-brand-cream-dark flex flex-col"
                 >
-                  <div className="aspect-[4/3] overflow-hidden bg-brand-cream-dark/30">
+                  <div className="aspect-[16/10] sm:aspect-[4/3] overflow-hidden bg-brand-cream-dark/30">
                     <img
                       src={tour.image}
                       alt=""
                       className="w-full h-full object-cover"
                     />
                   </div>
-                  <div className="p-6 flex-1 flex flex-col">
-                    <h3 className="text-xl font-bold text-brand-green mb-2">
+                  <div className="p-4 sm:p-5 flex-1 flex flex-col gap-2">
+                    {tour.timeBadge && (
+                      <p className="text-xs sm:text-sm font-bold text-brand-green bg-brand-cream-dark/40 inline-block self-start px-2 py-1 rounded-md">
+                        {tour.timeBadge}
+                      </p>
+                    )}
+                    {tour.limitedTag && (
+                      <p className="text-xs sm:text-sm font-bold text-amber-900 bg-amber-100 inline-block self-start px-2 py-1 rounded-md">
+                        {tour.limitedTag}
+                      </p>
+                    )}
+                    <h3 className="text-lg sm:text-xl font-bold text-brand-green leading-snug">
                       {tour.title}
                     </h3>
-                    <p className="text-brand-green/90 mb-4 flex-1 text-sm">
-                      {tour.briefDescription}
+                    <p className="text-sm text-brand-green/85">
+                      {tour.duration} · <span className="font-semibold">{tour.price}</span>
                     </p>
-                    <p className="flex items-center gap-2 text-brand-green/80 text-sm mb-4">
-                      <HiOutlineClock className="text-lg flex-shrink-0" />
-                      {tour.duration}
-                    </p>
-                    <Link
-                      to={`/tour/${tour.id}`}
-                      className="block w-full text-center px-4 py-3 bg-brand-green hover:bg-brand-green-dark text-brand-cream font-medium rounded-lg transition-colors shadow-md ring-2 ring-brand-green/30"
+                    <ul className="text-sm text-brand-green/90 space-y-1 leading-snug">
+                      {tour.bullets.map((b) => (
+                        <li key={b} className="flex gap-2">
+                          <span className="text-brand-green shrink-0" aria-hidden>
+                            •
+                          </span>
+                          <span>{b}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <a
+                      href={whatsappWithMessage(tour.whatsappPrefill)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-3 w-full inline-flex items-center justify-center gap-2 min-h-[48px] px-4 py-3.5 bg-[#25D366] hover:bg-[#20BD5A] text-white font-semibold rounded-lg transition-colors text-sm sm:text-base shadow-sm"
                     >
-                      View details
-                    </Link>
+                      <FaWhatsapp className="text-xl flex-shrink-0" />
+                      {tour.buttonText}
+                    </a>
                   </div>
                 </article>
               ))}
@@ -150,7 +234,7 @@ export default function DriversFleetTabs() {
         )}
 
         {activeTab === 'drivers' && (
-          <div className="bg-brand-cream rounded-xl shadow-md border border-brand-cream-dark overflow-hidden">
+          <div className="bg-brand-cream rounded-xl shadow-md border border-brand-cream-dark overflow-hidden max-w-xl mx-auto md:max-w-none">
             <div className="grid md:grid-cols-2 gap-0">
               <div className="aspect-[4/5] md:aspect-auto md:min-h-[320px] bg-brand-cream-dark/30">
                 <img
@@ -159,17 +243,26 @@ export default function DriversFleetTabs() {
                   className="w-full h-full object-cover object-top"
                 />
               </div>
-              <div className="p-6 md:p-8 flex flex-col justify-center">
-                <h3 className="text-2xl font-bold text-brand-green mb-2">Yaseen</h3>
-                <p className="text-brand-green/90 mb-4">
-                  Your qualified local guide for private tours of Cape Town and the Western Cape.
-                  Thoughtful, culturally sensitive, and focused on giving you a relaxed and memorable experience.
+              <div className="p-4 sm:p-6 md:p-8 flex flex-col justify-center gap-3">
+                <div>
+                  <h3 className="text-xl sm:text-2xl font-bold text-brand-green leading-snug">
+                    Meet Your Private Cape Town Guide
+                  </h3>
+                  <p className="text-brand-green/85 font-medium text-sm sm:text-base mt-2 leading-snug">
+                    Local, reliable, and focused on giving you a flexible, comfortable experience.
+                  </p>
+                </div>
+                <p className="text-brand-green/90 text-sm sm:text-base leading-relaxed">
+                  Hi, I&apos;m Yaseen, a local Cape Town guide. I specialise in private, flexible
+                  tours designed around your time, interests, and pace. Whether you&apos;re
+                  travelling as a couple, family, or solo, I&apos;ll make sure your experience is
+                  smooth, safe, and memorable.
                 </p>
                 <a
                   href={BOOK_WHATSAPP_URL}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 justify-center px-4 py-3 bg-brand-green hover:bg-brand-green-dark text-brand-cream font-medium rounded-lg transition-colors w-fit"
+                  className="inline-flex items-center justify-center gap-2 min-h-[48px] px-4 py-3.5 bg-brand-green hover:bg-brand-green-dark text-brand-cream font-semibold rounded-lg transition-colors w-full md:w-fit shadow-sm"
                 >
                   <FaWhatsapp className="text-xl" />
                   Book — +27 82 327 7446
@@ -180,11 +273,19 @@ export default function DriversFleetTabs() {
         )}
 
         {activeTab === 'fleet' && (
-          <div className="space-y-8">
+          <div className="space-y-5 md:space-y-8">
+            <div className="text-center md:max-w-2xl md:mx-auto">
+              <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-brand-green">
+                Choose Your Vehicle
+              </h3>
+              <p className="text-brand-green/90 text-sm sm:text-base mt-2 leading-snug">
+                Comfortable, reliable options for different group sizes and preferences.
+              </p>
+            </div>
             {fleetVehicles.map((vehicle) => (
               <div
                 key={vehicle.name}
-                className="bg-brand-cream rounded-xl shadow-md border border-brand-cream-dark overflow-hidden flex flex-col md:flex-row"
+                className="bg-brand-cream rounded-xl shadow-md border border-brand-cream-dark overflow-hidden flex flex-col md:flex-row max-w-xl mx-auto md:max-w-none"
               >
                 <div className="md:w-1/2 aspect-video md:aspect-auto md:min-h-[280px] bg-brand-cream-dark/30">
                   <img
@@ -193,11 +294,11 @@ export default function DriversFleetTabs() {
                     className="w-full h-full object-cover"
                   />
                 </div>
-                <div className="p-6 md:p-8 flex flex-col justify-center md:w-1/2">
-                  <h3 className="text-xl font-bold text-brand-green mb-1">{vehicle.name}</h3>
-                  <p className="text-brand-green/80 font-medium text-sm mb-2">{vehicle.subtitle}</p>
-                  <p className="text-brand-green/90 text-sm mb-3">{vehicle.intro}</p>
-                  <ul className="space-y-1.5 mb-3 text-brand-green/90 text-sm">
+                <div className="p-4 sm:p-6 md:p-8 flex flex-col justify-center md:w-1/2 gap-2">
+                  <h3 className="text-lg sm:text-xl font-bold text-brand-green">{vehicle.name}</h3>
+                  <p className="text-brand-green/80 font-medium text-sm">{vehicle.subtitle}</p>
+                  <p className="text-brand-green/90 text-sm leading-snug">{vehicle.intro}</p>
+                  <ul className="space-y-1 text-brand-green/90 text-sm leading-snug">
                     {vehicle.features.map((feature, i) => (
                       <li key={i} className="flex items-start gap-2">
                         <span className="text-brand-green shrink-0" aria-hidden>✔</span>
@@ -205,7 +306,7 @@ export default function DriversFleetTabs() {
                       </li>
                     ))}
                   </ul>
-                  <p className="text-brand-green/80 text-sm italic">{vehicle.tagline}</p>
+                  <p className="text-brand-green/80 text-sm italic pt-1">{vehicle.tagline}</p>
                 </div>
               </div>
             ))}
