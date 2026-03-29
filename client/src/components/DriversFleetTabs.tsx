@@ -3,10 +3,6 @@ import { HiOutlineUser, HiOutlineTruck, HiOutlineMap } from 'react-icons/hi'
 import { FaWhatsapp } from 'react-icons/fa'
 import { whatsappWithMessage } from '../lib/whatsappLinks'
 
-const DRIVER_MESSAGE_ME = whatsappWithMessage(
-  "Hi Yaseen, I'd like to message you about a private tour."
-)
-
 const DRIVER_CHAT_ME = whatsappWithMessage(
   "Hi Yaseen, I'd like to chat with you about booking a tour."
 )
@@ -269,26 +265,15 @@ export default function DriversFleetTabs() {
                 <p className="text-brand-green/80 text-sm leading-snug border-l-2 border-brand-green/40 pl-3">
                   You can choose your preferred time slot and experience directly from the homepage.
                 </p>
-                <div className="flex flex-col gap-2.5 pt-1">
-                  <a
-                    href={DRIVER_MESSAGE_ME}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center gap-2 min-h-[48px] px-4 py-3.5 bg-brand-green hover:bg-brand-green-dark text-brand-cream font-semibold rounded-lg transition-colors w-full shadow-sm"
-                  >
-                    <FaWhatsapp className="text-xl" />
-                    Message Me on WhatsApp
-                  </a>
-                  <a
-                    href={DRIVER_CHAT_ME}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center gap-2 min-h-[48px] px-4 py-3.5 bg-[#25D366] hover:bg-[#20BD5A] text-white font-semibold rounded-lg transition-colors w-full shadow-sm"
-                  >
-                    <FaWhatsapp className="text-xl" />
-                    Chat with Me on WhatsApp
-                  </a>
-                </div>
+                <a
+                  href={DRIVER_CHAT_ME}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-1 inline-flex items-center justify-center gap-2 min-h-[48px] px-4 py-3.5 bg-[#25D366] hover:bg-[#20BD5A] text-white font-semibold rounded-lg transition-colors w-full shadow-sm"
+                >
+                  <FaWhatsapp className="text-xl" />
+                  Chat with Me on WhatsApp
+                </a>
               </div>
             </div>
           </div>
