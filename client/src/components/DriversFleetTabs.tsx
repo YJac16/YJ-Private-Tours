@@ -3,8 +3,12 @@ import { HiOutlineUser, HiOutlineTruck, HiOutlineMap } from 'react-icons/hi'
 import { FaWhatsapp } from 'react-icons/fa'
 import { whatsappWithMessage } from '../lib/whatsappLinks'
 
-const BOOK_WHATSAPP_URL = whatsappWithMessage(
-  "Hi, I'd like to book with KhayrCape Experiences."
+const DRIVER_MESSAGE_ME = whatsappWithMessage(
+  "Hi Yaseen, I'd like to message you about a private tour."
+)
+
+const DRIVER_CHAT_ME = whatsappWithMessage(
+  "Hi Yaseen, I'd like to chat with you about booking a tour."
 )
 
 type TabId = 'tours' | 'drivers' | 'fleet'
@@ -78,6 +82,7 @@ const timeSlotTours: TimeSlotTour[] = [
 const fleetVehicles = [
   {
     name: 'Suzuki XL6',
+    bookVehiclePrefill: "Hi, I'd like to book a tour with the Suzuki XL6",
     image: '/Suzuki XL6.jpg',
     subtitle: 'Spacious Comfort for Families',
     intro: 'The Suzuki XL6 is the ideal people mover for families or small groups who want space, comfort, and reliability while exploring the Western Cape.',
@@ -91,6 +96,8 @@ const fleetVehicles = [
   },
   {
     name: 'Toyota Corolla Cross GR',
+    bookVehiclePrefill:
+      "Hi, I'd like to book a tour with the Toyota Corolla Cross GR Sport",
     image: '/Toyota Corolla Cross.jpg',
     subtitle: 'Sporty Comfort with a Personal Touch',
     intro: 'For couples or small groups seeking a more personal and stylish travel experience, the Corolla Cross GR offers sporty elegance with everyday comfort.',
@@ -104,6 +111,7 @@ const fleetVehicles = [
   },
   {
     name: 'Mercedes-Benz GLC 250 Coupe (Black)',
+    bookVehiclePrefill: "Hi, I'd like to book a tour with the Mercedes GLC",
     image: '/Mercedes Benz.png',
     subtitle: 'Premium Luxury Experience',
     intro: 'Experience the Western Cape in refined luxury with our black Mercedes-Benz GLC 250 Coupe — designed for guests who appreciate comfort, class, and exclusivity.',
@@ -258,15 +266,29 @@ export default function DriversFleetTabs() {
                   travelling as a couple, family, or solo, I&apos;ll make sure your experience is
                   smooth, safe, and memorable.
                 </p>
-                <a
-                  href={BOOK_WHATSAPP_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-2 min-h-[48px] px-4 py-3.5 bg-brand-green hover:bg-brand-green-dark text-brand-cream font-semibold rounded-lg transition-colors w-full md:w-fit shadow-sm"
-                >
-                  <FaWhatsapp className="text-xl" />
-                  Book — +27 82 327 7446
-                </a>
+                <p className="text-brand-green/80 text-sm leading-snug border-l-2 border-brand-green/40 pl-3">
+                  You can choose your preferred time slot and experience directly from the homepage.
+                </p>
+                <div className="flex flex-col gap-2.5 pt-1">
+                  <a
+                    href={DRIVER_MESSAGE_ME}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-2 min-h-[48px] px-4 py-3.5 bg-brand-green hover:bg-brand-green-dark text-brand-cream font-semibold rounded-lg transition-colors w-full shadow-sm"
+                  >
+                    <FaWhatsapp className="text-xl" />
+                    Message Me on WhatsApp
+                  </a>
+                  <a
+                    href={DRIVER_CHAT_ME}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-2 min-h-[48px] px-4 py-3.5 bg-[#25D366] hover:bg-[#20BD5A] text-white font-semibold rounded-lg transition-colors w-full shadow-sm"
+                  >
+                    <FaWhatsapp className="text-xl" />
+                    Chat with Me on WhatsApp
+                  </a>
+                </div>
               </div>
             </div>
           </div>
@@ -307,9 +329,27 @@ export default function DriversFleetTabs() {
                     ))}
                   </ul>
                   <p className="text-brand-green/80 text-sm italic pt-1">{vehicle.tagline}</p>
+                  <a
+                    href={whatsappWithMessage(vehicle.bookVehiclePrefill)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-3 w-full inline-flex items-center justify-center gap-2 min-h-[48px] px-4 py-3.5 bg-[#25D366] hover:bg-[#20BD5A] text-white font-semibold rounded-lg transition-colors text-sm sm:text-base shadow-sm"
+                  >
+                    <FaWhatsapp className="text-xl flex-shrink-0" />
+                    Book This Vehicle via WhatsApp
+                  </a>
                 </div>
               </div>
             ))}
+
+            <div className="bg-brand-cream rounded-xl border border-brand-cream-dark p-5 sm:p-6 max-w-xl mx-auto md:max-w-2xl md:mx-auto text-center">
+              <h4 className="text-lg sm:text-xl font-bold text-brand-green mb-2">
+                Not Sure Which Vehicle?
+              </h4>
+              <p className="text-brand-green/90 text-sm sm:text-base leading-relaxed">
+                I&apos;ll help you choose the best option based on your group size and experience.
+              </p>
+            </div>
           </div>
         )}
       </div>
