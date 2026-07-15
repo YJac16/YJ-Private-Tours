@@ -3,10 +3,17 @@
   "private": true,
   "description": "KhayrCape Experiences — YJ Private Tours",
   "scripts": {
-    "build": "cd client && npm ci && npm run build && cd ../server && npm ci",
-    "start": "cd server && node index.js",
-    "deploy": "cd client && npx vercel --prod",
-    "deploy:preview": "cd client && npx vercel"
+    "build": "cd client && npm ci && npm run build",
+    "deploy": "npx vercel --prod",
+    "deploy:preview": "npx vercel"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.0",
+    "@vercel/node": "^3.2.0",
+    "nodemailer": "^6.9.16"
+  },
+  "devDependencies": {
+    "@types/nodemailer": "^6.4.17"
   },
   "engines": {
     "node": ">=18"

@@ -140,12 +140,15 @@ const payments: MockPayment[] = []
 const blockedDates = new Set<string>()
 
 export function useMockStore() {
-  return (
-    process.env.BOOKING_MOCK === '1' ||
-    process.env.BOOKING_MOCK === 'true' ||
-    !process.env.NEXT_PUBLIC_SUPABASE_URL ||
-    process.env.NEXT_PUBLIC_SUPABASE_URL.includes('your-project')
-  )
+  if (process.env.BOOKING_MOCK === '1' || process.env.BOOKING_MOCK === 'true') {
+    return true
+  }
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || ''
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+  if (!url || !key || url.includes('your-project')) {
+    return true
+  }
+  return false
 }
 
 function normalizeTime(t: string) {
@@ -156,7 +159,10 @@ function minBookableDate(): string {
   const d = new Date()
   d.setHours(0, 0, 0, 0)
   d.setDate(d.getDate() + 2)
-  return d.toISOString().slice(0, 10)
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
 }
 
 function uuid() {

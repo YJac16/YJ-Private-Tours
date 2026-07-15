@@ -5,9 +5,21 @@
 const API = import.meta.env.VITE_BOOKING_API_URL || '/api'
 
 async function json<T>(res: Response): Promise<T> {
-  const data = await res.json()
+  const text = await res.text()
+  let data: Record<string, unknown> = {}
+  try {
+    data = text ? JSON.parse(text) : {}
+  } catch {
+    throw new Error(
+      res.ok
+        ? 'Invalid response from booking server.'
+        : `Booking API error (${res.status}). Is the API deployed? Got: ${text.slice(0, 80)}`
+    )
+  }
   if (!res.ok) {
-    throw new Error(data.error || data.message || 'Request failed')
+    throw new Error(
+      (data.error as string) || (data.message as string) || 'Request failed'
+    )
   }
   return data as T
 }
@@ -167,10 +179,13 @@ export async function driverUnblock(pin: string, id: string) {
   )
 }
 
-/** Minimum bookable date (today + 2 days) as YYYY-MM-DD */
-export function minBookableDate(): string {
+/** Minimum bookable date (today + 2 local calendar days) as YYYY-MM-DD */
+export function minBookableDate(noticeDays = 2): string {
   const d = new Date()
   d.setHours(0, 0, 0, 0)
-  d.setDate(d.getDate() + 2)
-  return d.toISOString().slice(0, 10)
+  d.setDate(d.getDate() + noticeDays)
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
 }

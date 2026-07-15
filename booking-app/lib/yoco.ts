@@ -25,7 +25,11 @@ export async function createYocoCheckout(opts: {
     throw new Error('YOCO_SECRET_KEY is not configured')
   }
 
-  const site = (process.env.SITE_URL || 'http://localhost:5173').replace(/\/$/, '')
+  const site = (
+    process.env.SITE_URL ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '') ||
+    'http://localhost:5173'
+  ).replace(/\/$/, '')
   const amount = Math.round(Number(opts.amountCents))
   if (!Number.isFinite(amount) || amount < 100) {
     throw new Error('Amount must be at least 100 cents (R1)')

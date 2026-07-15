@@ -197,7 +197,7 @@ export default function BookPage() {
             Choose a date, driver, time, and vehicle.
           </p>
           <p className="text-center text-brand-green/70 text-xs sm:text-sm mb-6">
-            Bookings need at least <strong>2 full days&apos; notice</strong> so your guide can confirm.
+            Bookings need at least <strong>2 full days&apos; notice</strong> (calendar days) so your guide can confirm.
           </p>
           {cancelled && (
             <p className="mb-6 text-sm text-amber-900 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-center">
