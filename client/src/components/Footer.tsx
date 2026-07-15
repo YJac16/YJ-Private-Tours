@@ -15,10 +15,22 @@ export default function Footer() {
             Cape Town, South Africa
           </span>
           <Link
+            to="/book"
+            className="text-brand-cream underline underline-offset-2 hover:text-white font-medium"
+          >
+            Book a tour
+          </Link>
+          <Link
             to="/terms"
             className="text-brand-cream underline underline-offset-2 hover:text-white font-medium"
           >
             Terms &amp; Conditions
+          </Link>
+          <Link
+            to="/driver"
+            className="text-brand-cream/60 hover:text-brand-cream text-sm"
+          >
+            Driver login
           </Link>
         </div>
         <p className="text-sm text-brand-cream/70 pt-4">

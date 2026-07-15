@@ -1,13 +1,7 @@
-import { HiOutlineMap } from 'react-icons/hi'
-import { FaWhatsapp } from 'react-icons/fa'
-import { whatsappWithMessage } from '../lib/whatsappLinks'
-
-const WHATSAPP_HERO =
-  "Hi, I'd like to book a private tour with KhayrCape Experiences."
+import { Link } from 'react-router-dom'
+import { HiOutlineMap, HiOutlineCalendar } from 'react-icons/hi'
 
 export default function Hero() {
-  const waHref = whatsappWithMessage(WHATSAPP_HERO)
-
   return (
     <section
       id="hero"
@@ -39,22 +33,20 @@ export default function Hero() {
           Relaxed, cultural, and scenic experiences with a qualified local guide
         </p>
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-stretch sm:justify-center items-stretch sm:items-center max-w-md sm:max-w-none mx-auto">
-          <a
-            href="#tours"
+          <Link
+            to="/#tours"
             className="inline-flex items-center justify-center gap-2 px-6 py-3.5 sm:py-3 min-h-[48px] bg-white text-brand-green font-semibold rounded-xl transition-all shadow-lg shadow-black/20 hover:bg-brand-cream active:scale-[0.98] border-2 border-white/30 w-full sm:w-auto sm:min-w-[200px]"
           >
             <HiOutlineMap className="text-2xl flex-shrink-0" />
             Explore Tours
-          </a>
-          <a
-            href={waHref}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center justify-center gap-2 px-6 py-3.5 sm:py-3 min-h-[48px] bg-[#25D366] hover:bg-[#20BD5A] text-white font-semibold rounded-xl transition-all shadow-lg shadow-black/25 active:scale-[0.98] w-full sm:w-auto sm:min-w-[200px]"
+          </Link>
+          <Link
+            to="/book"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3.5 sm:py-3 min-h-[48px] bg-brand-green hover:bg-brand-green-dark text-brand-cream font-semibold rounded-xl transition-all shadow-lg shadow-black/25 active:scale-[0.98] w-full sm:w-auto sm:min-w-[200px] border-2 border-white/20"
           >
-            <FaWhatsapp className="text-2xl flex-shrink-0" />
-            Book on WhatsApp
-          </a>
+            <HiOutlineCalendar className="text-2xl flex-shrink-0" />
+            Book a tour
+          </Link>
         </div>
       </div>
     </section>

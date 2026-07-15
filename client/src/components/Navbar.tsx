@@ -1,8 +1,6 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { HiMenu, HiX } from 'react-icons/hi'
-import { FaWhatsapp } from 'react-icons/fa'
-import { whatsappWithMessage } from '../lib/whatsappLinks'
 
 const navLinks = [
   { hash: 'tours', label: 'Tours' },
@@ -12,19 +10,24 @@ const navLinks = [
   { hash: 'about', label: 'About' },
 ]
 
-const BOOK_WA = whatsappWithMessage(
-  "Hi, I'd like to book a tour with KhayrCape Experiences."
-)
-
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false)
+  const navigate = useNavigate()
+
+  const goHome = () => {
+    setMobileOpen(false)
+    navigate({ pathname: '/', hash: '' })
+    window.requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    })
+  }
 
   return (
     <header className="sticky top-0 z-50 bg-brand-cream/95 backdrop-blur border-b border-brand-cream-dark shadow-sm">
       <div className="max-w-6xl mx-auto px-4 flex items-center justify-between h-16 md:h-18">
-        <Link
-          to="/"
-          onClick={() => setMobileOpen(false)}
+        <button
+          type="button"
+          onClick={goHome}
           className="flex items-center shrink-0"
           aria-label="KhayrCape Experiences home"
         >
@@ -33,7 +36,7 @@ export default function Navbar() {
             alt="KhayrCape Experiences"
             className="h-10 md:h-11 w-auto object-contain"
           />
-        </Link>
+        </button>
 
         <nav className="hidden md:flex items-center gap-1 ml-auto">
           {navLinks.map((link) => (
@@ -45,21 +48,18 @@ export default function Navbar() {
               {link.label}
             </Link>
           ))}
-          <a
-            href={BOOK_WA}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 px-3 py-2 ml-1 bg-[#25D366] hover:bg-[#20BD5A] text-white rounded-lg text-sm font-semibold transition-colors"
+          <Link
+            to="/book"
+            className="inline-flex items-center gap-1.5 px-3 py-2 ml-1 bg-brand-green hover:bg-brand-green-dark text-brand-cream rounded-lg text-sm font-semibold transition-colors"
           >
-            <FaWhatsapp className="text-base" />
             Book
-          </a>
+          </Link>
         </nav>
 
         <button
           type="button"
           onClick={() => setMobileOpen((o) => !o)}
-          className="md:hidden p-2 rounded-lg text-brand-green hover:bg-brand-cream-dark/50"
+          className="md:hidden p-2 rounded-lg text-brand-green hover:bg-brand-cream-dark/50 min-h-[44px] min-w-[44px] flex items-center justify-center"
           aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
           aria-expanded={mobileOpen}
         >
@@ -69,37 +69,34 @@ export default function Navbar() {
 
       <div
         className={`md:hidden overflow-hidden transition-all duration-200 ease-out ${
-          mobileOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+          mobileOpen ? 'max-h-[28rem] opacity-100' : 'max-h-0 opacity-0'
         }`}
       >
         <nav className="px-4 pb-4 pt-2 bg-brand-cream border-t border-brand-cream-dark flex flex-col gap-1">
-          <Link
-            to="/"
-            onClick={() => setMobileOpen(false)}
-            className="py-3 text-brand-green font-medium border-b border-brand-cream-dark"
+          <button
+            type="button"
+            onClick={goHome}
+            className="py-3 text-left text-brand-green font-medium border-b border-brand-cream-dark"
           >
             Home
-          </Link>
+          </button>
           {navLinks.map((link) => (
             <Link
               key={link.hash}
               to={`/#${link.hash}`}
               onClick={() => setMobileOpen(false)}
-              className="py-3 text-brand-green hover:bg-brand-cream-dark/50 rounded-lg px-2 font-medium"
+              className="py-3 text-brand-green hover:bg-brand-cream-dark/50 rounded-lg px-2 font-medium min-h-[44px] flex items-center"
             >
               {link.label}
             </Link>
           ))}
-          <a
-            href={BOOK_WA}
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            to="/book"
             onClick={() => setMobileOpen(false)}
-            className="inline-flex items-center justify-center gap-2 py-3.5 mt-1 bg-[#25D366] text-white font-semibold rounded-lg min-h-[48px]"
+            className="inline-flex items-center justify-center gap-2 py-3.5 mt-1 bg-brand-green text-brand-cream font-semibold rounded-lg min-h-[48px]"
           >
-            <FaWhatsapp className="text-xl" />
-            Book on WhatsApp
-          </a>
+            Book a tour
+          </Link>
         </nav>
       </div>
     </header>

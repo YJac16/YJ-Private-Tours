@@ -7,7 +7,7 @@ export default function Gallery() {
   const previewImages = galleryImages.slice(0, PREVIEW_COUNT)
 
   return (
-    <section id="gallery" className="py-16 md:py-24 bg-brand-cream px-4 scroll-mt-20">
+    <section id="gallery" className="py-16 md:py-24 bg-brand-cream px-4 scroll-mt-28 md:scroll-mt-24">
       <div className="max-w-6xl mx-auto">
         <h2 className="text-3xl md:text-4xl font-bold text-brand-green mb-4 text-center">
           Gallery

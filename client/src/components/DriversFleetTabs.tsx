@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 import { HiOutlineUser, HiOutlineTruck, HiOutlineMap } from 'react-icons/hi'
 import { FaWhatsapp } from 'react-icons/fa'
 import { whatsappWithMessage } from '../lib/whatsappLinks'
@@ -23,7 +24,7 @@ type TimeSlotTour = {
   duration: string
   price: string
   bullets: string[]
-  buttonText: string
+  bookPath: string
   whatsappPrefill: string
 }
 
@@ -35,7 +36,7 @@ const timeSlotTours: TimeSlotTour[] = [
     duration: '3–4 hours',
     price: 'From R1500',
     bullets: ['Bo-Kaap', 'city highlights', 'viewpoints', 'optional coffee stop'],
-    buttonText: 'Book 08:00 via WhatsApp',
+    bookPath: '/book?tour=city&time=08:00',
     whatsappPrefill: "Hi, I'd like to book the 08:00 City & Culture tour",
   },
   {
@@ -45,7 +46,7 @@ const timeSlotTours: TimeSlotTour[] = [
     duration: '3.5–4.5 hours',
     price: 'From R2800',
     bullets: ["Chapman's Peak", 'Cape Point', 'Penguins'],
-    buttonText: 'Book 12:30 via WhatsApp',
+    bookPath: '/book?tour=peninsula&time=12:30',
     whatsappPrefill: "Hi, I'd like to book the 12:30 Peninsula tour",
   },
   {
@@ -55,7 +56,7 @@ const timeSlotTours: TimeSlotTour[] = [
     duration: '2–3 hours',
     price: 'From R1800',
     bullets: ['Atlantic Seaboard', 'Camps Bay', 'sunset viewpoints'],
-    buttonText: 'Book Sunset via WhatsApp',
+    bookPath: '/book?tour=sunset&time=16:30',
     whatsappPrefill: "Hi, I'd like to book the Sunset tour",
   },
   {
@@ -69,7 +70,7 @@ const timeSlotTours: TimeSlotTour[] = [
       'halal-friendly stops',
       'flexible pace for your group',
     ],
-    buttonText: 'Check Availability on WhatsApp',
+    bookPath: '/book?tour=winelands',
     whatsappPrefill:
       "Hi, I'd like to check availability for the Winelands tour",
   },
@@ -78,6 +79,7 @@ const timeSlotTours: TimeSlotTour[] = [
 const fleetVehicles = [
   {
     name: 'Suzuki XL6',
+    vehicleKey: 'suzuki',
     bookVehiclePrefill: "Hi, I'd like to book a tour with the Suzuki XL6",
     image: '/Suzuki XL6.jpg',
     subtitle: 'Spacious Comfort for Families',
@@ -92,6 +94,7 @@ const fleetVehicles = [
   },
   {
     name: 'Toyota Corolla Cross GR',
+    vehicleKey: 'corolla',
     bookVehiclePrefill:
       "Hi, I'd like to book a tour with the Toyota Corolla Cross GR Sport",
     image: '/Toyota Corolla Cross.jpg',
@@ -107,6 +110,7 @@ const fleetVehicles = [
   },
   {
     name: 'Mercedes-Benz GLC 250 Coupe (Black)',
+    vehicleKey: 'mercedes',
     bookVehiclePrefill: "Hi, I'd like to book a tour with the Mercedes GLC",
     image: '/Mercedes Benz.png',
     subtitle: 'Premium Luxury Experience',
@@ -121,29 +125,31 @@ const fleetVehicles = [
   },
 ]
 
+function tabFromHash(hash: string): TabId | null {
+  const id = hash.replace(/^#/, '') as TabId
+  if (id === 'tours' || id === 'drivers' || id === 'fleet') return id
+  return null
+}
+
 export default function DriversFleetTabs() {
-  const [activeTab, setActiveTab] = useState<TabId>('tours')
+  const location = useLocation()
+  const [activeTab, setActiveTab] = useState<TabId>(() => tabFromHash(location.hash) ?? 'tours')
 
   useEffect(() => {
-    const hash = window.location.hash.slice(1) as TabId | ''
-    if (hash === 'drivers' || hash === 'fleet') setActiveTab(hash)
-    else if (hash === 'tours') setActiveTab('tours')
-  }, [])
+    const tab = tabFromHash(location.hash)
+    if (tab) setActiveTab(tab)
+  }, [location.hash])
 
-  useEffect(() => {
-    const onHashChange = () => {
-      const hash = window.location.hash.slice(1) as TabId | ''
-      if (hash === 'drivers' || hash === 'fleet' || hash === 'tours') setActiveTab(hash as TabId)
+  const selectTab = (id: TabId) => {
+    setActiveTab(id)
+    const next = `/#${id}`
+    if (`${location.pathname}${location.hash}` !== next) {
+      window.history.replaceState(null, '', next)
     }
-    window.addEventListener('hashchange', onHashChange)
-    return () => window.removeEventListener('hashchange', onHashChange)
-  }, [])
+  }
 
   return (
-    <section id="tours-drivers-fleet" className="py-10 md:py-24 bg-brand-cream-light px-4 scroll-mt-20">
-      <span id="tours" className="block -mt-24 pt-24" aria-hidden />
-      <span id="drivers" className="block -mt-24 pt-24" aria-hidden />
-      <span id="fleet" className="block -mt-24 pt-24" aria-hidden />
+    <section id="tours-drivers-fleet" className="py-10 md:py-24 bg-brand-cream-light px-4 scroll-mt-28 md:scroll-mt-24">
       <div className="max-w-6xl mx-auto">
         <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-brand-green mb-3 text-center leading-tight">
           Tours, Drivers & Fleet
@@ -152,12 +158,14 @@ export default function DriversFleetTabs() {
           Meet your guide, see our vehicles, and explore tour options below.
         </p>
 
-        <div className="flex flex-wrap justify-center gap-2 mb-8 md:mb-10">
+        <div className="flex flex-wrap justify-center gap-2 mb-8 md:mb-10" role="tablist" aria-label="Tours, drivers, and fleet">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               type="button"
-              onClick={() => setActiveTab(tab.id)}
+              role="tab"
+              aria-selected={activeTab === tab.id}
+              onClick={() => selectTab(tab.id)}
               className={`inline-flex items-center gap-2 px-4 py-2.5 sm:px-5 sm:py-3 rounded-lg font-medium transition-colors min-h-[44px] ${
                 activeTab === tab.id
                   ? 'bg-brand-green text-brand-cream shadow-md'
@@ -221,15 +229,23 @@ export default function DriversFleetTabs() {
                         </li>
                       ))}
                     </ul>
-                    <a
-                      href={whatsappWithMessage(tour.whatsappPrefill)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-3 w-full inline-flex items-center justify-center gap-2 min-h-[48px] px-4 py-3.5 bg-[#25D366] hover:bg-[#20BD5A] text-white font-semibold rounded-lg transition-colors text-sm sm:text-base shadow-sm"
-                    >
-                      <FaWhatsapp className="text-xl flex-shrink-0" />
-                      {tour.buttonText}
-                    </a>
+                    <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <Link
+                        to={tour.bookPath}
+                        className="w-full inline-flex items-center justify-center gap-2 min-h-[48px] px-4 py-3.5 bg-brand-green hover:bg-brand-green-dark text-brand-cream font-semibold rounded-lg transition-colors text-sm sm:text-base shadow-sm"
+                      >
+                        Book online
+                      </Link>
+                      <a
+                        href={whatsappWithMessage(tour.whatsappPrefill)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full inline-flex items-center justify-center gap-2 min-h-[48px] px-4 py-3.5 bg-[#25D366] hover:bg-[#20BD5A] text-white font-semibold rounded-lg transition-colors text-sm sm:text-base shadow-sm"
+                      >
+                        <FaWhatsapp className="text-xl flex-shrink-0" />
+                        WhatsApp
+                      </a>
+                    </div>
                   </div>
                 </article>
               ))}
@@ -265,15 +281,23 @@ export default function DriversFleetTabs() {
                 <p className="text-brand-green/80 text-sm leading-snug border-l-2 border-brand-green/40 pl-3">
                   You can choose your preferred time slot and experience directly from the homepage.
                 </p>
-                <a
-                  href={DRIVER_CHAT_ME}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-1 inline-flex items-center justify-center gap-2 min-h-[48px] px-4 py-3.5 bg-[#25D366] hover:bg-[#20BD5A] text-white font-semibold rounded-lg transition-colors w-full shadow-sm"
-                >
-                  <FaWhatsapp className="text-xl" />
-                  Chat with Me on WhatsApp
-                </a>
+                <div className="mt-1 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <Link
+                    to="/book"
+                    className="inline-flex items-center justify-center gap-2 min-h-[48px] px-4 py-3.5 bg-brand-green hover:bg-brand-green-dark text-brand-cream font-semibold rounded-lg transition-colors w-full shadow-sm"
+                  >
+                    Book with Yaseen
+                  </Link>
+                  <a
+                    href={DRIVER_CHAT_ME}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-2 min-h-[48px] px-4 py-3.5 bg-[#25D366] hover:bg-[#20BD5A] text-white font-semibold rounded-lg transition-colors w-full shadow-sm"
+                  >
+                    <FaWhatsapp className="text-xl" />
+                    WhatsApp
+                  </a>
+                </div>
               </div>
             </div>
           </div>
@@ -314,15 +338,23 @@ export default function DriversFleetTabs() {
                     ))}
                   </ul>
                   <p className="text-brand-green/80 text-sm italic pt-1">{vehicle.tagline}</p>
-                  <a
-                    href={whatsappWithMessage(vehicle.bookVehiclePrefill)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-3 w-full inline-flex items-center justify-center gap-2 min-h-[48px] px-4 py-3.5 bg-[#25D366] hover:bg-[#20BD5A] text-white font-semibold rounded-lg transition-colors text-sm sm:text-base shadow-sm"
-                  >
-                    <FaWhatsapp className="text-xl flex-shrink-0" />
-                    Book This Vehicle via WhatsApp
-                  </a>
+                  <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <Link
+                      to={`/book?vehicle=${vehicle.vehicleKey}`}
+                      className="w-full inline-flex items-center justify-center gap-2 min-h-[48px] px-4 py-3.5 bg-brand-green hover:bg-brand-green-dark text-brand-cream font-semibold rounded-lg transition-colors text-sm sm:text-base shadow-sm"
+                    >
+                      Select this vehicle
+                    </Link>
+                    <a
+                      href={whatsappWithMessage(vehicle.bookVehiclePrefill)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full inline-flex items-center justify-center gap-2 min-h-[48px] px-4 py-3.5 bg-[#25D366] hover:bg-[#20BD5A] text-white font-semibold rounded-lg transition-colors text-sm sm:text-base shadow-sm"
+                    >
+                      <FaWhatsapp className="text-xl flex-shrink-0" />
+                      WhatsApp
+                    </a>
+                  </div>
                 </div>
               </div>
             ))}

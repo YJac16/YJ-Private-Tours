@@ -1,6 +1,6 @@
 export default function About() {
   return (
-    <section id="about" className="py-16 md:py-24 bg-brand-cream-light px-4 scroll-mt-20">
+    <section id="about" className="py-16 md:py-24 bg-brand-cream-light px-4 scroll-mt-28 md:scroll-mt-24">
       <div className="max-w-3xl mx-auto">
         <h2 className="text-3xl md:text-4xl font-bold text-brand-green mb-8 text-center">
           About KhayrCape Experiences

@@ -1,13 +1,12 @@
+import { Link } from 'react-router-dom'
 import { HiOutlineMap, HiOutlineTruck, HiOutlineUser } from 'react-icons/hi'
-import { FaWhatsapp } from 'react-icons/fa'
-
-const BOOK_WHATSAPP_URL = 'https://wa.link/d96tsl'
+import { FaCalendarCheck } from 'react-icons/fa'
 
 const items = [
-  { href: '#tours', label: 'Tours', sub: 'Explore', icon: HiOutlineMap },
-  { href: '#fleet', label: 'Fleet', sub: 'Vehicles', icon: HiOutlineTruck },
-  { href: '#drivers', label: 'Drivers', sub: 'Experts', icon: HiOutlineUser },
-  { href: BOOK_WHATSAPP_URL, label: 'Book', sub: 'Now', icon: FaWhatsapp, external: true },
+  { to: '/#tours', label: 'Tours', sub: 'Explore', icon: HiOutlineMap },
+  { to: '/#fleet', label: 'Fleet', sub: 'Vehicles', icon: HiOutlineTruck },
+  { to: '/#drivers', label: 'Drivers', sub: 'Experts', icon: HiOutlineUser },
+  { to: '/book', label: 'Book', sub: 'Now', icon: FaCalendarCheck },
 ]
 
 export default function MobileStickyNav() {
@@ -19,10 +18,12 @@ export default function MobileStickyNav() {
       <div className="grid grid-cols-4 gap-0 max-w-full">
         {items.map((item) => {
           const Icon = item.icon
-          const className =
-            "flex flex-col items-center justify-center py-1.5 px-0.5 min-w-0 text-brand-green hover:bg-brand-cream-dark/40 active:bg-brand-cream-dark/60 transition-colors"
-          const content = (
-            <>
+          return (
+            <Link
+              key={item.label}
+              to={item.to}
+              className="flex flex-col items-center justify-center py-2 px-0.5 min-h-[52px] min-w-0 text-brand-green hover:bg-brand-cream-dark/40 active:bg-brand-cream-dark/60 transition-colors"
+            >
               <Icon className="text-base flex-shrink-0 mb-0.5" aria-hidden />
               <span className="text-[10px] font-semibold leading-tight truncate w-full text-center">
                 {item.label}
@@ -30,25 +31,7 @@ export default function MobileStickyNav() {
               <span className="text-[8px] text-brand-green/70 truncate w-full text-center leading-tight">
                 {item.sub}
               </span>
-            </>
-          )
-          if (item.external) {
-            return (
-              <a
-                key={item.label}
-                href={item.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={className}
-              >
-                {content}
-              </a>
-            )
-          }
-          return (
-            <a key={item.label} href={item.href} className={className}>
-              {content}
-            </a>
+            </Link>
           )
         })}
       </div>
