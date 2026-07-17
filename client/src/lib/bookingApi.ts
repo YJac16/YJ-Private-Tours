@@ -2,6 +2,8 @@
  * Client helpers for the booking API (proxied via Vite to booking-app in dev).
  */
 
+import type { BookingSettings, PriceBreakdown } from './pricing'
+
 const API = import.meta.env.VITE_BOOKING_API_URL || '/api'
 
 async function json<T>(res: Response): Promise<T> {
@@ -24,14 +26,47 @@ async function json<T>(res: Response): Promise<T> {
   return data as T
 }
 
-export type Driver = { id: string; name: string; is_active: boolean }
-export type Vehicle = { id: string; name: string; description: string | null; slug: string | null }
+export type Driver = {
+  id: string
+  name: string
+  full_name: string
+  is_active: boolean
+  photo_url: string | null
+  languages: string[]
+  years_experience: number
+  bio: string | null
+  rating_avg: number | null
+  rating_count: number
+}
+
+export type Vehicle = {
+  id: string
+  name: string
+  description: string | null
+  slug: string | null
+  capacity_min: number
+  capacity_max: number
+  vehicle_price_cents: number
+  vehicle_surcharge_cents?: number
+  luggage_capacity: number
+  features: string[]
+  image_url: string | null
+  is_luxury: boolean
+}
+
 export type Tour = {
   id: string
   name: string
   description: string | null
   slug: string | null
-  price_cents?: number
+  duration_label: string | null
+  included_items: string[]
+  excluded_items: string[]
+  image_url: string | null
+  price_per_person_cents: number
+  base_price_cents?: number
+  additional_guest_price_cents?: number
+  max_guests: number | null
 }
 
 export type Slot = {
@@ -42,10 +77,17 @@ export type Slot = {
   reason: string | null
 }
 
+export type Catalog = {
+  drivers: Driver[]
+  vehicles: Vehicle[]
+  tours: Tour[]
+  settings: BookingSettings
+  blocked_dates: string[]
+  yoco_public_key?: string | null
+}
+
 export async function fetchCatalog() {
-  return json<{ drivers: Driver[]; vehicles: Vehicle[]; tours: Tour[] }>(
-    await fetch(`${API}/catalog`)
-  )
+  return json<Catalog>(await fetch(`${API}/catalog`))
 }
 
 export async function fetchSlots(date: string, driverId: string) {
@@ -61,21 +103,29 @@ export type BookPayload = {
   driver_id: string
   tour_id: string
   vehicle_id: string
+  adult_count: number
+  child_count: number
   client_name: string
   client_email: string
   client_phone?: string
+  client_country?: string
+  pickup_address?: string
+  dietary_requirements?: string
+  flight_number?: string
+  special_requests?: string
   notes?: string
-  amount_cents?: number
 }
 
 export async function createBooking(payload: BookPayload) {
   return json<{
     success: boolean
     booking_id: string
+    booking_reference?: string
     payment?: boolean
     checkout_url?: string
     checkout_id?: string
     amount_cents?: number
+    pricing?: PriceBreakdown
     message?: string
     warning?: string
   }>(
@@ -97,11 +147,55 @@ export async function confirmPayment(bookingId: string) {
   )
 }
 
-function driverHeaders(pin: string): HeadersInit {
+function pinHeaders(pin: string): HeadersInit {
   return {
     'Content-Type': 'application/json',
     'x-driver-pin': pin,
   }
+}
+
+export async function fetchAdminPricing(pin: string) {
+  return json<{
+    tours: Tour[]
+    vehicles: Vehicle[]
+    settings: BookingSettings
+  }>(await fetch(`${API}/admin-pricing`, { headers: pinHeaders(pin) }))
+}
+
+export async function saveAdminPricing(
+  pin: string,
+  payload: {
+    tours?: Array<{
+      id: string
+      price_per_person_cents?: number
+      base_price_cents?: number
+      additional_guest_price_cents?: number
+      max_guests?: number | null
+    }>
+    vehicles?: Array<{
+      id: string
+      capacity_min?: number
+      capacity_max?: number
+      vehicle_price_cents?: number
+      vehicle_surcharge_cents?: number
+      luggage_capacity?: number
+      is_luxury?: boolean
+    }>
+    settings?: Partial<BookingSettings>
+  }
+) {
+  return json<{
+    success: boolean
+    tours: Tour[]
+    vehicles: Vehicle[]
+    settings: BookingSettings
+  }>(
+    await fetch(`${API}/admin-pricing`, {
+      method: 'PATCH',
+      headers: pinHeaders(pin),
+      body: JSON.stringify({ ...payload, pin }),
+    })
+  )
 }
 
 export async function driverFetchSchedule(pin: string, driverId?: string) {
@@ -115,6 +209,18 @@ export async function driverFetchSchedule(pin: string, driverId?: string) {
       booking_date: string
       start_time: string
       status: string
+      trip_status?: string
+      payment_status?: string
+      guest_count?: number
+      adult_count?: number
+      child_count?: number
+      passenger_count?: number
+      grand_total_cents?: number
+      final_price_cents?: number
+      driver_earnings_cents?: number | null
+      pickup_address?: string | null
+      special_requests?: string | null
+      booking_reference?: string | null
       client_name: string
       client_email: string
       client_phone: string | null
@@ -130,7 +236,7 @@ export async function driverFetchSchedule(pin: string, driverId?: string) {
       start_time: string | null
       reason: string | null
     }>
-  }>(await fetch(`${API}/driver?${q}`, { headers: driverHeaders(pin) }))
+  }>(await fetch(`${API}/driver?${q}`, { headers: pinHeaders(pin) }))
 }
 
 export async function driverUpdateBooking(
@@ -140,13 +246,14 @@ export async function driverUpdateBooking(
     booking_date?: string
     start_time?: string
     status?: string
+    trip_status?: string
     notes?: string
   }
 ) {
   return json(
     await fetch(`${API}/driver`, {
       method: 'PATCH',
-      headers: driverHeaders(pin),
+      headers: pinHeaders(pin),
       body: JSON.stringify({ ...updates, pin }),
     })
   )
@@ -164,7 +271,7 @@ export async function driverBlockSlot(
   return json(
     await fetch(`${API}/driver`, {
       method: 'POST',
-      headers: driverHeaders(pin),
+      headers: pinHeaders(pin),
       body: JSON.stringify({ ...payload, pin }),
     })
   )
@@ -174,7 +281,7 @@ export async function driverUnblock(pin: string, id: string) {
   return json(
     await fetch(`${API}/driver?id=${encodeURIComponent(id)}`, {
       method: 'DELETE',
-      headers: driverHeaders(pin),
+      headers: pinHeaders(pin),
     })
   )
 }
@@ -190,7 +297,6 @@ export function minBookableDate(noticeDays = 2): string {
   return `${y}-${m}-${day}`
 }
 
-/** True if date is on or after the earliest bookable day (2 full days' notice). */
 export function isBookableDate(dateStr: string, noticeDays = 2): boolean {
   if (!dateStr) return false
   return dateStr >= minBookableDate(noticeDays)

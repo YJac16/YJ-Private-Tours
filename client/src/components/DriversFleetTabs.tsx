@@ -1,8 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { HiOutlineUser, HiOutlineTruck, HiOutlineMap } from 'react-icons/hi'
 import { FaWhatsapp } from 'react-icons/fa'
 import { whatsappWithMessage } from '../lib/whatsappLinks'
+import { useCatalog } from '../hooks/useCatalog'
+import { formatTourFromPrice, formatTourPaxRate } from '../lib/pricing'
 
 const DRIVER_CHAT_ME = whatsappWithMessage(
   "Hi Yaseen, I'd like to chat with you about booking a tour."
@@ -19,10 +21,10 @@ const tabs: { id: TabId; label: string; icon: React.ReactNode }[] = [
 type TimeSlotTour = {
   image: string
   title: string
+  tourSlug: string
   timeBadge?: string
   limitedTag?: string
   duration: string
-  price: string
   bullets: string[]
   bookPath: string
   whatsappPrefill: string
@@ -32,9 +34,9 @@ const timeSlotTours: TimeSlotTour[] = [
   {
     image: '/bo-kaap.jpg',
     title: 'Cape Town City & Culture Experience',
+    tourSlug: 'city',
     timeBadge: '08:00 Start',
     duration: '3–4 hours',
-    price: 'From R1500',
     bullets: ['Bo-Kaap', 'city highlights', 'viewpoints', 'optional coffee stop'],
     bookPath: '/book?tour=city&time=08:00',
     whatsappPrefill: "Hi, I'd like to book the 08:00 City & Culture tour",
@@ -42,9 +44,9 @@ const timeSlotTours: TimeSlotTour[] = [
   {
     image: '/cape-point.jpg',
     title: 'Cape Peninsula Highlights (Express)',
+    tourSlug: 'peninsula',
     timeBadge: '12:30 Start',
     duration: '3.5–4.5 hours',
-    price: 'From R2800',
     bullets: ["Chapman's Peak", 'Cape Point', 'Penguins'],
     bookPath: '/book?tour=peninsula&time=12:30',
     whatsappPrefill: "Hi, I'd like to book the 12:30 Peninsula tour",
@@ -52,9 +54,9 @@ const timeSlotTours: TimeSlotTour[] = [
   {
     image: '/campsbay.JPG',
     title: 'Ocean Sunset Experience',
+    tourSlug: 'sunset',
     timeBadge: '16:30 Start — MOST POPULAR',
     duration: '2–3 hours',
-    price: 'From R1800',
     bullets: ['Atlantic Seaboard', 'Camps Bay', 'sunset viewpoints'],
     bookPath: '/book?tour=sunset&time=16:30',
     whatsappPrefill: "Hi, I'd like to book the Sunset tour",
@@ -62,9 +64,9 @@ const timeSlotTours: TimeSlotTour[] = [
   {
     image: '/winelands.jpg',
     title: 'Halal-Friendly Winelands Experience',
+    tourSlug: 'winelands',
     limitedTag: 'Limited Availability',
     duration: '5–6 hours',
-    price: 'From R4000',
     bullets: [
       'Scenic winelands',
       'halal-friendly stops',
@@ -133,15 +135,13 @@ function tabFromHash(hash: string): TabId | null {
 
 export default function DriversFleetTabs() {
   const location = useLocation()
-  const [activeTab, setActiveTab] = useState<TabId>(() => tabFromHash(location.hash) ?? 'tours')
-
-  useEffect(() => {
-    const tab = tabFromHash(location.hash)
-    if (tab) setActiveTab(tab)
-  }, [location.hash])
+  const { tourBySlug, loading: pricingLoading } = useCatalog()
+  const hashTab = tabFromHash(location.hash)
+  const [pickedTab, setPickedTab] = useState<TabId | null>(null)
+  const activeTab = hashTab ?? pickedTab ?? 'tours'
 
   const selectTab = (id: TabId) => {
-    setActiveTab(id)
+    setPickedTab(id)
     const next = `/#${id}`
     if (`${location.pathname}${location.hash}` !== next) {
       window.history.replaceState(null, '', next)
@@ -190,12 +190,14 @@ export default function DriversFleetTabs() {
             </div>
 
             <div className="grid grid-cols-1 gap-4 md:gap-6 md:max-w-4xl md:mx-auto">
-              {timeSlotTours.map((tour) => (
+              {timeSlotTours.map((tour) => {
+                const catalogTour = tourBySlug(tour.tourSlug)
+                return (
                 <article
                   key={tour.title}
                   className="bg-brand-cream rounded-xl shadow-md overflow-hidden border border-brand-cream-dark flex flex-col"
                 >
-                  <div className="aspect-[16/10] sm:aspect-[4/3] overflow-hidden bg-brand-cream-dark/30">
+                  <div className="aspect-16/10 sm:aspect-4/3 overflow-hidden bg-brand-cream-dark/30">
                     <img
                       src={tour.image}
                       alt=""
@@ -217,7 +219,21 @@ export default function DriversFleetTabs() {
                       {tour.title}
                     </h3>
                     <p className="text-sm text-brand-green/85">
-                      {tour.duration} · <span className="font-semibold">{tour.price}</span>
+                      {tour.duration}
+                      {catalogTour ? (
+                        <>
+                          {' '}
+                          ·{' '}
+                          <span className="font-semibold">
+                            {formatTourFromPrice(catalogTour)}
+                          </span>
+                          <span className="block text-xs text-brand-green/75 mt-0.5">
+                            {formatTourPaxRate(catalogTour)} · vehicle fee separate
+                          </span>
+                        </>
+                      ) : pricingLoading ? (
+                        <> · <span className="font-semibold">Loading rates…</span></>
+                      ) : null}
                     </p>
                     <ul className="text-sm text-brand-green/90 space-y-1 leading-snug">
                       {tour.bullets.map((b) => (
@@ -242,13 +258,13 @@ export default function DriversFleetTabs() {
                         rel="noopener noreferrer"
                         className="w-full inline-flex items-center justify-center gap-2 min-h-[48px] px-4 py-3.5 bg-[#25D366] hover:bg-[#20BD5A] text-white font-semibold rounded-lg transition-colors text-sm sm:text-base shadow-sm"
                       >
-                        <FaWhatsapp className="text-xl flex-shrink-0" />
+                        <FaWhatsapp className="text-xl shrink-0" />
                         WhatsApp
                       </a>
                     </div>
                   </div>
                 </article>
-              ))}
+              )})}
             </div>
           </div>
         )}
@@ -256,7 +272,7 @@ export default function DriversFleetTabs() {
         {activeTab === 'drivers' && (
           <div className="bg-brand-cream rounded-xl shadow-md border border-brand-cream-dark overflow-hidden max-w-xl mx-auto md:max-w-none">
             <div className="grid md:grid-cols-2 gap-0">
-              <div className="aspect-[4/5] md:aspect-auto md:min-h-[320px] bg-brand-cream-dark/30">
+              <div className="aspect-4/5 md:aspect-auto md:min-h-[320px] bg-brand-cream-dark/30">
                 <img
                   src="/driver-yaseen.JPG"
                   alt="Yaseen — Your guide"
@@ -351,7 +367,7 @@ export default function DriversFleetTabs() {
                       rel="noopener noreferrer"
                       className="w-full inline-flex items-center justify-center gap-2 min-h-[48px] px-4 py-3.5 bg-[#25D366] hover:bg-[#20BD5A] text-white font-semibold rounded-lg transition-colors text-sm sm:text-base shadow-sm"
                     >
-                      <FaWhatsapp className="text-xl flex-shrink-0" />
+                      <FaWhatsapp className="text-xl shrink-0" />
                       WhatsApp
                     </a>
                   </div>

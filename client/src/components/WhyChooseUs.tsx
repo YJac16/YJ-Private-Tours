@@ -17,7 +17,7 @@ export default function WhyChooseUs() {
         <ul className="space-y-4">
           {points.map((point, i) => (
             <li key={i} className="flex items-start gap-3">
-              <HiOutlineCheckCircle className="text-brand-green text-2xl flex-shrink-0 mt-0.5" />
+              <HiOutlineCheckCircle className="text-brand-green text-2xl shrink-0 mt-0.5" />
               <span className="text-brand-green/90 text-lg">{point}</span>
             </li>
           ))}

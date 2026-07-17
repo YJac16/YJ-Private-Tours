@@ -46,7 +46,7 @@ export default function TourPackages() {
               key={pkg.id}
               className="bg-brand-cream rounded-xl shadow-md overflow-hidden border border-brand-cream-dark hover:shadow-lg transition-shadow flex flex-col"
             >
-              <div className="aspect-[4/3] overflow-hidden bg-brand-cream-dark/30">
+              <div className="aspect-4/3 overflow-hidden bg-brand-cream-dark/30">
                 <img
                   src={pkg.image}
                   alt=""
@@ -65,7 +65,7 @@ export default function TourPackages() {
                   {pkg.description}
                 </p>
                 <p className="flex items-center gap-2 text-brand-green/80 text-sm mb-6">
-                  <HiOutlineClock className="text-lg flex-shrink-0" />
+                  <HiOutlineClock className="text-lg shrink-0" />
                   {pkg.duration}
                 </p>
                 <a

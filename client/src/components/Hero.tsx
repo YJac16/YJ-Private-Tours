@@ -5,16 +5,16 @@ export default function Hero() {
   return (
     <section
       id="hero"
-      className="relative min-h-[100svh] min-h-[100dvh] flex items-center justify-center px-4 py-20 sm:py-16 md:py-24 bg-cover bg-center bg-no-repeat"
+      className="relative min-h-dvh flex items-center justify-center px-4 py-20 sm:py-16 md:py-24 bg-cover bg-center bg-no-repeat"
       style={{ backgroundImage: 'url(/cape-town-banner.jpg)' }}
     >
       {/* Light tint so the banner photo stays visible; darker at bottom for button contrast */}
       <div
-        className="absolute inset-0 bg-gradient-to-b from-brand-green/35 via-brand-green/25 to-brand-green/55"
+        className="absolute inset-0 bg-linear-to-b from-brand-green/35 via-brand-green/25 to-brand-green/55"
         aria-hidden
       />
       <div
-        className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/15 to-transparent"
+        className="absolute inset-0 bg-linear-to-t from-black/45 via-black/15 to-transparent"
         aria-hidden
       />
       <div className="relative z-10 max-w-4xl mx-auto text-center w-full">
@@ -37,14 +37,14 @@ export default function Hero() {
             to="/#tours"
             className="inline-flex items-center justify-center gap-2 px-6 py-3.5 sm:py-3 min-h-[48px] bg-white text-brand-green font-semibold rounded-xl transition-all shadow-lg shadow-black/20 hover:bg-brand-cream active:scale-[0.98] border-2 border-white/30 w-full sm:w-auto sm:min-w-[200px]"
           >
-            <HiOutlineMap className="text-2xl flex-shrink-0" />
+            <HiOutlineMap className="text-2xl shrink-0" />
             Explore Tours
           </Link>
           <Link
             to="/book"
             className="inline-flex items-center justify-center gap-2 px-6 py-3.5 sm:py-3 min-h-[48px] bg-brand-green hover:bg-brand-green-dark text-brand-cream font-semibold rounded-xl transition-all shadow-lg shadow-black/25 active:scale-[0.98] w-full sm:w-auto sm:min-w-[200px] border-2 border-white/20"
           >
-            <HiOutlineCalendar className="text-2xl flex-shrink-0" />
+            <HiOutlineCalendar className="text-2xl shrink-0" />
             Book a tour
           </Link>
         </div>

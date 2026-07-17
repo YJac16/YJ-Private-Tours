@@ -11,13 +11,13 @@ export default function ThankYou() {
   const bookingId = searchParams.get('booking_id')
   const isPaymentSuccess = payment === 'success'
   const isPaymentFailure = payment === 'failure'
-  const [confirming, setConfirming] = useState(false)
+  const shouldConfirm = isPaymentSuccess && Boolean(bookingId)
+  const [confirming, setConfirming] = useState(shouldConfirm)
   const [confirmed, setConfirmed] = useState(false)
 
   useEffect(() => {
-    if (!isPaymentSuccess || !bookingId) return
+    if (!shouldConfirm || !bookingId) return
     let cancelled = false
-    setConfirming(true)
     confirmPayment(bookingId)
       .then(() => {
         if (!cancelled) setConfirmed(true)
@@ -31,7 +31,7 @@ export default function ThankYou() {
     return () => {
       cancelled = true
     }
-  }, [isPaymentSuccess, bookingId])
+  }, [shouldConfirm, bookingId])
 
   return (
     <>

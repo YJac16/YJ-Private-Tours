@@ -4,12 +4,18 @@ import { FaWhatsapp } from 'react-icons/fa'
 import { tours } from '../data/tours'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
+import { useCatalog } from '../hooks/useCatalog'
+import { catalogSlugForTourId } from '../lib/tourSlugs'
+import { formatTourFromPrice, formatTourPaxRate } from '../lib/pricing'
 
 const BOOK_WHATSAPP_URL = 'https://wa.link/d96tsl'
 
 export default function TourDetail() {
   const { tourId } = useParams<{ tourId: string }>()
   const tour = tours.find((t) => t.id === tourId)
+  const { tourBySlug, loading: pricingLoading } = useCatalog()
+  const catalogSlug = tourId ? catalogSlugForTourId(tourId) : ''
+  const catalogTour = catalogSlug ? tourBySlug(catalogSlug) : undefined
 
   if (!tour) {
     return (
@@ -23,6 +29,7 @@ export default function TourDetail() {
   }
 
   const bookUrl = `${BOOK_WHATSAPP_URL}?text=${encodeURIComponent(`Hi! I'd like to book the ${tour.title} with KhayrCape Experiences.`)}`
+  const onlineBookPath = catalogSlug ? `/book?tour=${catalogSlug}` : '/book'
 
   return (
     <>
@@ -43,12 +50,20 @@ export default function TourDetail() {
 
           <div className="flex flex-wrap gap-4 mb-6">
             <p className="flex items-center gap-2 text-brand-green/90 text-sm">
-              <HiOutlineClock className="text-lg flex-shrink-0" />
+              <HiOutlineClock className="text-lg shrink-0" />
               {tour.duration}
             </p>
             <p className="flex items-center gap-2 text-brand-green/90 text-sm">
-              <HiOutlineCurrencyDollar className="text-lg flex-shrink-0" />
-              {tour.price}
+              <HiOutlineCurrencyDollar className="text-lg shrink-0" />
+              {catalogTour ? (
+                <span>
+                  {formatTourFromPrice(catalogTour)} · {formatTourPaxRate(catalogTour)}
+                </span>
+              ) : pricingLoading ? (
+                'Loading rates…'
+              ) : (
+                tour.price
+              )}
             </p>
           </div>
 
@@ -69,11 +84,13 @@ export default function TourDetail() {
 
           <div className="flex flex-col sm:flex-row gap-3">
             <Link
-              to={`/checkout/${tour.id}`}
+              to={onlineBookPath}
               className="flex items-center justify-center gap-2 flex-1 py-4 px-6 bg-brand-green hover:bg-brand-green-dark text-brand-cream font-medium rounded-lg transition-colors shadow-lg"
             >
               <HiOutlineCreditCard className="text-2xl" />
-              Book & Pay — {tour.price}
+              {catalogTour
+                ? `Book online — ${formatTourFromPrice(catalogTour)}`
+                : 'Book online'}
             </Link>
             <a
               href={bookUrl}

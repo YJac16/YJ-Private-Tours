@@ -38,7 +38,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         .from('bookings')
         .select(
           `
-          id, booking_date, start_time, status, client_name, client_email, client_phone, notes, driver_id,
+          id, booking_date, start_time, status, trip_status, payment_status,
+          client_name, client_email, client_phone, notes, driver_id,
+          guest_count, adult_count, child_count, passenger_count,
+          grand_total_cents, final_price_cents, driver_earnings_cents,
+          pickup_address, special_requests, booking_reference,
           tour:tours(id, name, slug),
           vehicle:vehicles(id, name, slug)
         `
@@ -76,6 +80,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           booking_date: body.booking_date as string | undefined,
           start_time: body.start_time as string | undefined,
           status: body.status as 'pending' | 'paid' | 'cancelled' | undefined,
+          trip_status: body.trip_status as string | undefined,
           notes: body.notes as string | undefined,
         })
         return res.status(200).json({ success: true, booking })
@@ -84,7 +89,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const updates: Record<string, unknown> = {}
       if (body.booking_date) updates.booking_date = body.booking_date
       if (body.start_time) updates.start_time = String(body.start_time).slice(0, 5)
-      if (body.status) updates.status = body.status
+      if (body.status) {
+        updates.status = body.status
+        if (body.status === 'paid') updates.payment_status = 'paid'
+        if (body.status === 'cancelled') {
+          updates.payment_status = 'cancelled'
+          updates.trip_status = 'cancelled'
+        }
+      }
+      if (body.trip_status) updates.trip_status = body.trip_status
       if (body.notes !== undefined) updates.notes = body.notes
 
       const sb = supabaseAdmin()

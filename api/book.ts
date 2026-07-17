@@ -2,9 +2,15 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { mockDb, useMockStore } from '../booking-app/lib/mock-store'
 import { createClient } from '@supabase/supabase-js'
 import {
-  createYocoCheckout,
-  resolveTourAmountCents,
-} from '../booking-app/lib/yoco'
+  calculatePrice,
+  DEFAULT_BOOKING_SETTINGS,
+  generateBookingReference,
+  parseBookingSettings,
+  validateBookingGuests,
+  type PricingTour,
+  type PricingVehicle,
+} from '../booking-app/lib/pricing'
+import { createYocoCheckout } from '../booking-app/lib/yoco'
 import { notifyDriverBooking } from '../booking-app/lib/notify'
 import { methodNotAllowed, readJson } from './_lib/http'
 
@@ -17,6 +23,59 @@ function supabaseAdmin() {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY
   if (!url || !key) throw new Error('Supabase is not configured')
   return createClient(url, key, { auth: { persistSession: false } })
+}
+
+async function loadPricingContext(
+  sb: ReturnType<typeof supabaseAdmin>,
+  tour_id: string,
+  vehicle_id: string,
+  driver_id: string
+) {
+  const [{ data: tour }, { data: vehicle }, { data: driver }, { data: settingsRow }] =
+    await Promise.all([
+      sb
+        .from('tours')
+        .select(
+          'id, name, slug, price_per_person_cents, base_price_cents, additional_guest_price_cents, max_guests'
+        )
+        .eq('id', tour_id)
+        .single(),
+      sb
+        .from('vehicles')
+        .select(
+          'id, name, slug, capacity_min, capacity_max, vehicle_price_cents, vehicle_surcharge_cents, is_luxury'
+        )
+        .eq('id', vehicle_id)
+        .single(),
+      sb
+        .from('drivers')
+        .select('id, name, full_name')
+        .eq('id', driver_id)
+        .single(),
+      sb.from('app_settings').select('value').eq('key', 'booking').maybeSingle(),
+    ])
+
+  if (!tour || !vehicle) throw new Error('Invalid tour or vehicle')
+  if (!driver) throw new Error('Invalid driver')
+
+  const settings = parseBookingSettings(
+    (settingsRow?.value as Record<string, unknown>) || DEFAULT_BOOKING_SETTINGS
+  )
+
+  return {
+    tour: {
+      ...tour,
+      price_per_person_cents:
+        tour.price_per_person_cents ?? tour.additional_guest_price_cents ?? 0,
+    } as PricingTour & { name: string },
+    vehicle: {
+      ...vehicle,
+      vehicle_price_cents:
+        vehicle.vehicle_price_cents ?? vehicle.vehicle_surcharge_cents ?? 0,
+    } as PricingVehicle,
+    driver,
+    settings,
+  }
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -38,8 +97,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const client_name = String(body.client_name || '')
     const client_email = String(body.client_email || '')
     const client_phone = body.client_phone ? String(body.client_phone) : null
-    const notes = body.notes ? String(body.notes) : null
-    const amount_cents = body.amount_cents != null ? Number(body.amount_cents) : undefined
+    const client_country = body.client_country ? String(body.client_country) : null
+    const pickup_address = body.pickup_address ? String(body.pickup_address) : null
+    const dietary_requirements = body.dietary_requirements
+      ? String(body.dietary_requirements)
+      : null
+    const flight_number = body.flight_number ? String(body.flight_number) : null
+    const special_requests = body.special_requests
+      ? String(body.special_requests)
+      : null
+    const notes = body.notes
+      ? String(body.notes)
+      : special_requests
+
+    const adult_count = Math.round(
+      Number(body.adult_count ?? body.guest_count) || 1
+    )
+    const child_count = Math.round(Number(body.child_count) || 0)
 
     if (
       !booking_date ||
@@ -53,7 +127,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'Missing required fields' })
     }
 
+    const booking_reference = generateBookingReference()
+
     if (useMockStore()) {
+      const catalog = mockDb.catalog()
+      const tour = catalog.tours.find((t) => t.id === tour_id)
+      const vehicle = catalog.vehicles.find((v) => v.id === vehicle_id)
+      const driver = catalog.drivers.find((d) => d.id === driver_id)
+      if (!tour || !vehicle) {
+        return res.status(400).json({ error: 'Invalid tour or vehicle' })
+      }
+
+      const guestError = validateBookingGuests(
+        adult_count,
+        child_count,
+        tour,
+        vehicle,
+        catalog.settings
+      )
+      if (guestError) return res.status(400).json({ error: guestError })
+
+      const breakdown = calculatePrice(tour, vehicle, adult_count, child_count)
+
       const booking = mockDb.createBooking({
         booking_date,
         start_time,
@@ -63,23 +158,37 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         client_name,
         client_email,
         client_phone,
+        client_country,
+        pickup_address,
+        dietary_requirements,
+        flight_number,
+        special_requests,
         notes,
+        adult_count: breakdown.adult_count,
+        child_count: breakdown.child_count,
+        passenger_count: breakdown.passenger_count,
+        guest_count: breakdown.passenger_count,
+        vehicle_price_cents: breakdown.vehicle_price_cents,
+        price_per_person_cents: breakdown.price_per_person_cents,
+        passenger_total_cents: breakdown.passenger_total_cents,
+        grand_total_cents: breakdown.grand_total_cents,
+        final_price_cents: breakdown.final_price_cents,
+        booking_reference,
+        driver_name_snapshot: driver?.full_name || driver?.name,
+        vehicle_name_snapshot: vehicle.name,
+        tour_name_snapshot: tour.name,
       })
-      const catalog = mockDb.catalog()
-      const tour = catalog.tours.find((t) => t.id === tour_id)
-      const vehicle = catalog.vehicles.find((v) => v.id === vehicle_id)
-      const driver = catalog.drivers.find((d) => d.id === driver_id)
-      const amount = resolveTourAmountCents(tour?.slug || tour_id, amount_cents)
+
       const checkout = await createYocoCheckout({
-        amountCents: amount,
+        amountCents: breakdown.grand_total_cents,
         bookingId: booking.id,
         clientName: client_name,
         clientEmail: client_email,
-        tourName: tour?.name,
+        tourName: tour.name,
       })
       mockDb.recordPayment({
         booking_id: booking.id,
-        amount_cents: amount,
+        amount_cents: breakdown.grand_total_cents,
         external_id: checkout.id,
         status: 'pending',
       })
@@ -92,19 +201,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           clientName: client_name,
           clientEmail: client_email,
           clientPhone: client_phone,
-          tourName: tour?.name,
-          vehicleName: vehicle?.name,
-          driverName: driver?.name,
-          notes,
-          amountCents: amount,
+          tourName: tour.name,
+          vehicleName: vehicle.name,
+          driverName: driver?.full_name || driver?.name,
+          notes: special_requests || notes,
+          amountCents: breakdown.grand_total_cents,
         },
         'created'
       )
       return res.status(200).json({
         success: true,
         booking_id: booking.id,
+        booking_reference,
         payment: true,
-        amount_cents: amount,
+        amount_cents: breakdown.grand_total_cents,
+        pricing: breakdown,
         checkout_url: checkout.redirectUrl,
         checkout_id: checkout.id,
         mock: true,
@@ -113,12 +224,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const sb = supabaseAdmin()
     const time = normalizeTime(start_time)
+    const { tour, vehicle, driver, settings } = await loadPricingContext(
+      sb,
+      tour_id,
+      vehicle_id,
+      driver_id
+    )
 
-    const { data: tour } = await sb
-      .from('tours')
-      .select('id, name, slug')
-      .eq('id', tour_id)
-      .maybeSingle()
+    const guestError = validateBookingGuests(
+      adult_count,
+      child_count,
+      tour,
+      vehicle,
+      settings
+    )
+    if (guestError) return res.status(400).json({ error: guestError })
+
+    const breakdown = calculatePrice(tour, vehicle, adult_count, child_count)
+    const driverName = driver.full_name || driver.name
 
     const { data: booking, error: bookingError } = await sb
       .from('bookings')
@@ -131,8 +254,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         client_name,
         client_email,
         client_phone,
+        client_country,
+        pickup_address,
+        dietary_requirements,
+        flight_number,
+        special_requests,
         notes,
         status: 'pending',
+        payment_status: 'pending',
+        trip_status: 'scheduled',
+        guest_count: breakdown.passenger_count,
+        adult_count: breakdown.adult_count,
+        child_count: breakdown.child_count,
+        passenger_count: breakdown.passenger_count,
+        vehicle_price_cents: breakdown.vehicle_price_cents,
+        price_per_person_cents: breakdown.price_per_person_cents,
+        passenger_total_cents: breakdown.passenger_total_cents,
+        grand_total_cents: breakdown.grand_total_cents,
+        final_price_cents: breakdown.final_price_cents,
+        booking_reference,
+        driver_name_snapshot: driverName,
+        vehicle_name_snapshot: vehicle.name,
+        tour_name_snapshot: tour.name,
       })
       .select()
       .single()
@@ -141,27 +284,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: bookingError.message })
     }
 
-    const amount = resolveTourAmountCents(tour?.slug || tour_id, amount_cents)
     const checkout = await createYocoCheckout({
-      amountCents: amount,
+      amountCents: breakdown.grand_total_cents,
       bookingId: booking.id,
       clientName: client_name,
       clientEmail: client_email,
-      tourName: tour?.name,
+      tourName: tour.name,
     })
 
     await sb.from('payments').insert({
       booking_id: booking.id,
       status: 'pending',
-      amount_cents: amount,
+      amount_cents: breakdown.grand_total_cents,
       currency: 'ZAR',
       external_id: checkout.id,
     })
 
-    const [{ data: vehicle }, { data: driver }] = await Promise.all([
-      sb.from('vehicles').select('name').eq('id', vehicle_id).maybeSingle(),
-      sb.from('drivers').select('name').eq('id', driver_id).maybeSingle(),
-    ])
+    await sb
+      .from('bookings')
+      .update({ yoco_payment_reference: checkout.id })
+      .eq('id', booking.id)
 
     void notifyDriverBooking(
       {
@@ -172,11 +314,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         clientName: client_name,
         clientEmail: client_email,
         clientPhone: client_phone,
-        tourName: tour?.name,
-        vehicleName: vehicle?.name,
-        driverName: driver?.name,
-        notes,
-        amountCents: amount,
+        tourName: tour.name,
+        vehicleName: vehicle.name,
+        driverName,
+        notes: special_requests || notes,
+        amountCents: breakdown.grand_total_cents,
       },
       'created'
     )
@@ -184,8 +326,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).json({
       success: true,
       booking_id: booking.id,
+      booking_reference,
       payment: true,
-      amount_cents: amount,
+      amount_cents: breakdown.grand_total_cents,
+      pricing: breakdown,
       checkout_url: checkout.redirectUrl,
       checkout_id: checkout.id,
     })

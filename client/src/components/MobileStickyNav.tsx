@@ -24,7 +24,7 @@ export default function MobileStickyNav() {
               to={item.to}
               className="flex flex-col items-center justify-center py-2 px-0.5 min-h-[52px] min-w-0 text-brand-green hover:bg-brand-cream-dark/40 active:bg-brand-cream-dark/60 transition-colors"
             >
-              <Icon className="text-base flex-shrink-0 mb-0.5" aria-hidden />
+              <Icon className="shrink-0 text-base mb-0.5" aria-hidden />
               <span className="text-[10px] font-semibold leading-tight truncate w-full text-center">
                 {item.label}
               </span>

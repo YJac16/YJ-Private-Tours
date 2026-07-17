@@ -7,6 +7,7 @@ import GalleryPage from './pages/GalleryPage'
 import TermsPage from './pages/TermsPage'
 import BookPage from './pages/BookPage'
 import DriverSchedulePage from './pages/DriverSchedulePage'
+import AdminPricingPage from './pages/AdminPricingPage'
 import ScrollToTop from './components/ScrollToTop'
 import ScrollToHash from './components/ScrollToHash'
 import FloatingWhatsApp from './components/FloatingWhatsApp'
@@ -19,6 +20,7 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/book" element={<BookPage />} />
         <Route path="/driver" element={<DriverSchedulePage />} />
+        <Route path="/admin/pricing" element={<AdminPricingPage />} />
         <Route path="/thank-you" element={<ThankYou />} />
         <Route path="/tour/:tourId" element={<TourDetail />} />
         <Route path="/checkout/:tourId" element={<Checkout />} />
