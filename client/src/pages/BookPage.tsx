@@ -6,6 +6,7 @@ import {
   createBooking,
   fetchCatalog,
   fetchSlots,
+  isBookableDate,
   minBookableDate,
   type Driver,
   type Slot,
@@ -40,6 +41,7 @@ export default function BookPage() {
   const [notes, setNotes] = useState('')
 
   const minDate = minBookableDate()
+  const dateTooSoon = Boolean(date) && !isBookableDate(date)
   const vehicleSlug = searchParams.get('vehicle')
   const tourSlug = searchParams.get('tour')
   const timeParam = searchParams.get('time')
@@ -111,7 +113,7 @@ export default function BookPage() {
   }, [date, driverId, startTime])
 
   const canNext = () => {
-    if (step === 0) return Boolean(date) && date >= minDate
+    if (step === 0) return Boolean(date) && isBookableDate(date)
     if (step === 1) return Boolean(driverId)
     if (step === 2) return Boolean(startTime)
     if (step === 3) return Boolean(vehicleId)
@@ -120,6 +122,11 @@ export default function BookPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!isBookableDate(date)) {
+      setError('Bookings must be made at least 2 full days in advance.')
+      setStep(0)
+      return
+    }
     if (!tourId) {
       setError('Please select a tour experience.')
       return
@@ -240,13 +247,29 @@ export default function BookPage() {
                     min={minDate}
                     value={date}
                     onChange={(e) => {
-                      setDate(e.target.value)
+                      const next = e.target.value
+                      if (next && !isBookableDate(next)) {
+                        setError(
+                          'Bookings must be made at least 2 full days in advance.'
+                        )
+                        setDate('')
+                        setStartTime('')
+                        return
+                      }
+                      setError(null)
+                      setDate(next)
                       setStartTime('')
                     }}
                     className="w-full min-h-[48px] rounded-lg border border-brand-cream-dark bg-brand-cream px-3 text-brand-green"
                   />
+                  {dateTooSoon && (
+                    <p className="text-sm text-red-800 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mt-2">
+                      Bookings must be made at least 2 full days in advance. Earliest
+                      date: {minDate}.
+                    </p>
+                  )}
                   <span className="block text-xs text-brand-green/70 mt-2">
-                    Earliest available: {minDate} (needs 2 days&apos; notice for confirmation)
+                    Earliest available: {minDate} (2 full days&apos; notice required)
                   </span>
                 </label>
               )}

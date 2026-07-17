@@ -4,8 +4,8 @@ import { FaCalendarCheck } from 'react-icons/fa'
 
 const items = [
   { to: '/#tours', label: 'Tours', sub: 'Explore', icon: HiOutlineMap },
-  { to: '/#fleet', label: 'Fleet', sub: 'Vehicles', icon: HiOutlineTruck },
   { to: '/#drivers', label: 'Drivers', sub: 'Experts', icon: HiOutlineUser },
+  { to: '/#fleet', label: 'Fleet', sub: 'Vehicles', icon: HiOutlineTruck },
   { to: '/book', label: 'Book', sub: 'Now', icon: FaCalendarCheck },
 ]
 

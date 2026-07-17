@@ -189,3 +189,9 @@ export function minBookableDate(noticeDays = 2): string {
   const day = String(d.getDate()).padStart(2, '0')
   return `${y}-${m}-${day}`
 }
+
+/** True if date is on or after the earliest bookable day (2 full days' notice). */
+export function isBookableDate(dateStr: string, noticeDays = 2): boolean {
+  if (!dateStr) return false
+  return dateStr >= minBookableDate(noticeDays)
+}
