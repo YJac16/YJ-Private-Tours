@@ -38,7 +38,7 @@ export default function Footer() {
             to="/admin/pricing"
             className="text-brand-cream/60 hover:text-brand-cream text-sm"
           >
-            Pricing admin
+            Pricing & Business Management
           </Link>
         </div>
         <p className="text-sm text-brand-cream/70 pt-4">

@@ -3,6 +3,8 @@
  * or BOOKING_MOCK=1 is set.
  */
 
+import { calculatePrice } from './pricing'
+
 export type MockDriver = {
   id: string
   name: string
@@ -63,6 +65,9 @@ export type MockTour = {
       duration?: string
       icon?: string
       image?: string
+      lat?: number
+      lng?: number
+      arrival_time?: string
     }>
     faqs?: Array<{ question: string; answer: string }>
     display_name?: string
@@ -82,6 +87,56 @@ export type MockTour = {
     pricing_notes?: string
     duration_label?: string
   } | null
+  admin_meta?: Record<string, unknown> | null
+}
+
+export type MockQuote = {
+  id: string
+  quote_number: string
+  status: string
+  customer: Record<string, unknown>
+  adults: number
+  children: number
+  tour_id: string | null
+  vehicle_id: string | null
+  travel_date: string | null
+  pickup: string | null
+  dropoff: string | null
+  special_requests: string | null
+  enquiry_source: string | null
+  pricing_snapshot: Record<string, unknown> | null
+  discount_cents: number
+  additional_charges_cents: number
+  grand_total_cents: number | null
+  expires_at: string | null
+  created_by: string | null
+  booking_id: string | null
+  pdf_url: string | null
+  pdf_path: string | null
+  notes: string | null
+  line_items: unknown[]
+  created_at: string
+  updated_at: string
+}
+
+export type MockInvoice = {
+  id: string
+  invoice_number: string
+  quote_id: string | null
+  booking_id: string | null
+  customer: Record<string, unknown>
+  amount_cents: number
+  payment_status: string
+  yoco_reference: string | null
+  travel_date: string | null
+  pdf_url: string | null
+  booking_reference: string | null
+  created_at: string
+}
+
+export type MockDocumentCounter = {
+  prefix: string
+  next_value: number
 }
 
 export type MockSlot = {
@@ -292,11 +347,59 @@ export type MockPayment = {
 const bookings: MockBooking[] = []
 const unavailable: MockUnavailable[] = []
 const payments: MockPayment[] = []
+const quotes: MockQuote[] = []
+const invoices: MockInvoice[] = []
 const blockedDates = new Set<string>()
+
+const documentCounters: MockDocumentCounter[] = [
+  { prefix: 'KCE-Q', next_value: 1 },
+  { prefix: 'KCE-B', next_value: 1 },
+  { prefix: 'KCE-INV', next_value: 1 },
+  { prefix: 'KCE-R', next_value: 1 },
+]
 
 let bookingSettings = {
   max_guests_default: 5,
   allow_larger_groups: false,
+}
+
+let businessSettings: Record<string, unknown> = {
+  company_name: 'Khayr Cape Experiences',
+  logo_url: '',
+  email: '',
+  whatsapp: '',
+  website: '',
+  social: { instagram: '', facebook: '' },
+  prefixes: {
+    quote: 'KCE-Q',
+    booking: 'KCE-B',
+    invoice: 'KCE-INV',
+    receipt: 'KCE-R',
+  },
+  currency: 'ZAR',
+  vat_percent: 15,
+  business_hours: '',
+  discounts: [],
+  pdf_templates: {
+    quotation: {
+      header: '',
+      footer: '',
+      terms: '',
+      colours: { cream: '#F5F0E8', green: '#4D5B4A', gold: '#B08D57' },
+    },
+    invoice: {
+      header: '',
+      footer: '',
+      terms: '',
+      colours: { cream: '#F5F0E8', green: '#4D5B4A', gold: '#B08D57' },
+    },
+    receipt: {
+      header: '',
+      footer: '',
+      terms: '',
+      colours: { cream: '#F5F0E8', green: '#4D5B4A', gold: '#B08D57' },
+    },
+  },
 }
 
 export function useMockStore() {
@@ -445,6 +548,12 @@ export const mockDb = {
             u.experience_content && typeof u.experience_content === 'object'
               ? (u.experience_content as MockTour['experience_content'])
               : null
+        }
+        if (u.admin_meta !== undefined) {
+          t.admin_meta =
+            u.admin_meta && typeof u.admin_meta === 'object'
+              ? (u.admin_meta as Record<string, unknown>)
+              : {}
         }
       }
     }
@@ -734,5 +843,367 @@ export const mockDb = {
 
   getBooking(id: string) {
     return bookings.find((b) => b.id === id) ?? null
+  },
+
+  listQuotes() {
+    return quotes
+      .slice()
+      .sort((a, b) => b.created_at.localeCompare(a.created_at))
+      .map((q) => ({ ...q }))
+  },
+
+  createQuote(input: Record<string, unknown>) {
+    const now = new Date().toISOString()
+    const adults = Math.round(Number(input.adults) || 1)
+    const children = Math.round(Number(input.children) || 0)
+    const tourId = input.tour_id ? String(input.tour_id) : null
+    const vehicleId = input.vehicle_id ? String(input.vehicle_id) : null
+
+    let pricing_snapshot =
+      input.pricing_snapshot && typeof input.pricing_snapshot === 'object'
+        ? (input.pricing_snapshot as Record<string, unknown>)
+        : null
+
+    if (!pricing_snapshot && tourId && vehicleId) {
+      const tour = tours.find((t) => t.id === tourId)
+      const vehicle = vehicles.find((v) => v.id === vehicleId)
+      if (tour && vehicle) {
+        pricing_snapshot = {
+          ...calculatePrice(tour, vehicle, adults, children),
+        }
+      }
+    }
+
+    const discount = Math.round(Number(input.discount_cents) || 0)
+    const additional = Math.round(Number(input.additional_charges_cents) || 0)
+    const snapTotal = Number(pricing_snapshot?.grand_total_cents) || 0
+    const grand_total_cents =
+      input.grand_total_cents != null
+        ? Math.round(Number(input.grand_total_cents))
+        : snapTotal - discount + additional
+
+    const prefixes = businessSettings.prefixes as Record<string, string>
+    const quote_number =
+      input.quote_number != null
+        ? String(input.quote_number)
+        : this.nextDocumentNumber(prefixes?.quote || 'KCE-Q')
+
+    const quote: MockQuote = {
+      id: uuid(),
+      quote_number,
+      status: String(input.status || 'draft'),
+      customer:
+        input.customer && typeof input.customer === 'object'
+          ? (input.customer as Record<string, unknown>)
+          : {},
+      adults,
+      children,
+      tour_id: tourId,
+      vehicle_id: vehicleId,
+      travel_date: input.travel_date != null ? String(input.travel_date) : null,
+      pickup: input.pickup != null ? String(input.pickup) : null,
+      dropoff: input.dropoff != null ? String(input.dropoff) : null,
+      special_requests:
+        input.special_requests != null ? String(input.special_requests) : null,
+      enquiry_source:
+        input.enquiry_source != null ? String(input.enquiry_source) : null,
+      pricing_snapshot,
+      discount_cents: discount,
+      additional_charges_cents: additional,
+      grand_total_cents,
+      expires_at: input.expires_at != null ? String(input.expires_at) : null,
+      created_by: input.created_by != null ? String(input.created_by) : null,
+      booking_id: input.booking_id != null ? String(input.booking_id) : null,
+      pdf_url: input.pdf_url != null ? String(input.pdf_url) : null,
+      pdf_path: input.pdf_path != null ? String(input.pdf_path) : null,
+      notes: input.notes != null ? String(input.notes) : null,
+      line_items: Array.isArray(input.line_items) ? input.line_items : [],
+      created_at: now,
+      updated_at: now,
+    }
+    quotes.push(quote)
+    return { ...quote }
+  },
+
+  updateQuote(id: string, input: Record<string, unknown>) {
+    const q = quotes.find((x) => x.id === id)
+    if (!q) throw new Error('Quote not found')
+
+    const prevStatus = q.status
+    if (input.customer && typeof input.customer === 'object') {
+      q.customer = input.customer as Record<string, unknown>
+    }
+    if (input.adults != null) q.adults = Math.round(Number(input.adults))
+    if (input.children != null) q.children = Math.round(Number(input.children))
+    if (input.tour_id !== undefined) {
+      q.tour_id = input.tour_id == null ? null : String(input.tour_id)
+    }
+    if (input.vehicle_id !== undefined) {
+      q.vehicle_id = input.vehicle_id == null ? null : String(input.vehicle_id)
+    }
+    if (input.travel_date !== undefined) {
+      q.travel_date = input.travel_date == null ? null : String(input.travel_date)
+    }
+    if (input.pickup !== undefined) {
+      q.pickup = input.pickup == null ? null : String(input.pickup)
+    }
+    if (input.dropoff !== undefined) {
+      q.dropoff = input.dropoff == null ? null : String(input.dropoff)
+    }
+    if (input.special_requests !== undefined) {
+      q.special_requests =
+        input.special_requests == null ? null : String(input.special_requests)
+    }
+    if (input.enquiry_source !== undefined) {
+      q.enquiry_source =
+        input.enquiry_source == null ? null : String(input.enquiry_source)
+    }
+    if (input.pricing_snapshot !== undefined) {
+      q.pricing_snapshot =
+        input.pricing_snapshot && typeof input.pricing_snapshot === 'object'
+          ? (input.pricing_snapshot as Record<string, unknown>)
+          : null
+    }
+    if (input.discount_cents != null) {
+      q.discount_cents = Math.round(Number(input.discount_cents))
+    }
+    if (input.additional_charges_cents != null) {
+      q.additional_charges_cents = Math.round(Number(input.additional_charges_cents))
+    }
+    if (input.grand_total_cents != null) {
+      q.grand_total_cents = Math.round(Number(input.grand_total_cents))
+    }
+    if (input.expires_at !== undefined) {
+      q.expires_at = input.expires_at == null ? null : String(input.expires_at)
+    }
+    if (input.pdf_url !== undefined) {
+      q.pdf_url = input.pdf_url == null ? null : String(input.pdf_url)
+    }
+    if (input.pdf_path !== undefined) {
+      q.pdf_path = input.pdf_path == null ? null : String(input.pdf_path)
+    }
+    if (input.notes !== undefined) {
+      q.notes = input.notes == null ? null : String(input.notes)
+    }
+    if (input.line_items !== undefined) {
+      q.line_items = Array.isArray(input.line_items) ? input.line_items : []
+    }
+    if (input.booking_id !== undefined) {
+      q.booking_id = input.booking_id == null ? null : String(input.booking_id)
+    }
+    if (input.status != null) q.status = String(input.status)
+    q.updated_at = new Date().toISOString()
+
+    // status_note / changed_by accepted for API parity (history not persisted in mock)
+    void input.status_note
+    void input.changed_by
+    void prevStatus
+
+    return { ...q }
+  },
+
+  listInvoices() {
+    return invoices
+      .slice()
+      .sort((a, b) => b.created_at.localeCompare(a.created_at))
+      .map((i) => ({ ...i }))
+  },
+
+  createInvoice(input: Record<string, unknown>) {
+    const prefixes = businessSettings.prefixes as Record<string, string>
+    const invoice_number =
+      input.invoice_number != null
+        ? String(input.invoice_number)
+        : this.nextDocumentNumber(prefixes?.invoice || 'KCE-INV')
+
+    const invoice: MockInvoice = {
+      id: uuid(),
+      invoice_number,
+      quote_id: input.quote_id != null ? String(input.quote_id) : null,
+      booking_id: input.booking_id != null ? String(input.booking_id) : null,
+      customer:
+        input.customer && typeof input.customer === 'object'
+          ? (input.customer as Record<string, unknown>)
+          : {},
+      amount_cents: Math.round(Number(input.amount_cents) || 0),
+      payment_status: String(input.payment_status || 'pending'),
+      yoco_reference:
+        input.yoco_reference != null ? String(input.yoco_reference) : null,
+      travel_date: input.travel_date != null ? String(input.travel_date) : null,
+      pdf_url: input.pdf_url != null ? String(input.pdf_url) : null,
+      booking_reference:
+        input.booking_reference != null ? String(input.booking_reference) : null,
+      created_at: new Date().toISOString(),
+    }
+    invoices.push(invoice)
+    return { ...invoice }
+  },
+
+  getBusinessSettings() {
+    return { ...businessSettings }
+  },
+
+  updateBusinessSettings(patch: Record<string, unknown>) {
+    const next =
+      patch.settings && typeof patch.settings === 'object'
+        ? (patch.settings as Record<string, unknown>)
+        : Object.fromEntries(
+            Object.entries(patch).filter(
+              ([k]) => !['pin', 'resource', 'action', 'settings'].includes(k)
+            )
+          )
+    businessSettings = { ...businessSettings, ...next }
+    return { ...businessSettings }
+  },
+
+  listDocumentCounters() {
+    return documentCounters.map((c) => ({ ...c }))
+  },
+
+  nextDocumentNumber(prefix: string) {
+    let row = documentCounters.find((c) => c.prefix === prefix)
+    if (!row) {
+      row = { prefix, next_value: 1 }
+      documentCounters.push(row)
+    }
+    const value = row.next_value
+    row.next_value = value + 1
+    return `${prefix}-${String(value).padStart(6, '0')}`
+  },
+
+  convertQuoteToBooking(
+    quoteId: string,
+    opts?: { driver_id?: string; start_time?: string }
+  ) {
+    const quote = quotes.find((q) => q.id === quoteId)
+    if (!quote) throw new Error('Quote not found')
+    if (quote.booking_id) throw new Error('Quote already converted')
+
+    const customer = quote.customer || {}
+    const client_name = String(
+      customer.name || customer.full_name || customer.client_name || 'Guest'
+    )
+    const client_email = String(
+      customer.email || customer.client_email || `${quote.quote_number}@quote.local`
+    )
+    const client_phone = customer.phone
+      ? String(customer.phone)
+      : customer.whatsapp
+        ? String(customer.whatsapp)
+        : null
+
+    const prefixes = businessSettings.prefixes as Record<string, string>
+    const booking_reference = this.nextDocumentNumber(prefixes?.booking || 'KCE-B')
+    const driver_id =
+      opts?.driver_id ||
+      drivers[0]?.id ||
+      '11111111-1111-1111-1111-111111111111'
+    const start_time = normalizeTime(opts?.start_time || '08:00')
+    const tour = quote.tour_id ? tours.find((t) => t.id === quote.tour_id) : null
+    const vehicle = quote.vehicle_id
+      ? vehicles.find((v) => v.id === quote.vehicle_id)
+      : null
+    const driver = drivers.find((d) => d.id === driver_id)
+    const snap = quote.pricing_snapshot
+    const grand =
+      Number(quote.grand_total_cents) || Number(snap?.grand_total_cents) || 0
+
+    const booking: MockBooking = {
+      id: uuid(),
+      driver_id,
+      tour_id: quote.tour_id || tours[0].id,
+      vehicle_id: quote.vehicle_id || vehicles[0].id,
+      booking_date: quote.travel_date || new Date().toISOString().slice(0, 10),
+      start_time,
+      status: 'pending',
+      trip_status: 'scheduled',
+      payment_status: 'pending',
+      client_name,
+      client_email,
+      client_phone,
+      client_country: null,
+      pickup_address: quote.pickup,
+      dietary_requirements: null,
+      flight_number: null,
+      special_requests: quote.special_requests,
+      notes: quote.notes,
+      guest_count: quote.adults + quote.children,
+      adult_count: quote.adults,
+      child_count: quote.children,
+      passenger_count: quote.adults + quote.children,
+      vehicle_price_cents: Number(snap?.vehicle_price_cents) || 0,
+      price_per_person_cents: Number(snap?.price_per_person_cents) || 0,
+      passenger_total_cents: Number(snap?.passenger_total_cents) || 0,
+      grand_total_cents: grand,
+      final_price_cents: grand,
+      booking_reference,
+      yoco_payment_reference: null,
+      driver_name_snapshot: driver?.full_name || driver?.name || null,
+      vehicle_name_snapshot: vehicle?.name || null,
+      tour_name_snapshot: tour?.name || null,
+      driver_earnings_cents: null,
+      created_at: new Date().toISOString(),
+    }
+    bookings.push(booking)
+
+    const invoice = this.createInvoice({
+      quote_id: quote.id,
+      booking_id: booking.id,
+      customer: quote.customer,
+      amount_cents: grand,
+      payment_status: 'pending',
+      travel_date: quote.travel_date,
+      booking_reference,
+    })
+
+    quote.booking_id = booking.id
+    quote.status = 'awaiting_payment'
+    quote.updated_at = new Date().toISOString()
+
+    return { quote: { ...quote }, booking, invoice }
+  },
+
+  reports() {
+    const byBookingStatus: Record<string, number> = {}
+    let revenue = 0
+    const tourCounts: Record<string, number> = {}
+    const vehicleCounts: Record<string, number> = {}
+
+    for (const b of bookings) {
+      byBookingStatus[b.status] = (byBookingStatus[b.status] || 0) + 1
+      if (b.status === 'paid') revenue += b.grand_total_cents || 0
+      tourCounts[b.tour_id] = (tourCounts[b.tour_id] || 0) + 1
+      vehicleCounts[b.vehicle_id] = (vehicleCounts[b.vehicle_id] || 0) + 1
+    }
+
+    const byQuoteStatus: Record<string, number> = {}
+    let converted = 0
+    for (const q of quotes) {
+      byQuoteStatus[q.status] = (byQuoteStatus[q.status] || 0) + 1
+      if (q.booking_id) converted += 1
+    }
+
+    const paidCount = byBookingStatus.paid || 0
+    return {
+      bookings: {
+        count: bookings.length,
+        revenue_cents: revenue,
+        by_status: byBookingStatus,
+      },
+      quotes: {
+        count: quotes.length,
+        by_status: byQuoteStatus,
+        conversion_rate: quotes.length ? converted / quotes.length : 0,
+      },
+      aov_cents: paidCount ? Math.round(revenue / paidCount) : 0,
+      popular_tours: Object.entries(tourCounts)
+        .map(([id, count]) => ({ id, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 10),
+      popular_vehicles: Object.entries(vehicleCounts)
+        .map(([id, count]) => ({ id, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 10),
+    }
   },
 }

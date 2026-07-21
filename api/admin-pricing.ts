@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { mockDb, useMockStore } from '../booking-app/lib/mock-store'
 import { createClient } from '@supabase/supabase-js'
 import { DEFAULT_BOOKING_SETTINGS, parseBookingSettings } from '../booking-app/lib/pricing'
+import { checkAdminPin } from './_lib/adminAuth'
 import { methodNotAllowed, readJson } from './_lib/http'
 
 function supabaseAdmin() {
@@ -11,15 +12,8 @@ function supabaseAdmin() {
   return createClient(url, key, { auth: { persistSession: false } })
 }
 
-function checkPin(req: VercelRequest, bodyPin?: string) {
-  const expected = process.env.DRIVER_PIN || process.env.ADMIN_PIN || '0420'
-  const headerPin = req.headers['x-driver-pin']
-  const h = Array.isArray(headerPin) ? headerPin[0] : headerPin
-  return (h || bodyPin) === expected
-}
-
 const TOUR_SELECT_FULL =
-  'id, name, description, slug, duration_label, included_items, excluded_items, image_url, price_per_person_cents, base_price_cents, additional_guest_price_cents, max_guests, short_description, hero_tagline, detailed_description, hero_image_url, gallery_images, map_embed_url, seo_title, seo_description, seo_image, pricing_notes, perfect_for, good_to_know, experience_content'
+  'id, name, description, slug, duration_label, included_items, excluded_items, image_url, price_per_person_cents, base_price_cents, additional_guest_price_cents, max_guests, short_description, hero_tagline, detailed_description, hero_image_url, gallery_images, map_embed_url, seo_title, seo_description, seo_image, pricing_notes, perfect_for, good_to_know, experience_content, admin_meta'
 
 const TOUR_SELECT_BASIC =
   'id, name, description, slug, duration_label, included_items, excluded_items, image_url, price_per_person_cents, base_price_cents, additional_guest_price_cents, max_guests'
@@ -38,6 +32,8 @@ function normalizeTour(t: Record<string, unknown>) {
     perfect_for: (t.perfect_for as string[]) ?? [],
     good_to_know: (t.good_to_know as string[]) ?? [],
     experience_content: t.experience_content ?? null,
+    admin_meta:
+      t.admin_meta && typeof t.admin_meta === 'object' ? t.admin_meta : {},
   }
 }
 
@@ -58,9 +54,17 @@ async function fetchAdminPayload(sb: ReturnType<typeof supabaseAdmin>) {
   let tours = toursResult.data
   let tErr = toursResult.error
   if (tErr) {
-    const fallback = await sb.from('tours').select(TOUR_SELECT_BASIC).order('name')
-    tours = fallback.data
-    tErr = fallback.error
+    const withoutMeta =
+      'id, name, description, slug, duration_label, included_items, excluded_items, image_url, price_per_person_cents, base_price_cents, additional_guest_price_cents, max_guests, short_description, hero_tagline, detailed_description, hero_image_url, gallery_images, map_embed_url, seo_title, seo_description, seo_image, pricing_notes, perfect_for, good_to_know, experience_content'
+    const mid = await sb.from('tours').select(withoutMeta).order('name')
+    if (!mid.error) {
+      tours = mid.data
+      tErr = null
+    } else {
+      const fallback = await sb.from('tours').select(TOUR_SELECT_BASIC).order('name')
+      tours = fallback.data
+      tErr = fallback.error
+    }
   }
   if (tErr) throw new Error(tErr.message)
   if (vehiclesResult.error) throw new Error(vehiclesResult.error.message)
@@ -91,7 +95,7 @@ function asStringArray(value: unknown): string[] | undefined {
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     if (req.method === 'GET') {
-      if (!checkPin(req)) return res.status(401).json({ error: 'Unauthorized' })
+      if (!checkAdminPin(req)) return res.status(401).json({ error: 'Unauthorized' })
 
       if (useMockStore()) {
         return res.status(200).json(mockDb.adminPricing())
@@ -103,7 +107,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (req.method === 'PATCH') {
       const body = await readJson(req)
-      if (!checkPin(req, body.pin as string | undefined)) {
+      if (!checkAdminPin(req, body.pin as string | undefined)) {
         return res.status(401).json({ error: 'Unauthorized' })
       }
 
@@ -206,6 +210,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
               t.experience_content && typeof t.experience_content === 'object'
                 ? t.experience_content
                 : null
+          }
+
+          if (t.admin_meta !== undefined) {
+            patch.admin_meta =
+              t.admin_meta && typeof t.admin_meta === 'object' ? t.admin_meta : {}
           }
 
           if (Object.keys(patch).length) {

@@ -116,11 +116,19 @@ export function resolvePricePerPerson(tour: PricingTour): number {
   )
 }
 
+export type PriceModifiers = {
+  /** Extra cents added to grand total (weekend/holiday/peak/hour/etc.) */
+  surcharge_cents?: number
+  discount_cents?: number
+  additional_charges_cents?: number
+}
+
 export function calculatePrice(
   tour: PricingTour,
   vehicle: PricingVehicle,
   adultCount: number,
-  childCount = 0
+  childCount = 0,
+  modifiers?: PriceModifiers
 ): PriceBreakdown {
   const adults = Math.max(0, Math.round(adultCount))
   const children = Math.max(0, Math.round(childCount))
@@ -128,7 +136,13 @@ export function calculatePrice(
   const vehicle_price_cents = resolveVehiclePrice(vehicle)
   const price_per_person_cents = resolvePricePerPerson(tour)
   const passenger_total_cents = passenger_count * price_per_person_cents
-  const grand_total_cents = vehicle_price_cents + passenger_total_cents
+  const surcharge = Math.max(0, Math.round(modifiers?.surcharge_cents || 0))
+  const additional = Math.max(0, Math.round(modifiers?.additional_charges_cents || 0))
+  const discount = Math.max(0, Math.round(modifiers?.discount_cents || 0))
+  const grand_total_cents = Math.max(
+    0,
+    vehicle_price_cents + passenger_total_cents + surcharge + additional - discount
+  )
 
   return {
     adult_count: adults,

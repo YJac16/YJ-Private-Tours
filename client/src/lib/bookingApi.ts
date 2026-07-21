@@ -87,6 +87,9 @@ export type Tour = {
       duration?: string
       icon?: string
       image?: string
+      arrival_time?: string
+      lat?: number
+      lng?: number
     }>
     faqs?: Array<{ question: string; answer: string }>
     display_name?: string
@@ -105,6 +108,16 @@ export type Tour = {
     seo_image?: string
     pricing_notes?: string
     duration_label?: string
+  } | null
+  admin_meta?: {
+    weekend_price_cents?: number
+    holiday_price_cents?: number
+    peak_price_cents?: number
+    additional_hour_price_cents?: number
+    min_guests?: number
+    display_order?: number
+    status?: 'active' | 'draft' | 'hidden'
+    recommended_vehicle_id?: string | null
   } | null
 }
 
@@ -228,6 +241,7 @@ export async function saveAdminPricing(
       seo_image?: string | null
       pricing_notes?: string | null
       experience_content?: Tour['experience_content']
+      admin_meta?: Tour['admin_meta']
     }>
     vehicles?: Array<{
       id: string
@@ -339,6 +353,122 @@ export async function driverUnblock(pin: string, id: string) {
     await fetch(`${API}/driver?id=${encodeURIComponent(id)}`, {
       method: 'DELETE',
       headers: pinHeaders(pin),
+    })
+  )
+}
+
+export type BusinessSettings = {
+  company_name?: string
+  logo_url?: string
+  email?: string
+  whatsapp?: string
+  website?: string
+  social?: { instagram?: string; facebook?: string }
+  prefixes?: {
+    quote?: string
+    booking?: string
+    invoice?: string
+    receipt?: string
+  }
+  currency?: string
+  vat_percent?: number
+  business_hours?: string
+  discounts?: Array<{
+    id: string
+    code: string
+    type: 'percent' | 'fixed'
+    value: number
+    active: boolean
+  }>
+  pdf_templates?: Record<
+    string,
+    {
+      header?: string
+      footer?: string
+      terms?: string
+      logo_url?: string
+      colours?: { cream?: string; green?: string; gold?: string }
+    }
+  >
+}
+
+export type AdminQuote = {
+  id: string
+  quote_number: string
+  status: string
+  customer: Record<string, unknown>
+  adults: number
+  children: number
+  tour_id: string | null
+  vehicle_id: string | null
+  travel_date: string | null
+  pickup: string | null
+  dropoff: string | null
+  special_requests: string | null
+  enquiry_source: string | null
+  pricing_snapshot: Record<string, unknown> | null
+  discount_cents: number
+  additional_charges_cents: number
+  grand_total_cents: number | null
+  expires_at: string | null
+  created_by: string | null
+  booking_id: string | null
+  pdf_url: string | null
+  pdf_path?: string | null
+  notes: string | null
+  line_items?: unknown[]
+  created_at?: string
+  updated_at?: string
+}
+
+export type AdminInvoice = {
+  id: string
+  invoice_number: string
+  quote_id: string | null
+  booking_id: string | null
+  booking_reference?: string | null
+  customer: Record<string, unknown>
+  amount_cents: number
+  payment_status: string
+  yoco_reference: string | null
+  travel_date: string | null
+  pdf_url: string | null
+  created_at?: string
+}
+
+export async function fetchAdminBusiness(
+  pin: string,
+  resource: 'quotes' | 'invoices' | 'settings' | 'reports' | 'counters'
+) {
+  return json<Record<string, unknown>>(
+    await fetch(`${API}/admin-business?resource=${resource}`, {
+      headers: pinHeaders(pin),
+    })
+  )
+}
+
+export async function postAdminBusiness(
+  pin: string,
+  body: Record<string, unknown>
+) {
+  return json<Record<string, unknown>>(
+    await fetch(`${API}/admin-business`, {
+      method: 'POST',
+      headers: pinHeaders(pin),
+      body: JSON.stringify({ ...body, pin }),
+    })
+  )
+}
+
+export async function patchAdminBusiness(
+  pin: string,
+  body: Record<string, unknown>
+) {
+  return json<Record<string, unknown>>(
+    await fetch(`${API}/admin-business`, {
+      method: 'PATCH',
+      headers: pinHeaders(pin),
+      body: JSON.stringify({ ...body, pin }),
     })
   )
 }
