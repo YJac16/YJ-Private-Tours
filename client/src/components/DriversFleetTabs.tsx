@@ -4,7 +4,7 @@ import { HiOutlineUser, HiOutlineTruck, HiOutlineMap } from 'react-icons/hi'
 import { FaWhatsapp } from 'react-icons/fa'
 import { whatsappWithMessage } from '../lib/whatsappLinks'
 import { useCatalog } from '../hooks/useCatalog'
-import { formatTourFromPrice, formatTourPaxRate } from '../lib/pricing'
+import PriceWithInfo from './PriceWithInfo'
 
 const DRIVER_CHAT_ME = whatsappWithMessage(
   "Hi Yaseen, I'd like to chat with you about booking a tour."
@@ -218,39 +218,29 @@ export default function DriversFleetTabs() {
                     <h3 className="text-lg sm:text-xl font-bold text-brand-green leading-snug">
                       {tour.title}
                     </h3>
-                    <p className="text-sm text-brand-green/85">
-                      {tour.duration}
-                      {catalogTour ? (
-                        <>
-                          {' '}
-                          ·{' '}
-                          <span className="font-semibold">
-                            {formatTourFromPrice(catalogTour)}
-                          </span>
-                          <span className="block text-xs text-brand-green/75 mt-0.5">
-                            {formatTourPaxRate(catalogTour)} · vehicle fee separate
-                          </span>
-                        </>
-                      ) : pricingLoading ? (
-                        <> · <span className="font-semibold">Loading rates…</span></>
-                      ) : null}
+                    <p className="text-sm text-brand-green/85">{tour.duration}</p>
+                    {catalogTour ? (
+                      <PriceWithInfo tour={catalogTour} compact />
+                    ) : pricingLoading ? (
+                      <p className="text-sm font-semibold text-brand-green">
+                        Loading rates…
+                      </p>
+                    ) : null}
+                    <p className="text-sm text-brand-green/90 leading-snug">
+                      {tour.bullets.join(' · ')}
                     </p>
-                    <ul className="text-sm text-brand-green/90 space-y-1 leading-snug">
-                      {tour.bullets.map((b) => (
-                        <li key={b} className="flex gap-2">
-                          <span className="text-brand-green shrink-0" aria-hidden>
-                            •
-                          </span>
-                          <span>{b}</span>
-                        </li>
-                      ))}
-                    </ul>
-                    <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      <Link
+                        to={`/experience/${tour.tourSlug}`}
+                        className="w-full inline-flex items-center justify-center gap-2 min-h-12 px-4 py-3.5 border-2 border-brand-gold text-brand-green hover:bg-brand-gold/10 font-semibold rounded-lg transition-colors text-sm sm:text-base shadow-sm"
+                      >
+                        View Details
+                      </Link>
                       <Link
                         to={tour.bookPath}
                         className="w-full inline-flex items-center justify-center gap-2 min-h-12 px-4 py-3.5 bg-brand-green hover:bg-brand-green-dark text-brand-cream font-semibold rounded-lg transition-colors text-sm sm:text-base shadow-sm"
                       >
-                        Book online
+                        Book Online
                       </Link>
                       <a
                         href={whatsappWithMessage(tour.whatsappPrefill)}

@@ -15,6 +15,8 @@ export default {
           green: '#4D5B4A',
           'green-dark': '#3D4A3B',
           'green-light': '#5C6B59',
+          gold: '#B08D57',
+          'gold-light': '#C9A86C',
         },
         stone: {
           50: '#fafaf9',

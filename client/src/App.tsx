@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Home from './pages/Home'
 import ThankYou from './pages/ThankYou'
 import TourDetail from './pages/TourDetail'
+import ExperienceDetail from './pages/ExperienceDetail'
 import Checkout from './pages/Checkout'
 import GalleryPage from './pages/GalleryPage'
 import TermsPage from './pages/TermsPage'
@@ -22,6 +23,7 @@ function App() {
         <Route path="/driver" element={<DriverSchedulePage />} />
         <Route path="/admin/pricing" element={<AdminPricingPage />} />
         <Route path="/thank-you" element={<ThankYou />} />
+        <Route path="/experience/:slug" element={<ExperienceDetail />} />
         <Route path="/tour/:tourId" element={<TourDetail />} />
         <Route path="/checkout/:tourId" element={<Checkout />} />
         <Route path="/gallery" element={<GalleryPage />} />

@@ -67,6 +67,45 @@ export type Tour = {
   base_price_cents?: number
   additional_guest_price_cents?: number
   max_guests: number | null
+  /** Rich experience page fields (optional; client merges with defaults) */
+  short_description?: string | null
+  hero_tagline?: string | null
+  detailed_description?: string | null
+  hero_image_url?: string | null
+  gallery_images?: string[] | null
+  map_embed_url?: string | null
+  seo_title?: string | null
+  seo_description?: string | null
+  seo_image?: string | null
+  pricing_notes?: string | null
+  perfect_for?: string[] | null
+  good_to_know?: string[] | null
+  experience_content?: {
+    timeline?: Array<{
+      title: string
+      description: string
+      duration?: string
+      icon?: string
+      image?: string
+    }>
+    faqs?: Array<{ question: string; answer: string }>
+    display_name?: string
+    short_description?: string
+    hero_tagline?: string
+    detailed_description?: string
+    hero_image?: string
+    gallery_images?: string[]
+    included?: string[]
+    excluded?: string[]
+    perfect_for?: string[]
+    good_to_know?: string[]
+    map_embed_url?: string
+    seo_title?: string
+    seo_description?: string
+    seo_image?: string
+    pricing_notes?: string
+    duration_label?: string
+  } | null
 }
 
 export type Slot = {
@@ -171,6 +210,24 @@ export async function saveAdminPricing(
       base_price_cents?: number
       additional_guest_price_cents?: number
       max_guests?: number | null
+      duration_label?: string | null
+      description?: string | null
+      short_description?: string | null
+      hero_tagline?: string | null
+      detailed_description?: string | null
+      hero_image_url?: string | null
+      image_url?: string | null
+      gallery_images?: string[] | null
+      included_items?: string[]
+      excluded_items?: string[]
+      perfect_for?: string[] | null
+      good_to_know?: string[] | null
+      map_embed_url?: string | null
+      seo_title?: string | null
+      seo_description?: string | null
+      seo_image?: string | null
+      pricing_notes?: string | null
+      experience_content?: Tour['experience_content']
     }>
     vehicles?: Array<{
       id: string

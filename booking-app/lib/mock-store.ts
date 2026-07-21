@@ -44,6 +44,44 @@ export type MockTour = {
   base_price_cents: number
   additional_guest_price_cents: number
   max_guests: number | null
+  short_description?: string | null
+  hero_tagline?: string | null
+  detailed_description?: string | null
+  hero_image_url?: string | null
+  gallery_images?: string[] | null
+  map_embed_url?: string | null
+  seo_title?: string | null
+  seo_description?: string | null
+  seo_image?: string | null
+  pricing_notes?: string | null
+  perfect_for?: string[] | null
+  good_to_know?: string[] | null
+  experience_content?: {
+    timeline?: Array<{
+      title: string
+      description: string
+      duration?: string
+      icon?: string
+      image?: string
+    }>
+    faqs?: Array<{ question: string; answer: string }>
+    display_name?: string
+    short_description?: string
+    hero_tagline?: string
+    detailed_description?: string
+    hero_image?: string
+    gallery_images?: string[]
+    included?: string[]
+    excluded?: string[]
+    perfect_for?: string[]
+    good_to_know?: string[]
+    map_embed_url?: string
+    seo_title?: string
+    seo_description?: string
+    seo_image?: string
+    pricing_notes?: string
+    duration_label?: string
+  } | null
 }
 
 export type MockSlot = {
@@ -335,7 +373,79 @@ export const mockDb = {
         if (u.max_guests !== undefined) {
           t.max_guests = u.max_guests == null ? null : Number(u.max_guests)
         }
-        if (u.duration_label != null) t.duration_label = String(u.duration_label)
+        if (u.duration_label !== undefined) {
+          t.duration_label = u.duration_label == null ? null : String(u.duration_label)
+        }
+        if (u.description !== undefined) {
+          t.description = u.description == null ? null : String(u.description)
+        }
+        if (u.short_description !== undefined) {
+          t.short_description =
+            u.short_description == null ? null : String(u.short_description)
+        }
+        if (u.hero_tagline !== undefined) {
+          t.hero_tagline = u.hero_tagline == null ? null : String(u.hero_tagline)
+        }
+        if (u.detailed_description !== undefined) {
+          t.detailed_description =
+            u.detailed_description == null ? null : String(u.detailed_description)
+        }
+        if (u.hero_image_url !== undefined) {
+          t.hero_image_url =
+            u.hero_image_url == null ? null : String(u.hero_image_url)
+        }
+        if (u.image_url !== undefined) {
+          t.image_url = u.image_url == null ? null : String(u.image_url)
+        }
+        if (u.map_embed_url !== undefined) {
+          t.map_embed_url =
+            u.map_embed_url == null ? null : String(u.map_embed_url)
+        }
+        if (u.seo_title !== undefined) {
+          t.seo_title = u.seo_title == null ? null : String(u.seo_title)
+        }
+        if (u.seo_description !== undefined) {
+          t.seo_description =
+            u.seo_description == null ? null : String(u.seo_description)
+        }
+        if (u.seo_image !== undefined) {
+          t.seo_image = u.seo_image == null ? null : String(u.seo_image)
+        }
+        if (u.pricing_notes !== undefined) {
+          t.pricing_notes =
+            u.pricing_notes == null ? null : String(u.pricing_notes)
+        }
+        if (u.gallery_images !== undefined) {
+          t.gallery_images = Array.isArray(u.gallery_images)
+            ? u.gallery_images.map((x) => String(x))
+            : []
+        }
+        if (u.included_items !== undefined) {
+          t.included_items = Array.isArray(u.included_items)
+            ? u.included_items.map((x) => String(x))
+            : []
+        }
+        if (u.excluded_items !== undefined) {
+          t.excluded_items = Array.isArray(u.excluded_items)
+            ? u.excluded_items.map((x) => String(x))
+            : []
+        }
+        if (u.perfect_for !== undefined) {
+          t.perfect_for = Array.isArray(u.perfect_for)
+            ? u.perfect_for.map((x) => String(x))
+            : []
+        }
+        if (u.good_to_know !== undefined) {
+          t.good_to_know = Array.isArray(u.good_to_know)
+            ? u.good_to_know.map((x) => String(x))
+            : []
+        }
+        if (u.experience_content !== undefined) {
+          t.experience_content =
+            u.experience_content && typeof u.experience_content === 'object'
+              ? (u.experience_content as MockTour['experience_content'])
+              : null
+        }
       }
     }
     const vehicleUpdates = body.vehicles as Array<Record<string, unknown>> | undefined
