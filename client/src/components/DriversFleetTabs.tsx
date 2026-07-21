@@ -166,7 +166,7 @@ export default function DriversFleetTabs() {
               role="tab"
               aria-selected={activeTab === tab.id}
               onClick={() => selectTab(tab.id)}
-              className={`inline-flex items-center gap-2 px-4 py-2.5 sm:px-5 sm:py-3 rounded-lg font-medium transition-colors min-h-[44px] ${
+              className={`inline-flex items-center gap-2 px-4 py-2.5 sm:px-5 sm:py-3 rounded-lg font-medium transition-colors min-h-11 ${
                 activeTab === tab.id
                   ? 'bg-brand-green text-brand-cream shadow-md'
                   : 'bg-brand-cream text-brand-green hover:bg-brand-cream-dark/50 border border-brand-cream-dark'
@@ -248,7 +248,7 @@ export default function DriversFleetTabs() {
                     <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
                       <Link
                         to={tour.bookPath}
-                        className="w-full inline-flex items-center justify-center gap-2 min-h-[48px] px-4 py-3.5 bg-brand-green hover:bg-brand-green-dark text-brand-cream font-semibold rounded-lg transition-colors text-sm sm:text-base shadow-sm"
+                        className="w-full inline-flex items-center justify-center gap-2 min-h-12 px-4 py-3.5 bg-brand-green hover:bg-brand-green-dark text-brand-cream font-semibold rounded-lg transition-colors text-sm sm:text-base shadow-sm"
                       >
                         Book online
                       </Link>
@@ -256,7 +256,7 @@ export default function DriversFleetTabs() {
                         href={whatsappWithMessage(tour.whatsappPrefill)}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="w-full inline-flex items-center justify-center gap-2 min-h-[48px] px-4 py-3.5 bg-[#25D366] hover:bg-[#20BD5A] text-white font-semibold rounded-lg transition-colors text-sm sm:text-base shadow-sm"
+                        className="w-full inline-flex items-center justify-center gap-2 min-h-12 px-4 py-3.5 bg-[#25D366] hover:bg-[#20BD5A] text-white font-semibold rounded-lg transition-colors text-sm sm:text-base shadow-sm"
                       >
                         <FaWhatsapp className="text-xl shrink-0" />
                         WhatsApp
@@ -272,7 +272,7 @@ export default function DriversFleetTabs() {
         {activeTab === 'drivers' && (
           <div className="bg-brand-cream rounded-xl shadow-md border border-brand-cream-dark overflow-hidden max-w-xl mx-auto md:max-w-none">
             <div className="grid md:grid-cols-2 gap-0">
-              <div className="aspect-4/5 md:aspect-auto md:min-h-[320px] bg-brand-cream-dark/30">
+              <div className="aspect-4/5 md:aspect-auto md:min-h-80 bg-brand-cream-dark/30">
                 <img
                   src="/driver-yaseen.JPG"
                   alt="Yaseen — Your guide"
@@ -300,7 +300,7 @@ export default function DriversFleetTabs() {
                 <div className="mt-1 grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <Link
                     to="/book"
-                    className="inline-flex items-center justify-center gap-2 min-h-[48px] px-4 py-3.5 bg-brand-green hover:bg-brand-green-dark text-brand-cream font-semibold rounded-lg transition-colors w-full shadow-sm"
+                    className="inline-flex items-center justify-center gap-2 min-h-12 px-4 py-3.5 bg-brand-green hover:bg-brand-green-dark text-brand-cream font-semibold rounded-lg transition-colors w-full shadow-sm"
                   >
                     Book with Yaseen
                   </Link>
@@ -308,7 +308,7 @@ export default function DriversFleetTabs() {
                     href={DRIVER_CHAT_ME}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center gap-2 min-h-[48px] px-4 py-3.5 bg-[#25D366] hover:bg-[#20BD5A] text-white font-semibold rounded-lg transition-colors w-full shadow-sm"
+                    className="inline-flex items-center justify-center gap-2 min-h-12 px-4 py-3.5 bg-[#25D366] hover:bg-[#20BD5A] text-white font-semibold rounded-lg transition-colors w-full shadow-sm"
                   >
                     <FaWhatsapp className="text-xl" />
                     WhatsApp
@@ -334,7 +334,7 @@ export default function DriversFleetTabs() {
                 key={vehicle.name}
                 className="bg-brand-cream rounded-xl shadow-md border border-brand-cream-dark overflow-hidden flex flex-col md:flex-row max-w-xl mx-auto md:max-w-none"
               >
-                <div className="relative md:w-1/2 aspect-video md:aspect-auto md:min-h-[280px] overflow-hidden bg-brand-cream-dark/30 shrink-0">
+                <div className="relative md:w-1/2 aspect-video md:aspect-auto md:min-h-70 overflow-hidden bg-brand-cream-dark/30 shrink-0">
                   <img
                     src={vehicle.image}
                     alt={vehicle.name}
@@ -357,7 +357,7 @@ export default function DriversFleetTabs() {
                   <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <Link
                       to={`/book?vehicle=${vehicle.vehicleKey}`}
-                      className="w-full inline-flex items-center justify-center gap-2 min-h-[48px] px-4 py-3.5 bg-brand-green hover:bg-brand-green-dark text-brand-cream font-semibold rounded-lg transition-colors text-sm sm:text-base shadow-sm"
+                      className="w-full inline-flex items-center justify-center gap-2 min-h-12 px-4 py-3.5 bg-brand-green hover:bg-brand-green-dark text-brand-cream font-semibold rounded-lg transition-colors text-sm sm:text-base shadow-sm"
                     >
                       Select this vehicle
                     </Link>
@@ -365,7 +365,7 @@ export default function DriversFleetTabs() {
                       href={whatsappWithMessage(vehicle.bookVehiclePrefill)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="w-full inline-flex items-center justify-center gap-2 min-h-[48px] px-4 py-3.5 bg-[#25D366] hover:bg-[#20BD5A] text-white font-semibold rounded-lg transition-colors text-sm sm:text-base shadow-sm"
+                      className="w-full inline-flex items-center justify-center gap-2 min-h-12 px-4 py-3.5 bg-[#25D366] hover:bg-[#20BD5A] text-white font-semibold rounded-lg transition-colors text-sm sm:text-base shadow-sm"
                     >
                       <FaWhatsapp className="text-xl shrink-0" />
                       WhatsApp

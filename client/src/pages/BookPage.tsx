@@ -330,7 +330,7 @@ export default function BookPage() {
             </p>
             <Link
               to="/"
-              className="inline-flex min-h-[48px] items-center justify-center px-6 py-3 bg-brand-green text-brand-cream font-semibold rounded-xl"
+              className="inline-flex min-h-12 items-center justify-center px-6 py-3 bg-brand-green text-brand-cream font-semibold rounded-xl"
             >
               Back to home
             </Link>
@@ -367,7 +367,7 @@ export default function BookPage() {
                 <button
                   type="button"
                   onClick={() => i < step && setStep(i)}
-                  className={`w-full text-center text-[10px] lg:text-xs font-medium py-2.5 rounded-lg min-h-[40px] transition-colors ${
+                  className={`w-full text-center text-[10px] lg:text-xs font-medium py-2.5 rounded-lg min-h-10 transition-colors ${
                     i === step
                       ? 'bg-brand-green text-brand-cream shadow-sm'
                       : i < step
@@ -422,7 +422,7 @@ export default function BookPage() {
                             }`}
                           >
                             <div className="flex flex-col sm:flex-row">
-                              <div className="relative w-full sm:w-48 sm:shrink-0 aspect-video sm:aspect-auto sm:min-h-[140px] sm:self-stretch overflow-hidden bg-brand-cream-dark/30">
+                              <div className="relative w-full sm:w-48 sm:shrink-0 aspect-video sm:aspect-auto sm:min-h-35 sm:self-stretch overflow-hidden bg-brand-cream-dark/30">
                                 {t.image_url && (
                                   <img
                                     src={t.image_url}
@@ -482,7 +482,7 @@ export default function BookPage() {
                           >
                             −
                           </button>
-                          <div className="min-w-[72px] min-h-[52px] px-4 flex items-center justify-center rounded-xl border border-brand-cream-dark text-2xl font-bold text-brand-green tabular-nums bg-brand-cream-light">
+                          <div className="min-w-18 min-h-13 px-4 flex items-center justify-center rounded-xl border border-brand-cream-dark text-2xl font-bold text-brand-green tabular-nums bg-brand-cream-light">
                             {peopleCount}
                           </div>
                           <button
@@ -528,7 +528,7 @@ export default function BookPage() {
                             setDate(next)
                             setStartTime('')
                           }}
-                          className="w-full min-h-[52px] rounded-xl border border-brand-cream-dark bg-white px-4 text-brand-green"
+                          className="w-full min-h-13 rounded-xl border border-brand-cream-dark bg-white px-4 text-brand-green"
                         />
                         <span className="text-xs text-brand-green/60 mt-1.5 block">
                           Earliest available: {minDate}
@@ -552,7 +552,7 @@ export default function BookPage() {
                               type="button"
                               disabled={!s.available}
                               onClick={() => setStartTime(s.start_time)}
-                              className={`w-full text-left px-4 py-3.5 min-h-[52px] rounded-xl border transition-colors disabled:opacity-40 ${
+                              className={`w-full text-left px-4 py-3.5 min-h-13 rounded-xl border transition-colors disabled:opacity-40 ${
                                 startTime === s.start_time
                                   ? 'border-brand-green bg-brand-green text-brand-cream'
                                   : 'border-brand-cream-dark bg-white text-brand-green hover:border-brand-green/50'
@@ -597,7 +597,7 @@ export default function BookPage() {
                           }`}
                         >
                           <div className="flex flex-col sm:flex-row">
-                            <div className="relative w-full sm:w-36 sm:shrink-0 aspect-square sm:aspect-auto sm:min-h-[150px] sm:self-stretch overflow-hidden bg-brand-cream-dark/30">
+                            <div className="relative w-full sm:w-36 sm:shrink-0 aspect-square sm:aspect-auto sm:min-h-37.5 sm:self-stretch overflow-hidden bg-brand-cream-dark/30">
                               <img
                                 src={d.photo_url || '/driver-yaseen.JPG'}
                                 alt={d.full_name || d.name}
@@ -687,7 +687,7 @@ export default function BookPage() {
                               }`}
                             >
                               <div className="flex flex-col sm:flex-row">
-                                <div className="relative w-full sm:w-48 sm:shrink-0 aspect-video sm:aspect-auto sm:min-h-[160px] sm:self-stretch overflow-hidden bg-brand-cream-dark/30">
+                                <div className="relative w-full sm:w-48 sm:shrink-0 aspect-video sm:aspect-auto sm:min-h-40 sm:self-stretch overflow-hidden bg-brand-cream-dark/30">
                                   {v.image_url && (
                                     <img
                                       src={v.image_url}
@@ -874,7 +874,7 @@ export default function BookPage() {
                           setError(null)
                           setStep((s) => s - 1)
                         }}
-                        className="flex-1 min-h-[48px] rounded-xl border border-brand-cream-dark bg-white text-brand-green font-semibold"
+                        className="flex-1 min-h-12 rounded-xl border border-brand-cream-dark bg-white text-brand-green font-semibold"
                       >
                         Back
                       </button>
@@ -884,7 +884,7 @@ export default function BookPage() {
                         type="button"
                         disabled={!canNext()}
                         onClick={goNext}
-                        className="flex-1 min-h-[48px] rounded-xl bg-brand-green text-brand-cream font-semibold disabled:opacity-40 shadow-sm"
+                        className="flex-1 min-h-12 rounded-xl bg-brand-green text-brand-cream font-semibold disabled:opacity-40 shadow-sm"
                       >
                         Continue
                       </button>
@@ -893,7 +893,7 @@ export default function BookPage() {
                         type="button"
                         disabled={submitting || !breakdown || !termsAccepted}
                         onClick={handlePay}
-                        className="flex-1 min-h-[48px] rounded-xl bg-brand-green text-brand-cream font-semibold disabled:opacity-60 shadow-sm"
+                        className="flex-1 min-h-12 rounded-xl bg-brand-green text-brand-cream font-semibold disabled:opacity-60 shadow-sm"
                       >
                         {submitting
                           ? 'Redirecting to Yoco…'
@@ -986,7 +986,7 @@ function Field({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         autoComplete={autoComplete}
-        className="w-full min-h-[48px] rounded-xl border border-brand-cream-dark bg-white px-3"
+        className="w-full min-h-12 rounded-xl border border-brand-cream-dark bg-white px-3"
       />
     </label>
   )
