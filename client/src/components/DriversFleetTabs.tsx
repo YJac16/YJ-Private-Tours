@@ -334,14 +334,14 @@ export default function DriversFleetTabs() {
                 key={vehicle.name}
                 className="bg-brand-cream rounded-xl shadow-md border border-brand-cream-dark overflow-hidden flex flex-col md:flex-row max-w-xl mx-auto md:max-w-none"
               >
-                <div className="md:w-1/2 aspect-video md:aspect-auto md:min-h-[280px] bg-brand-cream-dark/30">
+                <div className="relative md:w-1/2 aspect-video md:aspect-auto md:min-h-[280px] overflow-hidden bg-brand-cream-dark/30 shrink-0">
                   <img
                     src={vehicle.image}
                     alt={vehicle.name}
-                    className="w-full h-full object-cover"
+                    className="absolute inset-0 w-full h-full object-cover"
                   />
                 </div>
-                <div className="p-4 sm:p-6 md:p-8 flex flex-col justify-center md:w-1/2 gap-2">
+                <div className="p-4 sm:p-6 md:p-8 flex flex-col justify-center md:w-1/2 min-w-0 gap-2">
                   <h3 className="text-lg sm:text-xl font-bold text-brand-green">{vehicle.name}</h3>
                   <p className="text-brand-green/80 font-medium text-sm">{vehicle.subtitle}</p>
                   <p className="text-brand-green/90 text-sm leading-snug">{vehicle.intro}</p>

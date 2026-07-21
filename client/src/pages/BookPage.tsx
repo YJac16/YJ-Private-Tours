@@ -421,22 +421,22 @@ export default function BookPage() {
                                 : 'border-brand-cream-dark bg-brand-cream hover:border-brand-green/40'
                             }`}
                           >
-                            <div className="grid sm:grid-cols-[200px_1fr]">
-                              <div className="aspect-video sm:aspect-auto sm:min-h-[140px] bg-brand-cream-dark/30">
+                            <div className="flex flex-col sm:flex-row">
+                              <div className="relative w-full sm:w-48 sm:shrink-0 aspect-video sm:aspect-auto sm:min-h-[140px] sm:self-stretch overflow-hidden bg-brand-cream-dark/30">
                                 {t.image_url && (
                                   <img
                                     src={t.image_url}
                                     alt=""
-                                    className="w-full h-full object-cover"
+                                    className="absolute inset-0 w-full h-full object-cover"
                                   />
                                 )}
                               </div>
-                              <div className="p-4 sm:p-5 space-y-1.5">
+                              <div className="flex-1 min-w-0 p-4 sm:p-5 space-y-1.5">
                                 <div className="flex flex-wrap justify-between gap-2">
                                   <h3 className="font-bold text-brand-green text-lg">
                                     {t.name}
                                   </h3>
-                                  <span className="text-sm font-semibold text-brand-green">
+                                  <span className="text-sm font-semibold text-brand-green shrink-0">
                                     From {formatZar(fromCents)}
                                   </span>
                                 </div>
@@ -596,15 +596,15 @@ export default function BookPage() {
                               : 'border-brand-cream-dark bg-brand-cream'
                           }`}
                         >
-                          <div className="grid sm:grid-cols-[140px_1fr]">
-                            <div className="aspect-square sm:min-h-[150px] bg-brand-cream-dark/30">
+                          <div className="flex flex-col sm:flex-row">
+                            <div className="relative w-full sm:w-36 sm:shrink-0 aspect-square sm:aspect-auto sm:min-h-[150px] sm:self-stretch overflow-hidden bg-brand-cream-dark/30">
                               <img
                                 src={d.photo_url || '/driver-yaseen.JPG'}
                                 alt={d.full_name || d.name}
-                                className="w-full h-full object-cover object-top"
+                                className="absolute inset-0 w-full h-full object-cover object-top"
                               />
                             </div>
-                            <div className="p-4 sm:p-5 space-y-2">
+                            <div className="flex-1 min-w-0 p-4 sm:p-5 space-y-2">
                               <h3 className="font-bold text-brand-green text-lg">
                                 {d.full_name || d.name}
                               </h3>
@@ -686,22 +686,22 @@ export default function BookPage() {
                                   : 'border-brand-cream-dark bg-white'
                               }`}
                             >
-                              <div className="grid sm:grid-cols-[200px_1fr]">
-                                <div className="aspect-video sm:min-h-[160px] bg-brand-cream-dark/30">
+                              <div className="flex flex-col sm:flex-row">
+                                <div className="relative w-full sm:w-48 sm:shrink-0 aspect-video sm:aspect-auto sm:min-h-[160px] sm:self-stretch overflow-hidden bg-brand-cream-dark/30">
                                   {v.image_url && (
                                     <img
                                       src={v.image_url}
                                       alt={v.name}
-                                      className="w-full h-full object-cover"
+                                      className="absolute inset-0 w-full h-full object-cover"
                                     />
                                   )}
                                 </div>
-                                <div className="p-4 sm:p-5 space-y-2">
-                                  <div className="flex flex-wrap justify-between gap-2">
-                                    <h3 className="font-bold text-brand-green text-lg">
+                                <div className="flex-1 min-w-0 p-4 sm:p-5 space-y-2">
+                                  <div className="flex flex-col gap-1 sm:flex-row sm:flex-wrap sm:justify-between sm:gap-2">
+                                    <h3 className="font-bold text-brand-green text-lg leading-snug">
                                       {v.name}
                                     </h3>
-                                    <span className="text-sm font-bold text-brand-green">
+                                    <span className="text-sm font-bold text-brand-green shrink-0">
                                       Vehicle fee:{' '}
                                       {formatZar(resolveVehiclePrice(v))}
                                     </span>
