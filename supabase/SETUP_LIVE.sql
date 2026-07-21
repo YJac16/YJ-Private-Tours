@@ -250,7 +250,7 @@ ON CONFLICT (id) DO UPDATE SET
   max_guests = EXCLUDED.max_guests;
 
 INSERT INTO vehicles (id, name, description, slug, capacity_min, capacity_max, vehicle_surcharge_cents, is_luxury) VALUES
-  ('33333333-3333-3333-3333-333333333301', 'Suzuki XL6', 'Spacious comfort for families', 'suzuki', 4, 5, 70000, false),
+  ('33333333-3333-3333-3333-333333333301', 'Suzuki XL6', 'Spacious comfort for families', 'suzuki', 1, 5, 70000, false),
   ('33333333-3333-3333-3333-333333333302', 'Mercedes Benz GLC 250 Coupe', 'Premium luxury experience', 'mercedes', 1, 3, 120000, true),
   ('33333333-3333-3333-3333-333333333303', 'Toyota Corolla Cross GR Sport', 'Sporty comfort with a personal touch', 'corolla', 1, 3, 0, false)
 ON CONFLICT (id) DO UPDATE SET
@@ -620,3 +620,8 @@ ALTER TABLE tours
   ADD COLUMN IF NOT EXISTS perfect_for TEXT[],
   ADD COLUMN IF NOT EXISTS good_to_know TEXT[],
   ADD COLUMN IF NOT EXISTS hero_image_url TEXT;
+
+-- 008 — Suzuki XL6 available for 1–5 guests
+UPDATE vehicles
+SET capacity_min = 1, capacity_max = 5
+WHERE slug = 'suzuki' OR name = 'Suzuki XL6';

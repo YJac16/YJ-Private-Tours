@@ -217,7 +217,7 @@ const vehicles: MockVehicle[] = [
     name: 'Suzuki XL6',
     description: 'Spacious comfort for families',
     slug: 'suzuki',
-    capacity_min: 4,
+    capacity_min: 1,
     capacity_max: 5,
     vehicle_price_cents: 320000,
     vehicle_surcharge_cents: 320000,
