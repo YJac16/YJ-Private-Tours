@@ -25,6 +25,7 @@ import {
   resolvePricePerPerson,
   resolveVehiclePrice,
   validateBookingGuests,
+  vehicleFitsGuests,
   vehiclesForGuestCount,
   type BookingSettings,
 } from '../lib/pricing'
@@ -95,9 +96,8 @@ export default function BookPage() {
     ? maxGuestsForTour(selectedTour, settings)
     : settings.max_guests_default
 
-  const maxForStepper = selectedVehicle
-    ? Math.min(maxGuests, selectedVehicle.capacity_max)
-    : maxGuests
+  /** Always allow up to tour max (5); vehicle step blocks undersized cars. */
+  const maxForStepper = maxGuests
 
   const breakdown = useMemo(() => {
     if (!selectedTour || !selectedVehicle) return null
@@ -172,10 +172,21 @@ export default function BookPage() {
   }, [tourSlug, timeParam, vehicleSlug])
 
   useEffect(() => {
-    if (!vehicles.length || vehicleManual) return
-    const auto = defaultVehicleForGuests(vehicles, Math.max(1, peopleCount))
-    if (auto) setVehicleId(auto.id)
-  }, [peopleCount, vehicles, vehicleManual])
+    if (!vehicles.length) return
+    const count = Math.max(1, peopleCount)
+    const current = vehicles.find((v) => v.id === vehicleId)
+
+    // Keep a manual choice only while it still fits this group size
+    if (vehicleManual && current && vehicleFitsGuests(current, count)) {
+      return
+    }
+
+    const auto = defaultVehicleForGuests(vehicles, count)
+    setVehicleId(auto?.id ?? '')
+    if (current && !vehicleFitsGuests(current, count)) {
+      setVehicleManual(false)
+    }
+  }, [peopleCount, vehicles, vehicleManual, vehicleId])
 
   useEffect(() => {
     if (peopleCount > maxForStepper) {
@@ -659,9 +670,7 @@ export default function BookPage() {
 
                       <div className="space-y-3">
                         {vehicles.map((v) => {
-                          const fits =
-                            peopleCount >= v.capacity_min &&
-                            peopleCount <= v.capacity_max
+                          const fits = vehicleFitsGuests(v, peopleCount)
                           const preview =
                             selectedTour && fits
                               ? calculatePrice(
