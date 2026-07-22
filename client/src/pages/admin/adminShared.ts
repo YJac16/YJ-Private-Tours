@@ -12,6 +12,8 @@ export type AdminTabId =
   | 'pdf'
   | 'reports'
   | 'settings'
+  | 'drivers'
+  | 'trips'
 
 export const ADMIN_TABS: { id: AdminTabId; label: string }[] = [
   { id: 'pricing', label: 'Pricing' },
@@ -22,6 +24,8 @@ export const ADMIN_TABS: { id: AdminTabId; label: string }[] = [
   { id: 'content', label: 'Experience Content' },
   { id: 'pdf', label: 'PDF Templates' },
   { id: 'reports', label: 'Reports' },
+  { id: 'drivers', label: 'Drivers' },
+  { id: 'trips', label: 'Trips' },
   { id: 'settings', label: 'Settings' },
 ]
 

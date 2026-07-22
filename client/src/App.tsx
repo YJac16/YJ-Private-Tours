@@ -9,6 +9,9 @@ import TermsPage from './pages/TermsPage'
 import BookPage from './pages/BookPage'
 import DriverSchedulePage from './pages/DriverSchedulePage'
 import AdminPricingPage from './pages/AdminPricingPage'
+import LoginPage from './pages/LoginPage'
+import SignupPage from './pages/SignupPage'
+import AccountPage from './pages/AccountPage'
 import ScrollToTop from './components/ScrollToTop'
 import ScrollToHash from './components/ScrollToHash'
 import FloatingWhatsApp from './components/FloatingWhatsApp'
@@ -20,6 +23,9 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/book" element={<BookPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignupPage />} />
+        <Route path="/account" element={<AccountPage />} />
         <Route path="/driver" element={<DriverSchedulePage />} />
         <Route path="/admin/pricing" element={<AdminPricingPage />} />
         <Route path="/thank-you" element={<ThankYou />} />

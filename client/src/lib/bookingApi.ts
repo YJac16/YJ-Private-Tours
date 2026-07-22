@@ -168,7 +168,14 @@ export type BookPayload = {
   notes?: string
 }
 
-export async function createBooking(payload: BookPayload) {
+export async function createBooking(
+  payload: BookPayload,
+  accessToken?: string | null
+) {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  }
+  if (accessToken) headers.Authorization = `Bearer ${accessToken}`
   return json<{
     success: boolean
     booking_id: string
@@ -183,7 +190,7 @@ export async function createBooking(payload: BookPayload) {
   }>(
     await fetch(`${API}/book`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify(payload),
     })
   )
@@ -200,10 +207,16 @@ export async function confirmPayment(bookingId: string) {
 }
 
 function pinHeaders(pin: string): HeadersInit {
-  return {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    'x-driver-pin': pin,
   }
+  // JWT / mock tokens use Bearer; legacy PIN still sent as header
+  if (pin.startsWith('mock.') || pin.includes('.') || pin.length > 24) {
+    headers.Authorization = `Bearer ${pin}`
+  } else {
+    headers['x-driver-pin'] = pin
+  }
+  return headers
 }
 
 export async function fetchAdminPricing(pin: string) {

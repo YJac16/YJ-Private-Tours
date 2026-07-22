@@ -1,14 +1,12 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { mockDb, useMockStore } from '../booking-app/lib/mock-store'
 import { createClient } from '@supabase/supabase-js'
+import { mockDb, useMockStore } from '../booking-app/lib/mock-store'
+import {
+  isAuthError,
+  requireAuth,
+  type AuthContext,
+} from './_lib/authUser'
 import { methodNotAllowed, readJson } from './_lib/http'
-
-function checkPin(req: VercelRequest, bodyPin?: string) {
-  const expected = process.env.DRIVER_PIN || '0420'
-  const headerPin = req.headers['x-driver-pin']
-  const h = Array.isArray(headerPin) ? headerPin[0] : headerPin
-  return (h || bodyPin) === expected
-}
 
 function supabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL
@@ -17,19 +15,123 @@ function supabaseAdmin() {
   return createClient(url, key, { auth: { persistSession: false } })
 }
 
+type DriverRow = {
+  id: string
+  name: string
+  full_name: string | null
+  is_active: boolean
+  photo_url: string | null
+  languages: string[] | null
+  years_experience: number | null
+  bio: string | null
+  user_id: string | null
+  rating_avg?: number | null
+  rating_count?: number
+}
+
+async function resolveDriver(
+  auth: AuthContext,
+  req: VercelRequest,
+  bodyDriverId?: string
+): Promise<DriverRow | { error: string; status: number }> {
+  const queryId =
+    (req.query.driver_id ? String(req.query.driver_id) : '') ||
+    (bodyDriverId ? String(bodyDriverId) : '')
+
+  if (useMockStore()) {
+    if (auth.role === 'admin' && queryId) {
+      const d = mockDb.findDriverById(queryId)
+      if (!d) return { error: 'Driver not found', status: 404 }
+      return d
+    }
+    if (auth.role === 'driver') {
+      const d = mockDb.findDriverByUserId(auth.user.id)
+      if (!d) return { error: 'No driver profile linked to this account', status: 404 }
+      return d
+    }
+    if (auth.role === 'admin') {
+      const all = mockDb.listAllDrivers()
+      if (all[0]) return all[0]
+      return { error: 'No drivers found', status: 404 }
+    }
+    return { error: 'Forbidden', status: 403 }
+  }
+
+  const sb = supabaseAdmin()
+  if (auth.role === 'admin' && queryId) {
+    const { data, error } = await sb
+      .from('drivers')
+      .select(
+        'id, name, full_name, is_active, photo_url, languages, years_experience, bio, user_id, rating_avg, rating_count'
+      )
+      .eq('id', queryId)
+      .maybeSingle()
+    if (error) return { error: error.message, status: 500 }
+    if (!data) return { error: 'Driver not found', status: 404 }
+    return data as DriverRow
+  }
+
+  if (auth.role === 'driver') {
+    const { data, error } = await sb
+      .from('drivers')
+      .select(
+        'id, name, full_name, is_active, photo_url, languages, years_experience, bio, user_id, rating_avg, rating_count'
+      )
+      .eq('user_id', auth.user.id)
+      .maybeSingle()
+    if (error) return { error: error.message, status: 500 }
+    if (!data) {
+      return { error: 'No driver profile linked to this account', status: 404 }
+    }
+    return data as DriverRow
+  }
+
+  if (auth.role === 'admin') {
+    const { data, error } = await sb
+      .from('drivers')
+      .select(
+        'id, name, full_name, is_active, photo_url, languages, years_experience, bio, user_id, rating_avg, rating_count'
+      )
+      .order('full_name', { ascending: true })
+      .limit(1)
+      .maybeSingle()
+    if (error) return { error: error.message, status: 500 }
+    if (!data) return { error: 'No drivers found', status: 404 }
+    return data as DriverRow
+  }
+
+  return { error: 'Forbidden', status: 403 }
+}
+
+function isDriverError(
+  v: DriverRow | { error: string; status: number }
+): v is { error: string; status: number } {
+  return 'error' in v && 'status' in v
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
+    const auth = await requireAuth(req, ['driver', 'admin'])
+    if (isAuthError(auth)) {
+      return res.status(auth.status).json({ error: auth.error })
+    }
+
     if (req.method === 'GET') {
-      if (!checkPin(req)) return res.status(401).json({ error: 'Unauthorized' })
-      const driverId = req.query.driver_id ? String(req.query.driver_id) : undefined
+      const driver = await resolveDriver(auth, req)
+      if (isDriverError(driver)) {
+        return res.status(driver.status).json({ error: driver.error })
+      }
+
       const from = req.query.from ? String(req.query.from) : undefined
+      const driverId = driver.id
 
       if (useMockStore()) {
         return res.status(200).json({
+          driver,
           bookings: mockDb.listBookings(driverId, from),
           unavailable: mockDb
             .listUnavailable()
-            .filter((u) => (driverId ? u.driver_id === driverId : true)),
+            .filter((u) => u.driver_id === driverId),
         })
       }
 
@@ -47,10 +149,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           vehicle:vehicles(id, name, slug)
         `
         )
+        .eq('driver_id', driverId)
         .order('booking_date', { ascending: true })
         .order('start_time', { ascending: true })
 
-      if (driverId) query = query.eq('driver_id', driverId)
       if (from) query = query.gte('booking_date', from)
 
       const { data, error } = await query
@@ -59,9 +161,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const { data: unavailable } = await sb
         .from('driver_unavailable')
         .select('*')
+        .eq('driver_id', driverId)
         .order('unavailable_date', { ascending: true })
 
       return res.status(200).json({
+        driver,
         bookings: data ?? [],
         unavailable: unavailable ?? [],
       })
@@ -69,13 +173,68 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (req.method === 'PATCH') {
       const body = await readJson(req)
-      if (!checkPin(req, body.pin as string | undefined)) {
-        return res.status(401).json({ error: 'Unauthorized' })
+
+      if (body.action === 'update_profile') {
+        const driver = await resolveDriver(auth, req, body.driver_id as string)
+        if (isDriverError(driver)) {
+          return res.status(driver.status).json({ error: driver.error })
+        }
+        if (auth.role === 'driver' && driver.user_id !== auth.user.id) {
+          return res.status(403).json({ error: 'Forbidden' })
+        }
+
+        const updates: Record<string, unknown> = {}
+        if (body.full_name !== undefined) {
+          updates.full_name = String(body.full_name)
+          updates.name = String(body.full_name)
+        }
+        if (body.photo_url !== undefined) updates.photo_url = body.photo_url
+        if (body.bio !== undefined) updates.bio = body.bio
+        if (body.years_experience !== undefined) {
+          updates.years_experience = Number(body.years_experience) || 0
+        }
+        if (body.languages !== undefined) {
+          updates.languages = Array.isArray(body.languages)
+            ? body.languages
+            : String(body.languages)
+                .split(',')
+                .map((s: string) => s.trim())
+                .filter(Boolean)
+        }
+
+        if (useMockStore()) {
+          const updated = mockDb.updateDriver(driver.id, updates as Parameters<
+            typeof mockDb.updateDriver
+          >[1])
+          return res.status(200).json({ success: true, driver: updated })
+        }
+
+        const sb = supabaseAdmin()
+        const { data, error } = await sb
+          .from('drivers')
+          .update(updates)
+          .eq('id', driver.id)
+          .select(
+            'id, name, full_name, is_active, photo_url, languages, years_experience, bio, user_id, rating_avg, rating_count'
+          )
+          .single()
+        if (error) return res.status(400).json({ error: error.message })
+        return res.status(200).json({ success: true, driver: data })
       }
+
+      const driver = await resolveDriver(auth, req, body.driver_id as string)
+      if (isDriverError(driver)) {
+        return res.status(driver.status).json({ error: driver.error })
+      }
+
       const booking_id = String(body.booking_id || '')
       if (!booking_id) return res.status(400).json({ error: 'booking_id required' })
 
       if (useMockStore()) {
+        const existing = mockDb.listBookings(driver.id).find((b) => b.id === booking_id)
+        if (!existing) {
+          return res.status(404).json({ error: 'Booking not found for this driver' })
+        }
         const booking = mockDb.updateBooking(booking_id, {
           booking_date: body.booking_date as string | undefined,
           start_time: body.start_time as string | undefined,
@@ -105,6 +264,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         .from('bookings')
         .update(updates)
         .eq('id', booking_id)
+        .eq('driver_id', driver.id)
         .select()
         .single()
 
@@ -114,18 +274,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (req.method === 'POST') {
       const body = await readJson(req)
-      if (!checkPin(req, body.pin as string | undefined)) {
-        return res.status(401).json({ error: 'Unauthorized' })
+      const driver = await resolveDriver(auth, req, body.driver_id as string)
+      if (isDriverError(driver)) {
+        return res.status(driver.status).json({ error: driver.error })
       }
-      const driver_id = String(body.driver_id || '')
+
       const unavailable_date = String(body.unavailable_date || '')
-      if (!driver_id || !unavailable_date) {
-        return res.status(400).json({ error: 'driver_id and unavailable_date required' })
+      if (!unavailable_date) {
+        return res.status(400).json({ error: 'unavailable_date required' })
       }
 
       if (useMockStore()) {
         const row = mockDb.block({
-          driver_id,
+          driver_id: driver.id,
           unavailable_date,
           start_time: (body.start_time as string) || null,
           reason: (body.reason as string) || null,
@@ -137,7 +298,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const { data, error } = await sb
         .from('driver_unavailable')
         .insert({
-          driver_id,
+          driver_id: driver.id,
           unavailable_date,
           start_time: body.start_time ? String(body.start_time).slice(0, 5) : null,
           reason: (body.reason as string) || null,
@@ -150,17 +311,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (req.method === 'DELETE') {
-      if (!checkPin(req)) return res.status(401).json({ error: 'Unauthorized' })
+      const driver = await resolveDriver(auth, req)
+      if (isDriverError(driver)) {
+        return res.status(driver.status).json({ error: driver.error })
+      }
+
       const id = String(req.query.id || '')
       if (!id) return res.status(400).json({ error: 'id required' })
 
       if (useMockStore()) {
+        const row = mockDb.listUnavailable().find((u) => u.id === id)
+        if (!row || row.driver_id !== driver.id) {
+          return res.status(404).json({ error: 'Block not found' })
+        }
         mockDb.unblock(id)
         return res.status(200).json({ success: true })
       }
 
       const sb = supabaseAdmin()
-      const { error } = await sb.from('driver_unavailable').delete().eq('id', id)
+      const { error } = await sb
+        .from('driver_unavailable')
+        .delete()
+        .eq('id', id)
+        .eq('driver_id', driver.id)
       if (error) return res.status(400).json({ error: error.message })
       return res.status(200).json({ success: true })
     }

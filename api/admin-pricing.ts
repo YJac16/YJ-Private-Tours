@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { mockDb, useMockStore } from '../booking-app/lib/mock-store'
 import { createClient } from '@supabase/supabase-js'
 import { DEFAULT_BOOKING_SETTINGS, parseBookingSettings } from '../booking-app/lib/pricing'
-import { checkAdminPin } from './_lib/adminAuth'
+import { assertAdminAccess } from './_lib/adminAuth'
 import { methodNotAllowed, readJson } from './_lib/http'
 
 function supabaseAdmin() {
@@ -95,7 +95,8 @@ function asStringArray(value: unknown): string[] | undefined {
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     if (req.method === 'GET') {
-      if (!checkAdminPin(req)) return res.status(401).json({ error: 'Unauthorized' })
+      const gate = await assertAdminAccess(req)
+      if (gate !== true) return res.status(gate.status).json({ error: gate.error })
 
       if (useMockStore()) {
         return res.status(200).json(mockDb.adminPricing())
@@ -107,9 +108,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (req.method === 'PATCH') {
       const body = await readJson(req)
-      if (!checkAdminPin(req, body.pin as string | undefined)) {
-        return res.status(401).json({ error: 'Unauthorized' })
-      }
+      const gate = await assertAdminAccess(req, body.pin as string | undefined)
+      if (gate !== true) return res.status(gate.status).json({ error: gate.error })
 
       if (useMockStore()) {
         mockDb.updateAdminPricing(body)

@@ -15,6 +15,7 @@ import {
   type Tour,
   type Vehicle,
 } from '../lib/bookingApi'
+import { useAuth } from '../lib/auth'
 import {
   calculatePrice,
   defaultVehicleForGuests,
@@ -48,6 +49,7 @@ const DEFAULT_TIMES: Slot[] = [
 
 export default function BookPage() {
   const [searchParams] = useSearchParams()
+  const { profile, accessToken } = useAuth()
   const [step, setStep] = useState(0)
   const [drivers, setDrivers] = useState<Driver[]>([])
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
@@ -86,7 +88,19 @@ export default function BookPage() {
   const tourSlug = searchParams.get('tour')
   const timeParam = searchParams.get('time')
   const vehicleSlug = searchParams.get('vehicle')
+  const noteParam = searchParams.get('note')
   const minDate = minBookableDate()
+
+  useEffect(() => {
+    if (!profile) return
+    if (profile.full_name) setName((n) => n || profile.full_name || '')
+    if (profile.email) setEmail((e) => e || profile.email || '')
+    if (profile.phone) setPhone((p) => p || profile.phone || '')
+  }, [profile])
+
+  useEffect(() => {
+    if (noteParam) setSpecialRequests((s) => s || noteParam)
+  }, [noteParam])
 
   const selectedTour = tours.find((t) => t.id === tourId)
   const selectedVehicle = vehicles.find((v) => v.id === vehicleId)
@@ -294,23 +308,26 @@ export default function BookPage() {
     setSubmitting(true)
     setError(null)
     try {
-      const res = await createBooking({
-        booking_date: date,
-        start_time: startTime,
-        driver_id: driverId,
-        tour_id: tourId,
-        vehicle_id: vehicleId,
-        adult_count: peopleCount,
-        child_count: 0,
-        client_name: name.trim(),
-        client_email: email.trim(),
-        client_phone: phone.trim(),
-        client_country: country.trim() || undefined,
-        pickup_address: pickupAddress.trim(),
-        dietary_requirements: dietary.trim() || undefined,
-        flight_number: flightNumber.trim() || undefined,
-        special_requests: specialRequests.trim() || undefined,
-      })
+      const res = await createBooking(
+        {
+          booking_date: date,
+          start_time: startTime,
+          driver_id: driverId,
+          tour_id: tourId,
+          vehicle_id: vehicleId,
+          adult_count: peopleCount,
+          child_count: 0,
+          client_name: name.trim(),
+          client_email: email.trim(),
+          client_phone: phone.trim(),
+          client_country: country.trim() || undefined,
+          pickup_address: pickupAddress.trim(),
+          dietary_requirements: dietary.trim() || undefined,
+          flight_number: flightNumber.trim() || undefined,
+          special_requests: specialRequests.trim() || undefined,
+        },
+        accessToken
+      )
       if (res.checkout_url) {
         window.location.href = res.checkout_url
         return

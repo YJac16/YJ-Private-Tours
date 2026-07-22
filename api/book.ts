@@ -13,6 +13,7 @@ import {
 import { createYocoCheckout } from '../booking-app/lib/yoco'
 import { notifyDriverBooking } from '../booking-app/lib/notify'
 import { methodNotAllowed, readJson } from './_lib/http'
+import { getAuthContext } from './_lib/authUser'
 
 function normalizeTime(t: string) {
   return t.slice(0, 5)
@@ -89,6 +90,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const body = await readJson(req)
+    const auth = await getAuthContext(req)
+    const client_user_id = auth?.user.id ?? null
     const booking_date = String(body.booking_date || '')
     const start_time = String(body.start_time || '')
     const driver_id = String(body.driver_id || '')
@@ -158,6 +161,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         client_name,
         client_email,
         client_phone,
+        client_user_id,
         client_country,
         pickup_address,
         dietary_requirements,
@@ -254,6 +258,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         client_name,
         client_email,
         client_phone,
+        client_user_id,
         client_country,
         pickup_address,
         dietary_requirements,

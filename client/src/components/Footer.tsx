@@ -28,18 +28,6 @@ export default function Footer() {
           >
             Terms &amp; Conditions
           </Link>
-          <Link
-            to="/driver"
-            className="text-brand-cream/60 hover:text-brand-cream text-sm"
-          >
-            Driver login
-          </Link>
-          <Link
-            to="/admin/pricing"
-            className="text-brand-cream/60 hover:text-brand-cream text-sm"
-          >
-            Pricing & Business Management
-          </Link>
         </div>
         <p className="text-sm text-brand-cream/70 pt-4">
           © {new Date().getFullYear()} KhayrCape Experiences. All rights reserved.

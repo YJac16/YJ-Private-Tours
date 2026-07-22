@@ -16,6 +16,7 @@ export type MockDriver = {
   bio: string | null
   rating_avg: number | null
   rating_count: number
+  user_id: string | null
 }
 
 export type MockVehicle = {
@@ -160,6 +161,7 @@ export type MockBooking = {
   client_name: string
   client_email: string
   client_phone: string | null
+  client_user_id: string | null
   client_country: string | null
   pickup_address: string | null
   dietary_requirements: string | null
@@ -192,6 +194,9 @@ export type MockUnavailable = {
   reason: string | null
 }
 
+/** Matches client mockSignIn id for role "driver". */
+const MOCK_DRIVER_USER_ID = '00000000-0000-4000-8000-driver000000'
+
 const drivers: MockDriver[] = [
   {
     id: '11111111-1111-1111-1111-111111111111',
@@ -204,6 +209,7 @@ const drivers: MockDriver[] = [
     bio: 'Local Cape Town guide specialising in private, flexible tours designed around your time, interests, and pace.',
     rating_avg: 5,
     rating_count: 0,
+    user_id: MOCK_DRIVER_USER_ID,
   },
 ]
 
@@ -650,6 +656,7 @@ export const mockDb = {
     client_name: string
     client_email: string
     client_phone?: string | null
+    client_user_id?: string | null
     client_country?: string | null
     pickup_address?: string | null
     dietary_requirements?: string | null
@@ -700,6 +707,7 @@ export const mockDb = {
       client_name: input.client_name,
       client_email: input.client_email,
       client_phone: input.client_phone || null,
+      client_user_id: input.client_user_id || null,
       client_country: input.client_country || null,
       pickup_address: input.pickup_address || null,
       dietary_requirements: input.dietary_requirements || null,
@@ -741,6 +749,87 @@ export const mockDb = {
         vehicle: vehicles.find((v) => v.id === b.vehicle_id) ?? null,
         driver: drivers.find((d) => d.id === b.driver_id) ?? null,
       }))
+  },
+
+  listAccountBookings(userId: string, email?: string | null) {
+    const emailNorm = (email || '').trim().toLowerCase()
+    return this.listBookings().filter(
+      (b) =>
+        b.client_user_id === userId ||
+        (emailNorm && b.client_email.toLowerCase() === emailNorm)
+    )
+  },
+
+  listAllDrivers() {
+    return drivers.map((d) => ({ ...d }))
+  },
+
+  findDriverByUserId(userId: string) {
+    return drivers.find((d) => d.user_id === userId) ?? null
+  },
+
+  findDriverById(id: string) {
+    return drivers.find((d) => d.id === id) ?? null
+  },
+
+  createDriver(input: {
+    name?: string
+    full_name: string
+    is_active?: boolean
+    photo_url?: string | null
+    languages?: string[]
+    years_experience?: number
+    bio?: string | null
+    user_id?: string | null
+  }) {
+    const row: MockDriver = {
+      id: uuid(),
+      name: input.name || input.full_name,
+      full_name: input.full_name,
+      is_active: input.is_active !== false,
+      photo_url: input.photo_url ?? null,
+      languages: input.languages ?? ['English'],
+      years_experience: input.years_experience ?? 0,
+      bio: input.bio ?? null,
+      rating_avg: null,
+      rating_count: 0,
+      user_id: input.user_id ?? null,
+    }
+    drivers.push(row)
+    return { ...row }
+  },
+
+  updateDriver(
+    id: string,
+    patch: Partial<
+      Pick<
+        MockDriver,
+        | 'name'
+        | 'full_name'
+        | 'is_active'
+        | 'photo_url'
+        | 'languages'
+        | 'years_experience'
+        | 'bio'
+        | 'user_id'
+      >
+    >
+  ) {
+    const d = drivers.find((x) => x.id === id)
+    if (!d) throw new Error('Driver not found')
+    if (patch.name !== undefined) d.name = patch.name
+    if (patch.full_name !== undefined) {
+      d.full_name = patch.full_name
+      if (!patch.name) d.name = patch.full_name
+    }
+    if (patch.is_active !== undefined) d.is_active = patch.is_active
+    if (patch.photo_url !== undefined) d.photo_url = patch.photo_url
+    if (patch.languages !== undefined) d.languages = patch.languages
+    if (patch.years_experience !== undefined)
+      d.years_experience = patch.years_experience
+    if (patch.bio !== undefined) d.bio = patch.bio
+    if (patch.user_id !== undefined) d.user_id = patch.user_id
+    return { ...d }
   },
 
   updateBooking(
@@ -1121,6 +1210,7 @@ export const mockDb = {
       client_name,
       client_email,
       client_phone,
+      client_user_id: null,
       client_country: null,
       pickup_address: quote.pickup,
       dietary_requirements: null,

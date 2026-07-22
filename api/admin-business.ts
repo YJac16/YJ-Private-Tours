@@ -6,7 +6,7 @@ import {
   type PricingTour,
   type PricingVehicle,
 } from '../booking-app/lib/pricing'
-import { checkAdminPin } from './_lib/adminAuth'
+import { assertAdminAccess } from './_lib/adminAuth'
 import { methodNotAllowed, readJson } from './_lib/http'
 
 function supabaseAdmin() {
@@ -215,7 +215,8 @@ function asOptionalString(value: unknown): string | null | undefined {
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     if (req.method === 'GET') {
-      if (!checkAdminPin(req)) return res.status(401).json({ error: 'Unauthorized' })
+      const gate = await assertAdminAccess(req)
+      if (gate !== true) return res.status(gate.status).json({ error: gate.error })
 
       const resource = String(req.query.resource || '')
       const id = req.query.id ? String(req.query.id) : undefined
@@ -275,9 +276,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (req.method === 'POST' || req.method === 'PATCH') {
       const body = await readJson(req)
-      if (!checkAdminPin(req, body.pin as string | undefined)) {
-        return res.status(401).json({ error: 'Unauthorized' })
-      }
+      const gate = await assertAdminAccess(req, body.pin as string | undefined)
+      if (gate !== true) return res.status(gate.status).json({ error: gate.error })
 
       const resource = String(body.resource || req.query.resource || '')
       const action = String(body.action || '')

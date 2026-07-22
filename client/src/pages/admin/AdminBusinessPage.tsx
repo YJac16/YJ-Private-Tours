@@ -2,18 +2,15 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Navbar from '../../components/Navbar'
 import Footer from '../../components/Footer'
+import { RequireAuth } from '../../components/RequireAuth'
+import { useAuth } from '../../lib/auth'
 import {
   fetchAdminPricing,
   type Tour,
   type Vehicle,
 } from '../../lib/bookingApi'
 import type { BookingSettings } from '../../lib/pricing'
-import {
-  ADMIN_PIN_KEY,
-  ADMIN_TABS,
-  type AdminTabId,
-  inputClass,
-} from './adminShared'
+import { ADMIN_TABS, type AdminTabId } from './adminShared'
 import PricingTab from './tabs/PricingTab'
 import TemplatesTab from './tabs/TemplatesTab'
 import QuotesTab from './tabs/QuotesTab'
@@ -23,10 +20,12 @@ import ContentTab from './tabs/ContentTab'
 import PdfTemplatesTab from './tabs/PdfTemplatesTab'
 import ReportsTab from './tabs/ReportsTab'
 import SettingsTab from './tabs/SettingsTab'
+import DriversTab from './tabs/DriversTab'
+import TripsTab from './tabs/TripsTab'
 
-export default function AdminBusinessPage() {
-  const [pin, setPin] = useState(() => sessionStorage.getItem(ADMIN_PIN_KEY) || '')
-  const [pinInput, setPinInput] = useState('')
+function AdminBusinessInner() {
+  const { accessToken, signOut } = useAuth()
+  const pin = accessToken || ''
   const [activeTab, setActiveTab] = useState<AdminTabId>('pricing')
   const [tours, setTours] = useState<Tour[]>([])
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
@@ -38,25 +37,16 @@ export default function AdminBusinessPage() {
   const [error, setError] = useState<string | null>(null)
   const [savedFlash, setSavedFlash] = useState(false)
 
-  const unlock = (value: string) => {
-    sessionStorage.setItem(ADMIN_PIN_KEY, value)
-    setPin(value)
-  }
-
-  const load = async (activePin: string) => {
+  const load = async (credential: string) => {
     setLoading(true)
     setError(null)
     try {
-      const data = await fetchAdminPricing(activePin)
+      const data = await fetchAdminPricing(credential)
       setTours(data.tours)
       setVehicles(data.vehicles)
       setSettings(data.settings)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load pricing')
-      if (String(e).includes('Unauthorized')) {
-        sessionStorage.removeItem(ADMIN_PIN_KEY)
-        setPin('')
-      }
     } finally {
       setLoading(false)
     }
@@ -69,47 +59,6 @@ export default function AdminBusinessPage() {
   const onSaved = () => {
     setSavedFlash(true)
     window.setTimeout(() => setSavedFlash(false), 2500)
-  }
-
-  if (!pin) {
-    return (
-      <>
-        <Navbar />
-        <main className="min-h-[70vh] bg-brand-cream-light px-4 py-12 flex items-center">
-          <form
-            className="max-w-sm mx-auto w-full space-y-4"
-            onSubmit={(e) => {
-              e.preventDefault()
-              if (pinInput.trim()) unlock(pinInput.trim())
-            }}
-          >
-            <h1 className="text-2xl font-bold text-brand-green text-center">
-              Pricing & Business Management
-            </h1>
-            <p className="text-sm text-brand-green/85 text-center">
-              Enter your admin PIN to manage pricing, quotes, invoices, and
-              experience content.
-            </p>
-            <input
-              type="password"
-              inputMode="numeric"
-              value={pinInput}
-              onChange={(e) => setPinInput(e.target.value)}
-              placeholder="PIN"
-              className={inputClass}
-              autoFocus
-            />
-            <button
-              type="submit"
-              className="w-full min-h-12 rounded-lg bg-brand-green text-brand-cream font-semibold"
-            >
-              Unlock
-            </button>
-          </form>
-        </main>
-        <Footer />
-      </>
-    )
   }
 
   return (
@@ -128,13 +77,10 @@ export default function AdminBusinessPage() {
             </div>
             <button
               type="button"
-              onClick={() => {
-                sessionStorage.removeItem(ADMIN_PIN_KEY)
-                setPin('')
-              }}
+              onClick={() => signOut()}
               className="text-sm underline text-brand-green/80"
             >
-              Lock
+              Sign out
             </button>
           </div>
 
@@ -213,6 +159,8 @@ export default function AdminBusinessPage() {
               )}
               {activeTab === 'pdf' && <PdfTemplatesTab pin={pin} />}
               {activeTab === 'reports' && <ReportsTab pin={pin} />}
+              {activeTab === 'drivers' && <DriversTab token={pin} />}
+              {activeTab === 'trips' && <TripsTab token={pin} />}
               {activeTab === 'settings' && <SettingsTab pin={pin} />}
             </div>
           </div>
@@ -220,5 +168,13 @@ export default function AdminBusinessPage() {
       </main>
       <Footer />
     </>
+  )
+}
+
+export default function AdminBusinessPage() {
+  return (
+    <RequireAuth roles={['admin']}>
+      <AdminBusinessInner />
+    </RequireAuth>
   )
 }
