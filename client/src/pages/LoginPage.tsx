@@ -2,7 +2,16 @@ import { type FormEvent, useState } from 'react'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
-import { useAuth } from '../lib/auth'
+import { useAuth, type UserRole } from '../lib/auth'
+
+function hubForRole(role: UserRole | null, from: string) {
+  if (role === 'admin') return '/admin/pricing'
+  if (role === 'driver') return '/driver'
+  if (from.startsWith('/login') || from.startsWith('/signup') || from === '/') {
+    return '/account'
+  }
+  return from
+}
 
 export default function LoginPage() {
   const { signIn, mockSignIn, supabaseConfigured, user, role, loading } =
@@ -17,15 +26,7 @@ export default function LoginPage() {
   const [busy, setBusy] = useState(false)
 
   if (!loading && user) {
-    const dest =
-      role === 'admin'
-        ? '/admin/pricing'
-        : role === 'driver'
-          ? '/driver'
-          : from.startsWith('/login')
-            ? '/account'
-            : from
-    return <Navigate to={dest} replace />
+    return <Navigate to={hubForRole(role, from)} replace />
   }
 
   const onSubmit = async (e: FormEvent) => {
@@ -33,8 +34,8 @@ export default function LoginPage() {
     setBusy(true)
     setError(null)
     try {
-      await signIn(email.trim(), password)
-      navigate(from.startsWith('/login') ? '/account' : from, { replace: true })
+      const signedRole = await signIn(email.trim(), password)
+      navigate(hubForRole(signedRole, from), { replace: true })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Sign in failed')
     } finally {
@@ -53,10 +54,6 @@ export default function LoginPage() {
           <h1 className="text-2xl font-bold text-brand-green text-center">
             Sign in
           </h1>
-          <p className="text-sm text-brand-green/80 text-center">
-            Clients, drivers, and admins use the same sign-in. Your role opens
-            the right portal.
-          </p>
           {error && (
             <p className="text-sm text-red-800 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
               {error}
@@ -100,15 +97,8 @@ export default function LoginPage() {
                     key={r}
                     type="button"
                     onClick={async () => {
-                      await mockSignIn(r)
-                      navigate(
-                        r === 'admin'
-                          ? '/admin/pricing'
-                          : r === 'driver'
-                            ? '/driver'
-                            : '/account',
-                        { replace: true }
-                      )
+                      const signedRole = await mockSignIn(r)
+                      navigate(hubForRole(signedRole, from), { replace: true })
                     }}
                     className="text-xs min-h-11 rounded-lg border border-brand-gold text-brand-green hover:bg-brand-gold/10 capitalize"
                   >

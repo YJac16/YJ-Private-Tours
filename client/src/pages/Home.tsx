@@ -1,5 +1,4 @@
 import Navbar from '../components/Navbar'
-import MobileStickyNav from '../components/MobileStickyNav'
 import Hero from '../components/Hero'
 import About from '../components/About'
 import DriversFleetTabs from '../components/DriversFleetTabs'
@@ -11,7 +10,6 @@ export default function Home() {
   return (
     <>
       <Navbar />
-      <MobileStickyNav />
       <Hero />
       <About />
       <DriversFleetTabs />

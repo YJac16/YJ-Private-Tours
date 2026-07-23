@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { HiMenu, HiX } from 'react-icons/hi'
+import { HiMenu, HiOutlineMap, HiOutlineTruck, HiOutlineUser, HiX } from 'react-icons/hi'
+import { FaCalendarCheck } from 'react-icons/fa'
 import { useAuth } from '../lib/auth'
 
 const navLinks = [
@@ -10,6 +11,17 @@ const navLinks = [
   { hash: 'gallery', label: 'Gallery' },
   { hash: 'about', label: 'About' },
 ]
+
+const mobileQuickLinks = [
+  { to: '/#tours', label: 'Tours', icon: HiOutlineMap },
+  { to: '/#drivers', label: 'Drivers', icon: HiOutlineUser },
+  { to: '/#fleet', label: 'Fleet', icon: HiOutlineTruck },
+  { to: '/book', label: 'Book', icon: FaCalendarCheck },
+]
+
+const drawerLinks = navLinks.filter(
+  (l) => l.hash === 'gallery' || l.hash === 'about'
+)
 
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -39,30 +51,17 @@ export default function Navbar() {
     if (loading) return null
     if (!user) {
       return (
-        <>
-          <Link
-            to="/login"
-            onClick={() => setMobileOpen(false)}
-            className={
-              mobile
-                ? 'py-3 text-brand-green hover:bg-brand-cream-dark/50 rounded-lg px-2 font-medium min-h-11 flex items-center'
-                : 'px-3 py-2 text-brand-green hover:bg-brand-cream-dark/50 rounded-lg text-sm font-medium'
-            }
-          >
-            Sign in
-          </Link>
-          <Link
-            to="/signup"
-            onClick={() => setMobileOpen(false)}
-            className={
-              mobile
-                ? 'py-3 text-brand-green hover:bg-brand-cream-dark/50 rounded-lg px-2 font-medium min-h-11 flex items-center'
-                : 'px-3 py-2 text-brand-green hover:bg-brand-cream-dark/50 rounded-lg text-sm font-medium'
-            }
-          >
-            Sign up
-          </Link>
-        </>
+        <Link
+          to="/login"
+          onClick={() => setMobileOpen(false)}
+          className={
+            mobile
+              ? 'py-3 text-brand-green hover:bg-brand-cream-dark/50 rounded-lg px-2 min-h-11 font-medium flex items-center'
+              : 'px-3 py-2 text-brand-green hover:bg-brand-cream-dark/50 rounded-lg text-sm font-medium'
+          }
+        >
+          Sign in
+        </Link>
       )
     }
 
@@ -154,7 +153,7 @@ export default function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 bg-brand-cream/95 backdrop-blur border-b border-brand-cream-dark shadow-sm">
-      <div className="max-w-6xl mx-auto px-4 flex items-center justify-between h-16 md:h-18">
+      <div className="max-w-6xl mx-auto px-3 sm:px-4 flex items-center gap-1 h-16 md:h-18">
         <button
           type="button"
           onClick={goHome}
@@ -164,9 +163,30 @@ export default function Navbar() {
           <img
             src="/logo vector.png"
             alt="KhayrCape Experiences"
-            className="h-10 md:h-11 w-auto object-contain"
+            className="h-9 md:h-11 w-auto object-contain"
           />
         </button>
+
+        <nav
+          className="md:hidden flex-1 min-w-0 grid grid-cols-4 gap-0"
+          aria-label="Quick links"
+        >
+          {mobileQuickLinks.map((item) => {
+            const Icon = item.icon
+            return (
+              <Link
+                key={item.label}
+                to={item.to}
+                className="flex flex-col items-center justify-center py-1 px-0.5 min-w-0 text-brand-green hover:bg-brand-cream-dark/40 rounded-lg"
+              >
+                <Icon className="shrink-0 text-base" aria-hidden />
+                <span className="text-[10px] font-semibold leading-tight truncate w-full text-center">
+                  {item.label}
+                </span>
+              </Link>
+            )
+          })}
+        </nav>
 
         <nav className="hidden md:flex items-center gap-1 ml-auto">
           {navLinks.map((link) => (
@@ -190,7 +210,7 @@ export default function Navbar() {
         <button
           type="button"
           onClick={() => setMobileOpen((o) => !o)}
-          className="md:hidden p-2 rounded-lg text-brand-green hover:bg-brand-cream-dark/50 min-h-11 min-w-11 flex items-center justify-center"
+          className="md:hidden shrink-0 p-2 rounded-lg text-brand-green hover:bg-brand-cream-dark/50 min-h-11 min-w-11 flex items-center justify-center"
           aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
           aria-expanded={mobileOpen}
         >
@@ -211,7 +231,7 @@ export default function Navbar() {
           >
             Home
           </button>
-          {navLinks.map((link) => (
+          {drawerLinks.map((link) => (
             <Link
               key={link.hash}
               to={`/#${link.hash}`}
@@ -221,13 +241,6 @@ export default function Navbar() {
               {link.label}
             </Link>
           ))}
-          <Link
-            to="/book"
-            onClick={() => setMobileOpen(false)}
-            className="inline-flex items-center justify-center gap-2 py-3.5 mt-1 bg-brand-green text-brand-cream font-semibold rounded-lg min-h-12"
-          >
-            Book a tour
-          </Link>
           <AuthLinks mobile />
         </nav>
       </div>

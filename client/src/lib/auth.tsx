@@ -32,7 +32,7 @@ type AuthState = {
   accessToken: string | null
   role: UserRole | null
   supabaseConfigured: boolean
-  signIn: (email: string, password: string) => Promise<void>
+  signIn: (email: string, password: string) => Promise<UserRole>
   signUp: (email: string, password: string, fullName: string) => Promise<void>
   signOut: () => Promise<void>
   refreshProfile: () => Promise<void>
@@ -42,7 +42,7 @@ type AuthState = {
     email?: string | null
   }) => Promise<void>
   /** Dev-only when Supabase is not configured */
-  mockSignIn: (role: UserRole, email?: string) => Promise<void>
+  mockSignIn: (role: UserRole, email?: string) => Promise<UserRole>
 }
 
 const AuthContext = createContext<AuthState | null>(null)
@@ -203,8 +203,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signIn = useCallback(async (email: string, password: string) => {
     if (!supabase) throw new Error('Supabase is not configured')
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
     if (error) throw error
+    const authed = data.user
+    if (!authed) throw new Error('Sign in failed')
+    setSession(data.session)
+    setUser(authed)
+    setAccessToken(data.session?.access_token ?? null)
+    const p = await fetchProfile(authed.id)
+    setProfile(p)
+    return p?.role ?? 'client'
   }, [])
 
   const signUp = useCallback(
@@ -232,11 +243,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         role,
         id: `00000000-0000-4000-8000-${role.padEnd(12, '0').slice(0, 12)}`,
         email,
-        full_name: role === 'admin' ? 'Admin' : role === 'driver' ? 'Driver' : 'Guest Client',
+        full_name:
+          role === 'admin' ? 'Admin' : role === 'driver' ? 'Driver' : 'Guest Client',
         phone: null,
       }
       writeMock(stored)
       applyMock(stored)
+      return role
     },
     [applyMock]
   )
@@ -275,6 +288,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
+// Hook co-located with provider; allow non-component export for Fast Refresh.
+// eslint-disable-next-line react-refresh/only-export-components -- useAuth is the public API for AuthProvider
 export function useAuth() {
   const ctx = useContext(AuthContext)
   if (!ctx) throw new Error('useAuth must be used within AuthProvider')
