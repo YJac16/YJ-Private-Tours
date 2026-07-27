@@ -377,7 +377,7 @@ UPDATE tours SET
 WHERE slug = 'city';
 
 UPDATE tours SET
-  duration_label = 'Full day (approx. 7–8 hours)',
+  duration_label = 'Express (approx. 3.5–4.5 hours)',
   included_items = ARRAY['Private guide', 'Hotel pickup & drop-off', 'Bottled water', 'Scenic coastal drive'],
   excluded_items = ARRAY['Cape Point entrance fees', 'Penguin colony tickets', 'Meals', 'Gratuities'],
   price_per_person_cents = 90000,
@@ -538,7 +538,7 @@ UPDATE tours SET
 WHERE slug = 'city';
 
 UPDATE tours SET
-  duration_label = 'Full day (approx. 7–8 hours)',
+  duration_label = 'Express (approx. 3.5–4.5 hours)',
   included_items = ARRAY['Private guide', 'Hotel pickup & drop-off', 'Bottled water', 'Scenic coastal drive'],
   excluded_items = ARRAY['Cape Point entrance fees', 'Penguin colony tickets', 'Meals', 'Gratuities'],
   price_per_person_cents = 90000,
@@ -819,12 +819,27 @@ CREATE POLICY "Users update own profile"
   USING (auth.uid() = id)
   WITH CHECK (auth.uid() = id);
 
+-- Avoid RLS recursion: admin check via SECURITY DEFINER helper
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.profiles
+    WHERE id = auth.uid()
+      AND role = 'admin'
+  );
+$$;
+
+REVOKE ALL ON FUNCTION public.is_admin() FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.is_admin() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.is_admin() TO anon;
+
 DROP POLICY IF EXISTS "Admins read all profiles" ON profiles;
 CREATE POLICY "Admins read all profiles"
   ON profiles FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM profiles p
-      WHERE p.id = auth.uid() AND p.role = 'admin'
-    )
-  );
+  USING (public.is_admin());

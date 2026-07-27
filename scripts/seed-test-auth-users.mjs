@@ -106,7 +106,8 @@ async function ensureUser(u) {
       email: u.email,
       password: u.password,
       email_confirm: true,
-      user_metadata: { full_name: u.full_name },
+      user_metadata: { full_name: u.full_name, role: u.role },
+      app_metadata: { role: u.role },
     })
     if (error) throw error
     userId = data.user.id
@@ -115,7 +116,8 @@ async function ensureUser(u) {
     const { error } = await sb.auth.admin.updateUserById(userId, {
       password: u.password,
       email_confirm: true,
-      user_metadata: { full_name: u.full_name },
+      user_metadata: { full_name: u.full_name, role: u.role },
+      app_metadata: { role: u.role },
     })
     if (error) throw error
     console.log(`updated ${u.role}: ${u.email}`)

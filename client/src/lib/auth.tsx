@@ -71,17 +71,41 @@ function writeMock(v: MockStored | null) {
   else sessionStorage.setItem(MOCK_KEY, JSON.stringify(v))
 }
 
-async function fetchProfile(userId: string): Promise<Profile | null> {
-  if (!supabase) return null
+function roleFromUser(user: User | null | undefined): UserRole {
+  const meta = (user?.app_metadata?.role ||
+    user?.user_metadata?.role) as string | undefined
+  if (meta === 'admin' || meta === 'driver' || meta === 'client') return meta
+  return 'client'
+}
+
+function profileFromUser(user: User): Profile {
+  return {
+    id: user.id,
+    role: roleFromUser(user),
+    full_name:
+      (user.user_metadata?.full_name as string | undefined) ||
+      user.email ||
+      null,
+    phone: (user.user_metadata?.phone as string | undefined) || null,
+    email: user.email ?? null,
+  }
+}
+
+async function fetchProfile(user: User): Promise<Profile> {
+  if (!supabase) return profileFromUser(user)
   const { data, error } = await supabase
     .from('profiles')
     .select('id, role, full_name, phone, email')
-    .eq('id', userId)
+    .eq('id', user.id)
     .maybeSingle()
-  if (error || !data) return null
+  if (error) {
+    console.warn('fetchProfile failed', error.message)
+    return profileFromUser(user)
+  }
+  if (!data) return profileFromUser(user)
   return {
     id: data.id,
-    role: (data.role as UserRole) || 'client',
+    role: (data.role as UserRole) || roleFromUser(user),
     full_name: data.full_name,
     phone: data.phone,
     email: data.email,
@@ -118,7 +142,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshProfile = useCallback(async () => {
     if (!supabaseConfigured || !user) return
-    const p = await fetchProfile(user.id)
+    const p = await fetchProfile(user)
     setProfile(p)
   }, [user])
 
@@ -141,7 +165,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           })
           .eq('id', user.id)
         if (error) throw error
-        const p = await fetchProfile(user.id)
+        const p = await fetchProfile(user)
         setProfile(p)
         return
       }
@@ -173,7 +197,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(data.session?.user ?? null)
       setAccessToken(data.session?.access_token ?? null)
       if (data.session?.user) {
-        const p = await fetchProfile(data.session.user.id)
+        const p = await fetchProfile(data.session.user)
         if (!cancelled) setProfile(p)
       }
       if (!cancelled) setLoading(false)
@@ -188,7 +212,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(next?.user ?? null)
       setAccessToken(next?.access_token ?? null)
       if (next?.user) {
-        const p = await fetchProfile(next.user.id)
+        const p = await fetchProfile(next.user)
         setProfile(p)
       } else {
         setProfile(null)
@@ -213,9 +237,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSession(data.session)
     setUser(authed)
     setAccessToken(data.session?.access_token ?? null)
-    const p = await fetchProfile(authed.id)
+    const p = await fetchProfile(authed)
     setProfile(p)
-    return p?.role ?? 'client'
+    return p.role
   }, [])
 
   const signUp = useCallback(
@@ -261,7 +285,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user,
       profile,
       accessToken,
-      role: profile?.role ?? null,
+      role: profile?.role ?? (user ? 'client' : null),
       supabaseConfigured,
       signIn,
       signUp,

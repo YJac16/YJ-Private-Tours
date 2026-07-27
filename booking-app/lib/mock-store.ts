@@ -233,7 +233,7 @@ const tours: MockTour[] = [
     name: 'Cape Point',
     description: 'Cape Peninsula and Cape Point — Chapman’s Peak, penguins, and dramatic cliffs.',
     slug: 'peninsula',
-    duration_label: 'Full day (approx. 7–8 hours)',
+    duration_label: 'Express (approx. 3.5–4.5 hours)',
     included_items: ['Private guide', 'Hotel pickup & drop-off', 'Bottled water', 'Scenic coastal drive'],
     excluded_items: ['Cape Point entrance fees', 'Penguin colony tickets', 'Meals', 'Gratuities'],
     image_url: '/cape-point.jpg',
