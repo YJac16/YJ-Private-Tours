@@ -284,7 +284,7 @@ export default function BookPage() {
   const handlePay = async () => {
     if (!selectedTour || !selectedVehicle || !selectedDriver) return
     if (!termsAccepted) {
-      setError('Please accept the Terms & Conditions.')
+      setError('Please accept the Terms & Conditions and Privacy Policy.')
       setStep(4)
       return
     }
@@ -817,6 +817,14 @@ export default function BookPage() {
                             className="underline font-semibold"
                           >
                             Terms &amp; Conditions
+                          </Link>{' '}
+                          and{' '}
+                          <Link
+                            to="/privacy"
+                            target="_blank"
+                            className="underline font-semibold"
+                          >
+                            Privacy Policy
                           </Link>
                         </span>
                       </label>

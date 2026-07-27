@@ -89,7 +89,7 @@ function AccountInner() {
             <button
               type="button"
               onClick={() => signOut()}
-              className="text-sm underline text-brand-green min-h-11"
+              className="text-sm text-brand-green underline min-h-11"
             >
               Sign out
             </button>

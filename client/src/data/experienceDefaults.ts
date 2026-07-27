@@ -44,9 +44,8 @@ export const EXPERIENCE_DEFAULTS: Record<string, ExperienceContent> = {
     hero_image: '/bo-kaap.jpg',
     gallery_images: [
       '/bo-kaap.jpg',
-      '/campsbay.JPG',
-      '/Table Mountain.jpg',
-      '/cape-point.jpg',
+      '/bo-kaap-table-mountain.JPG',
+      '/kirstenbosch-botanical-gardens.jpg',
     ],
     timeline: [
       {
@@ -70,7 +69,7 @@ export const EXPERIENCE_DEFAULTS: Record<string, ExperienceContent> = {
           'Panoramic views across the city bowl, harbour, and toward Robben Island and Table Mountain. Ideal photography opportunities.',
         duration: '20–30 min',
         icon: 'viewpoint',
-        image: '/Table Mountain.jpg',
+        image: '/bo-kaap-table-mountain.JPG',
       },
       {
         title: "Company's Garden",
@@ -78,6 +77,7 @@ export const EXPERIENCE_DEFAULTS: Record<string, ExperienceContent> = {
           'Stroll through historic gardens near Parliament — a calm green pause in the heart of the city.',
         duration: '25–35 min',
         icon: 'garden',
+        image: '/kirstenbosch-botanical-gardens.jpg',
       },
       {
         title: 'Historic City Drive',
@@ -92,7 +92,6 @@ export const EXPERIENCE_DEFAULTS: Record<string, ExperienceContent> = {
           'Optional harbour stroll, shopping, coffee stop, and photography before returning.',
         duration: '30–45 min',
         icon: 'harbour',
-        image: '/campsbay.JPG',
       },
       {
         title: 'Return',
@@ -159,9 +158,9 @@ export const EXPERIENCE_DEFAULTS: Record<string, ExperienceContent> = {
     hero_image: '/cape-point.jpg',
     gallery_images: [
       '/cape-point.jpg',
-      '/campsbay.JPG',
-      '/Table Mountain.jpg',
-      '/bo-kaap.jpg',
+      '/chapmans-peak.jpg',
+      '/boulders-beach.jpg',
+      '/muizenberg.jpg',
     ],
     timeline: [
       {
@@ -177,7 +176,7 @@ export const EXPERIENCE_DEFAULTS: Record<string, ExperienceContent> = {
           'One of the world’s great coastal drives — sweeping ocean views and memorable photo stops.',
         duration: '30–40 min',
         icon: 'coast',
-        image: '/campsbay.JPG',
+        image: '/chapmans-peak.jpg',
       },
       {
         title: 'Cape Point',
@@ -193,6 +192,7 @@ export const EXPERIENCE_DEFAULTS: Record<string, ExperienceContent> = {
           'Optional stop to see African penguins when timing and tickets allow.',
         duration: '30–45 min',
         icon: 'wildlife',
+        image: '/boulders-beach.jpg',
       },
       {
         title: 'Coastal Return',
@@ -200,6 +200,7 @@ export const EXPERIENCE_DEFAULTS: Record<string, ExperienceContent> = {
           'Scenic return toward Cape Town with flexible coffee or viewpoint stops.',
         duration: '45–60 min',
         icon: 'coast',
+        image: '/muizenberg.jpg',
       },
       {
         title: 'Return',
@@ -267,9 +268,10 @@ export const EXPERIENCE_DEFAULTS: Record<string, ExperienceContent> = {
     hero_image: '/campsbay.JPG',
     gallery_images: [
       '/campsbay.JPG',
-      '/Table Mountain.jpg',
-      '/bo-kaap.jpg',
-      '/cape-point.jpg',
+      '/campsbay-1.JPG',
+      '/clifton.JPG',
+      '/blouberg.JPG',
+      '/blouberg-1.JPG',
     ],
     timeline: [
       {
@@ -285,7 +287,7 @@ export const EXPERIENCE_DEFAULTS: Record<string, ExperienceContent> = {
           'Scenic drive along the coastline with stops for views and photographs.',
         duration: '30–40 min',
         icon: 'coast',
-        image: '/campsbay.JPG',
+        image: '/clifton.JPG',
       },
       {
         title: 'Camps Bay & Sunset Viewpoints',
@@ -293,7 +295,7 @@ export const EXPERIENCE_DEFAULTS: Record<string, ExperienceContent> = {
           'Golden-hour light over Camps Bay and nearby viewpoints — timed for atmosphere and photography.',
         duration: '45–60 min',
         icon: 'sunset',
-        image: '/Table Mountain.jpg',
+        image: '/campsbay.JPG',
       },
       {
         title: 'Optional Coffee Stop',
@@ -301,6 +303,7 @@ export const EXPERIENCE_DEFAULTS: Record<string, ExperienceContent> = {
           'Optional short pause for coffee or a harbour moment before returning.',
         duration: '20–30 min',
         icon: 'cafe',
+        image: '/campsbay-1.JPG',
       },
       {
         title: 'Return',
@@ -364,12 +367,7 @@ export const EXPERIENCE_DEFAULTS: Record<string, ExperienceContent> = {
     detailed_description:
       'This private winelands experience focuses on scenery, culture, and comfortable pacing rather than rushed tasting rooms. Ideal for Muslim-friendly travellers, families, and guests who want beautiful landscapes with thoughtful stop recommendations.\n\nYour registered guide shares local insight across Stellenbosch / Franschhoek vistas while adapting the day to your preferences. Every Khayr Cape Experience remains private and personalised — no shared groups, with hotel or Airbnb pickup and an air-conditioned vehicle throughout.',
     hero_image: '/winelands.jpg',
-    gallery_images: [
-      '/winelands.jpg',
-      '/cape-point.jpg',
-      '/bo-kaap.jpg',
-      '/campsbay.JPG',
-    ],
+    gallery_images: ['/winelands.jpg', '/proteas.jpg'],
     timeline: [
       {
         title: 'Pickup',
@@ -392,6 +390,7 @@ export const EXPERIENCE_DEFAULTS: Record<string, ExperienceContent> = {
           'Guided scenic exploration with flexible cultural and landscape stops suited to your group.',
         duration: '2–3 hours',
         icon: 'culture',
+        image: '/proteas.jpg',
       },
       {
         title: 'Halal-Friendly Pause',

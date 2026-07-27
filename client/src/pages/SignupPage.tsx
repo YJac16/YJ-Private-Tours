@@ -10,6 +10,7 @@ export default function SignupPage() {
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [privacyAccepted, setPrivacyAccepted] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -24,6 +25,9 @@ export default function SignupPage() {
     setError(null)
     setMessage(null)
     try {
+      if (!privacyAccepted) {
+        throw new Error('Please accept the Privacy Policy and Terms & Conditions.')
+      }
       if (!supabaseConfigured) {
         throw new Error(
           'Supabase is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.'
@@ -97,9 +101,28 @@ export default function SignupPage() {
               className="mt-1 w-full min-h-12 rounded-lg border border-brand-cream-dark px-3"
             />
           </label>
+          <label className="flex items-start gap-3 text-sm text-brand-green cursor-pointer">
+            <input
+              type="checkbox"
+              checked={privacyAccepted}
+              onChange={(e) => setPrivacyAccepted(e.target.checked)}
+              className="mt-1 size-4 accent-brand-green"
+              required
+            />
+            <span>
+              I agree to the{' '}
+              <Link to="/privacy" target="_blank" className="underline font-semibold">
+                Privacy Policy
+              </Link>{' '}
+              and{' '}
+              <Link to="/terms" target="_blank" className="underline font-semibold">
+                Terms &amp; Conditions
+              </Link>
+            </span>
+          </label>
           <button
             type="submit"
-            disabled={busy}
+            disabled={busy || !privacyAccepted}
             className="w-full min-h-12 rounded-lg bg-brand-green text-brand-cream font-semibold disabled:opacity-50"
           >
             {busy ? 'Creating…' : 'Sign up'}

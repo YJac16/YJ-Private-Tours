@@ -163,7 +163,7 @@ export default function DriversTab({ token }: Props) {
         <label className={labelClass}>
           Bio
           <textarea
-            className={`${inputClass} min-h-20 py-2`}
+            className={`${inputClass} py-2 min-h-20`}
             value={form.bio}
             onChange={(e) => setForm((f) => ({ ...f, bio: e.target.value }))}
           />
@@ -255,7 +255,7 @@ export default function DriversTab({ token }: Props) {
                   <button
                     type="button"
                     onClick={() => startEdit(d)}
-                    className="text-sm underline text-brand-green min-h-11"
+                    className="text-sm text-brand-green underline min-h-11"
                   >
                     Edit
                   </button>

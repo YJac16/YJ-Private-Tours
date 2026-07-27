@@ -4,6 +4,9 @@
   "installCommand": "npm ci && cd client && npm ci",
   "framework": null,
   "rewrites": [
-    { "source": "/((?!api/).*)", "destination": "/index.html" }
+    {
+      "source": "/((?!api/|robots\\.txt|sitemap\\.xml).*)",
+      "destination": "/index.html"
+    }
   ]
 }

@@ -6,6 +6,9 @@ import ExperienceDetail from './pages/ExperienceDetail'
 import Checkout from './pages/Checkout'
 import GalleryPage from './pages/GalleryPage'
 import TermsPage from './pages/TermsPage'
+import PrivacyPage from './pages/PrivacyPage'
+import CookiesPage from './pages/CookiesPage'
+import NotFoundPage from './pages/NotFoundPage'
 import BookPage from './pages/BookPage'
 import DriverSchedulePage from './pages/DriverSchedulePage'
 import AdminPricingPage from './pages/AdminPricingPage'
@@ -15,6 +18,7 @@ import AccountPage from './pages/AccountPage'
 import ScrollToTop from './components/ScrollToTop'
 import ScrollToHash from './components/ScrollToHash'
 import FloatingWhatsApp from './components/FloatingWhatsApp'
+import CookieBanner from './components/CookieBanner'
 
 function App() {
   return (
@@ -34,9 +38,13 @@ function App() {
         <Route path="/checkout/:tourId" element={<Checkout />} />
         <Route path="/gallery" element={<GalleryPage />} />
         <Route path="/terms" element={<TermsPage />} />
+        <Route path="/privacy" element={<PrivacyPage />} />
+        <Route path="/cookies" element={<CookiesPage />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
       <ScrollToTop />
       <FloatingWhatsApp />
+      <CookieBanner />
     </BrowserRouter>
   )
 }

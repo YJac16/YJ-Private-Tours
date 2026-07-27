@@ -1,19 +1,22 @@
-import { useState } from 'react'
-import type { FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
-import axios from 'axios'
+import { type FormEvent, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { whatsappWithMessage } from '../lib/whatsappLinks'
 
 const TOUR_OPTIONS = [
   { value: '', label: 'Select a tour...' },
-  { value: 'cape-peninsula', label: 'Cape Peninsula Private Tour (Half-Day)' },
-  { value: 'bo-kaap', label: 'Bo-Kaap & Cultural Heritage Tour' },
-  { value: 'winelands', label: 'Cape Winelands Tour (Halal-friendly options)' },
-  { value: 'other', label: 'Other / Not sure yet' },
+  { value: 'Cape Peninsula Experience', label: 'Cape Peninsula Experience' },
+  { value: 'Cape Town City & Culture Experience', label: 'Cape Town City & Culture Experience' },
+  { value: 'Halal-Friendly Winelands Experience', label: 'Halal-Friendly Winelands Experience' },
+  { value: 'Ocean Sunset Experience', label: 'Ocean Sunset Experience' },
+  { value: 'Other / Not sure yet', label: 'Other / Not sure yet' },
 ]
 
+/**
+ * WhatsApp-based enquiry form (no server endpoint).
+ * Prefer the floating WhatsApp button or /book for conversion; this component
+ * can be mounted on a page if a structured enquiry section is needed.
+ */
 export default function ContactEnquiry() {
-  const navigate = useNavigate()
-  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [form, setForm] = useState({
     name: '',
@@ -23,12 +26,14 @@ export default function ContactEnquiry() {
     message: '',
   })
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  ) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }))
     setError(null)
   }
 
-  const handleSubmit = async (e: FormEvent) => {
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
     setError(null)
 
@@ -36,35 +41,21 @@ export default function ContactEnquiry() {
       setError('Please enter your name.')
       return
     }
-    if (!form.email.trim()) {
-      setError('Please enter your email.')
-      return
-    }
     if (!form.tourInterest) {
       setError('Please select a tour interest.')
       return
     }
 
-    setLoading(true)
-    try {
-      // In dev, Vite proxy forwards /api to backend; in prod use full API URL via env
-      const apiUrl = import.meta.env.VITE_API_URL || '/api'
-      await axios.post(`${apiUrl}/enquiry`, {
-        name: form.name.trim(),
-        email: form.email.trim(),
-        phone: form.phone.trim() || undefined,
-        tourInterest: form.tourInterest,
-        message: form.message.trim() || undefined,
-      })
-      navigate('/thank-you')
-    } catch (err: unknown) {
-      const message = axios.isAxiosError(err) && err.response?.data?.message
-        ? err.response.data.message
-        : 'Something went wrong. Please try again or contact us on WhatsApp.'
-      setError(message)
-    } finally {
-      setLoading(false)
-    }
+    const lines = [
+      `Hello KhayrCape — enquiry from the website.`,
+      `Name: ${form.name.trim()}`,
+      form.email.trim() ? `Email: ${form.email.trim()}` : null,
+      form.phone.trim() ? `Phone: ${form.phone.trim()}` : null,
+      `Tour interest: ${form.tourInterest}`,
+      form.message.trim() ? `Message: ${form.message.trim()}` : null,
+    ].filter(Boolean)
+
+    window.open(whatsappWithMessage(lines.join('\n')), '_blank', 'noopener,noreferrer')
   }
 
   return (
@@ -73,98 +64,94 @@ export default function ContactEnquiry() {
         <h2 className="text-3xl md:text-4xl font-bold text-brand-green mb-4 text-center">
           Contact / Enquiry
         </h2>
-        <p className="text-brand-green/90 text-center mb-10">
-          Send us a message and we’ll get back to you as soon as we can.
+        <p className="text-brand-green/90 text-center mb-4">
+          Prefer WhatsApp? Fill in a few details and we&apos;ll open a pre-filled message for you.
         </p>
-        <form onSubmit={handleSubmit} className="bg-brand-cream-light rounded-xl shadow-md border border-brand-cream-dark p-6 md:p-8 space-y-5">
+        <p className="text-brand-green/80 text-center text-sm mb-10">
+          Or{' '}
+          <Link to="/book" className="underline font-semibold text-brand-green">
+            book online
+          </Link>{' '}
+          for instant availability and secure payment.
+        </p>
+        <form
+          onSubmit={handleSubmit}
+          className="bg-brand-cream-light rounded-xl shadow-md border border-brand-cream-dark p-6 md:p-8 space-y-5"
+        >
           {error && (
-            <div className="p-3 rounded-lg bg-red-50 text-red-700 text-sm border border-red-200">
+            <p className="text-sm text-red-800 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
               {error}
-            </div>
+            </p>
           )}
-          <div>
-            <label htmlFor="name" className="block text-sm font-medium text-brand-green mb-1">
-              Name <span className="text-red-500">*</span>
-            </label>
+          <label className="block text-sm text-brand-green">
+            Name *
             <input
-              type="text"
-              id="name"
               name="name"
+              type="text"
               required
               value={form.name}
               onChange={handleChange}
-              className="w-full px-4 py-2 rounded-lg border border-brand-cream-dark bg-brand-cream focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none text-brand-green placeholder:text-brand-green/50"
-              placeholder="Your name"
+              className="mt-1 w-full min-h-12 rounded-lg border border-brand-cream-dark px-3 bg-white"
             />
-          </div>
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-brand-green mb-1">
-              Email <span className="text-red-500">*</span>
-            </label>
+          </label>
+          <label className="block text-sm text-brand-green">
+            Email
             <input
-              type="email"
-              id="email"
               name="email"
-              required
+              type="email"
               value={form.email}
               onChange={handleChange}
-              className="w-full px-4 py-2 rounded-lg border border-brand-cream-dark bg-brand-cream focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none text-brand-green placeholder:text-brand-green/50"
-              placeholder="your@email.com"
+              className="mt-1 w-full min-h-12 rounded-lg border border-brand-cream-dark px-3 bg-white"
             />
-          </div>
-          <div>
-            <label htmlFor="phone" className="block text-sm font-medium text-brand-green mb-1">
-              Phone <span className="text-brand-green/60">(optional)</span>
-            </label>
+          </label>
+          <label className="block text-sm text-brand-green">
+            Phone
             <input
-              type="tel"
-              id="phone"
               name="phone"
+              type="tel"
               value={form.phone}
               onChange={handleChange}
-              className="w-full px-4 py-2 rounded-lg border border-brand-cream-dark bg-brand-cream focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none text-brand-green placeholder:text-brand-green/50"
-              placeholder="+27..."
+              className="mt-1 w-full min-h-12 rounded-lg border border-brand-cream-dark px-3 bg-white"
             />
-          </div>
-          <div>
-            <label htmlFor="tourInterest" className="block text-sm font-medium text-brand-green mb-1">
-              Tour interest <span className="text-red-500">*</span>
-            </label>
+          </label>
+          <label className="block text-sm text-brand-green">
+            Tour interest *
             <select
-              id="tourInterest"
               name="tourInterest"
               required
               value={form.tourInterest}
               onChange={handleChange}
-              className="w-full px-4 py-2 rounded-lg border border-brand-cream-dark bg-brand-cream focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none text-brand-green"
+              className="mt-1 w-full min-h-12 rounded-lg border border-brand-cream-dark px-3 bg-white"
             >
               {TOUR_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
+                <option key={opt.value || 'empty'} value={opt.value}>
                   {opt.label}
                 </option>
               ))}
             </select>
-          </div>
-          <div>
-            <label htmlFor="message" className="block text-sm font-medium text-brand-green mb-1">
-              Message
-            </label>
+          </label>
+          <label className="block text-sm text-brand-green">
+            Message
             <textarea
-              id="message"
               name="message"
               rows={4}
               value={form.message}
               onChange={handleChange}
-              className="w-full px-4 py-2 rounded-lg border border-brand-cream-dark bg-brand-cream focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none resize-none text-brand-green placeholder:text-brand-green/50"
-              placeholder="Tell us your dates, group size, or any questions..."
+              className="mt-1 w-full rounded-lg border border-brand-cream-dark px-3 py-2 bg-white"
             />
-          </div>
+          </label>
+          <p className="text-xs text-brand-green/70">
+            By continuing you acknowledge our{' '}
+            <Link to="/privacy" className="underline font-medium">
+              Privacy Policy
+            </Link>
+            . Your message opens in WhatsApp — no form data is stored on this website.
+          </p>
           <button
             type="submit"
-            disabled={loading}
-            className="w-full py-3 bg-brand-green hover:bg-brand-green-dark disabled:bg-brand-green/60 text-brand-cream font-medium rounded-lg transition-colors"
+            className="w-full min-h-12 rounded-lg bg-brand-green text-brand-cream font-semibold hover:opacity-95"
           >
-            {loading ? 'Sending...' : 'Submit Enquiry'}
+            Continue on WhatsApp
           </button>
         </form>
       </div>

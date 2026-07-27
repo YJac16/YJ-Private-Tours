@@ -23,11 +23,17 @@ export default function TermsPage() {
             <section>
               <h2 className="text-lg sm:text-xl font-bold text-brand-green mb-3">1. Booking Process</h2>
               <p className="mb-3">All tours are private and operate on a pre-booking basis.</p>
-              <p className="mb-2 font-medium text-brand-green">To secure your booking:</p>
+              <p className="mb-2 font-medium text-brand-green">You can book in either of these ways:</p>
               <ul className="list-disc pl-5 space-y-1.5">
-                <li>Enquiries are made via WhatsApp.</li>
-                <li>Availability will be confirmed.</li>
-                <li>A secure payment link will be sent via WhatsApp using Yoco.</li>
+                <li>
+                  <strong className="text-brand-green">Online:</strong> complete the booking flow on this
+                  website (select experience, date, vehicle, and guest details), then pay securely via Yoco
+                  checkout.
+                </li>
+                <li>
+                  <strong className="text-brand-green">WhatsApp:</strong> message us to check availability;
+                  we may send a Yoco payment link to confirm.
+                </li>
               </ul>
               <p className="mt-3">Bookings are only confirmed once payment has been received.</p>
             </section>
@@ -37,7 +43,10 @@ export default function TermsPage() {
             <section>
               <h2 className="text-lg sm:text-xl font-bold text-brand-green mb-3">2. Payment</h2>
               <ul className="list-disc pl-5 space-y-1.5">
-                <li>Payments are processed securely via a Yoco payment link sent on WhatsApp.</li>
+                <li>
+                  Payments are processed securely via Yoco (online checkout or a payment link sent on
+                  WhatsApp).
+                </li>
                 <li>Full payment is required to confirm your booking.</li>
                 <li>Prices are quoted in South African Rand (ZAR).</li>
               </ul>
@@ -135,8 +144,32 @@ export default function TermsPage() {
             <hr className="border-brand-cream-dark" />
 
             <section>
-              <h2 className="text-lg sm:text-xl font-bold text-brand-green mb-3">10. Contact</h2>
-              <p>For all bookings and enquiries, please contact via WhatsApp.</p>
+              <h2 className="text-lg sm:text-xl font-bold text-brand-green mb-3">10. Privacy</h2>
+              <p>
+                Personal information collected for bookings and accounts is handled as described in our{' '}
+                <Link to="/privacy" className="underline font-semibold">
+                  Privacy Policy
+                </Link>
+                .
+              </p>
+            </section>
+
+            <hr className="border-brand-cream-dark" />
+
+            <section>
+              <h2 className="text-lg sm:text-xl font-bold text-brand-green mb-3">11. Contact</h2>
+              <p>
+                For bookings and enquiries, use the online booking page or WhatsApp at{' '}
+                <a
+                  href="https://wa.me/27823277446"
+                  className="underline font-medium"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  +27 82 327 7446
+                </a>
+                .
+              </p>
             </section>
 
             <hr className="border-brand-cream-dark" />
