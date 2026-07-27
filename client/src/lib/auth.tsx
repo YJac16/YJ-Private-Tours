@@ -31,16 +31,23 @@ type AuthState = {
   profile: Profile | null
   accessToken: string | null
   role: UserRole | null
+  emailConfirmed: boolean
   supabaseConfigured: boolean
   signIn: (email: string, password: string) => Promise<UserRole>
-  signUp: (email: string, password: string, fullName: string) => Promise<void>
+  /** Returns whether a session was created immediately (false when email confirm is required). */
+  signUp: (
+    email: string,
+    password: string,
+    fullName: string
+  ) => Promise<{ sessionCreated: boolean }>
   signOut: () => Promise<void>
   refreshProfile: () => Promise<void>
+  resendEmailConfirmation: (email?: string) => Promise<void>
   updateProfile: (patch: {
     full_name?: string
     phone?: string | null
     email?: string | null
-  }) => Promise<void>
+  }) => Promise<{ emailChangePending?: boolean }>
   /** Dev-only when Supabase is not configured */
   mockSignIn: (role: UserRole, email?: string) => Promise<UserRole>
 }
@@ -55,6 +62,11 @@ type MockStored = {
   email: string
   full_name: string
   phone: string | null
+}
+
+function authCallbackUrl(): string {
+  if (typeof window === 'undefined') return ''
+  return `${window.location.origin}/auth/callback`
 }
 
 function readMock(): MockStored | null {
@@ -76,6 +88,11 @@ function roleFromUser(user: User | null | undefined): UserRole {
     user?.user_metadata?.role) as string | undefined
   if (meta === 'admin' || meta === 'driver' || meta === 'client') return meta
   return 'client'
+}
+
+function isEmailConfirmed(user: User | null | undefined): boolean {
+  if (!user) return false
+  return Boolean(user.email_confirmed_at)
 }
 
 function profileFromUser(user: User): Profile {
@@ -108,7 +125,8 @@ async function fetchProfile(user: User): Promise<Profile> {
     role: (data.role as UserRole) || roleFromUser(user),
     full_name: data.full_name,
     phone: data.phone,
-    email: data.email,
+    // Prefer Auth email as source of truth for login identity
+    email: user.email ?? data.email,
   }
 }
 
@@ -129,7 +147,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     const token = buildMockAccessToken(m.role, m.id, m.email)
     setAccessToken(token)
-    setUser({ id: m.id, email: m.email } as User)
+    setUser({
+      id: m.id,
+      email: m.email,
+      email_confirmed_at: new Date().toISOString(),
+    } as User)
     setSession({ access_token: token } as Session)
     setProfile({
       id: m.id,
@@ -146,6 +168,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfile(p)
   }, [user])
 
+  const resendEmailConfirmation = useCallback(async (email?: string) => {
+    if (!supabase) throw new Error('Supabase is not configured')
+    const target = (email || user?.email || '').trim()
+    if (!target) throw new Error('No email to confirm')
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email: target,
+      options: { emailRedirectTo: authCallbackUrl() },
+    })
+    if (error) throw error
+  }, [user])
+
   const updateProfile = useCallback(
     async (patch: {
       full_name?: string
@@ -153,21 +187,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email?: string | null
     }) => {
       if (supabaseConfigured && supabase && user) {
+        let emailChangePending = false
+        const nextEmail = patch.email?.trim()
+        const currentAuthEmail = (user.email || '').toLowerCase()
+
+        if (nextEmail && nextEmail.toLowerCase() !== currentAuthEmail) {
+          const { error: authEmailError } = await supabase.auth.updateUser(
+            { email: nextEmail },
+            { emailRedirectTo: authCallbackUrl() }
+          )
+          if (authEmailError) throw authEmailError
+          emailChangePending = true
+        }
+
+        const profilePatch: Record<string, unknown> = {
+          updated_at: new Date().toISOString(),
+        }
+        if (patch.full_name !== undefined) profilePatch.full_name = patch.full_name
+        if (patch.phone !== undefined) profilePatch.phone = patch.phone
+        // Only sync profiles.email when it matches Auth (no pending change)
+        if (nextEmail && !emailChangePending) {
+          profilePatch.email = nextEmail
+        }
+
         const { error } = await supabase
           .from('profiles')
-          .update({
-            ...(patch.full_name !== undefined
-              ? { full_name: patch.full_name }
-              : {}),
-            ...(patch.phone !== undefined ? { phone: patch.phone } : {}),
-            ...(patch.email !== undefined ? { email: patch.email } : {}),
-            updated_at: new Date().toISOString(),
-          })
+          .update(profilePatch)
           .eq('id', user.id)
         if (error) throw error
-        const p = await fetchProfile(user)
-        setProfile(p)
-        return
+
+        const { data: refreshed } = await supabase.auth.getUser()
+        if (refreshed.user) {
+          setUser(refreshed.user)
+          const p = await fetchProfile(refreshed.user)
+          setProfile(p)
+        } else {
+          const p = await fetchProfile(user)
+          setProfile(p)
+        }
+        return { emailChangePending }
       }
       const m = readMock()
       if (!m) throw new Error('Not signed in')
@@ -179,6 +237,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       writeMock(next)
       applyMock(next)
+      return {}
     },
     [user, applyMock]
   )
@@ -245,12 +304,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signUp = useCallback(
     async (email: string, password: string, fullName: string) => {
       if (!supabase) throw new Error('Supabase is not configured')
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        options: { data: { full_name: fullName } },
+        options: {
+          data: { full_name: fullName },
+          emailRedirectTo: authCallbackUrl(),
+        },
       })
       if (error) throw error
+      return { sessionCreated: Boolean(data.session) }
     },
     []
   )
@@ -278,6 +341,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [applyMock]
   )
 
+  const emailConfirmed = supabaseConfigured
+    ? isEmailConfirmed(user)
+    : Boolean(user)
+
   const value = useMemo<AuthState>(
     () => ({
       loading,
@@ -286,11 +353,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       profile,
       accessToken,
       role: profile?.role ?? (user ? 'client' : null),
+      emailConfirmed,
       supabaseConfigured,
       signIn,
       signUp,
       signOut,
       refreshProfile,
+      resendEmailConfirmation,
       updateProfile,
       mockSignIn,
     }),
@@ -300,10 +369,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user,
       profile,
       accessToken,
+      emailConfirmed,
       signIn,
       signUp,
       signOut,
       refreshProfile,
+      resendEmailConfirmation,
       updateProfile,
       mockSignIn,
     ]

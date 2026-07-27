@@ -11,22 +11,33 @@ import {
 import { formatZar } from '../lib/pricing'
 
 function AccountInner() {
-  const { profile, accessToken, updateProfile, signOut, role } = useAuth()
+  const {
+    profile,
+    accessToken,
+    updateProfile,
+    signOut,
+    role,
+    emailConfirmed,
+    resendEmailConfirmation,
+    user,
+  } = useAuth()
   const [fullName, setFullName] = useState(profile?.full_name || '')
-  const [email, setEmail] = useState(profile?.email || '')
+  const [email, setEmail] = useState(profile?.email || user?.email || '')
   const [phone, setPhone] = useState(profile?.phone || '')
   const [note, setNote] = useState('')
   const [bookings, setBookings] = useState<AccountBooking[]>([])
   const [saving, setSaving] = useState(false)
+  const [resending, setResending] = useState(false)
   const [loadingBookings, setLoadingBookings] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
+  const [info, setInfo] = useState<string | null>(null)
 
   useEffect(() => {
     setFullName(profile?.full_name || '')
-    setEmail(profile?.email || '')
+    setEmail(profile?.email || user?.email || '')
     setPhone(profile?.phone || '')
-  }, [profile])
+  }, [profile, user])
 
   useEffect(() => {
     if (!accessToken) return
@@ -54,17 +65,40 @@ function AccountInner() {
     setSaving(true)
     setError(null)
     setSaved(false)
+    setInfo(null)
     try {
-      await updateProfile({
+      const result = await updateProfile({
         full_name: fullName.trim(),
         email: email.trim(),
         phone: phone.trim() || null,
       })
-      setSaved(true)
+      if (result.emailChangePending) {
+        setInfo(
+          'Check your inbox to confirm the new email address. Your login email updates after you click the link.'
+        )
+      } else {
+        setSaved(true)
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not save profile')
     } finally {
       setSaving(false)
+    }
+  }
+
+  const onResend = async () => {
+    setResending(true)
+    setError(null)
+    setInfo(null)
+    try {
+      await resendEmailConfirmation(email.trim() || user?.email || undefined)
+      setInfo('Confirmation email sent. Check your inbox (and spam folder).')
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : 'Could not resend confirmation email'
+      )
+    } finally {
+      setResending(false)
     }
   }
 
@@ -105,6 +139,11 @@ function AccountInner() {
               Profile saved.
             </p>
           )}
+          {info && (
+            <p className="text-sm text-brand-green bg-brand-cream border border-brand-cream-dark rounded-xl px-3 py-2">
+              {info}
+            </p>
+          )}
 
           <form
             onSubmit={onSave}
@@ -120,16 +159,35 @@ function AccountInner() {
                 required
               />
             </label>
-            <label className="block text-sm text-brand-green">
-              Email
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 w-full min-h-12 rounded-xl border border-brand-cream-dark px-3"
-                required
-              />
-            </label>
+            <div className="space-y-2">
+              <label className="block text-sm text-brand-green">
+                Email
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="mt-1 w-full min-h-12 rounded-xl border border-brand-cream-dark px-3"
+                  required
+                />
+              </label>
+              <div className="flex flex-wrap items-center gap-3 text-sm">
+                {emailConfirmed ? (
+                  <span className="text-green-800 font-medium">Verified</span>
+                ) : (
+                  <>
+                    <span className="text-amber-900 font-medium">Unverified</span>
+                    <button
+                      type="button"
+                      onClick={onResend}
+                      disabled={resending}
+                      className="underline text-brand-green min-h-11 disabled:opacity-50"
+                    >
+                      {resending ? 'Sending…' : 'Resend confirmation'}
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
             <label className="block text-sm text-brand-green">
               Phone
               <input

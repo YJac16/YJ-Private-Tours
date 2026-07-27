@@ -84,7 +84,7 @@ export async function notifyDriverBooking(
   details: BookingEmailDetails,
   kind: 'created' | 'paid' = 'created'
 ): Promise<{ sent: boolean; reason?: string }> {
-  const to = process.env.DRIVER_NOTIFY_EMAIL || 'yaseenjacobs97@gmail.com'
+  const to = process.env.DRIVER_NOTIFY_EMAIL || 'yaseenjacobs@icloud.com'
   const { subject, text, html } = buildBodies(details, kind)
 
   // Prefer Resend if configured

@@ -15,6 +15,7 @@ import AdminPricingPage from './pages/AdminPricingPage'
 import LoginPage from './pages/LoginPage'
 import SignupPage from './pages/SignupPage'
 import AccountPage from './pages/AccountPage'
+import AuthCallbackPage from './pages/AuthCallbackPage'
 import ScrollToTop from './components/ScrollToTop'
 import ScrollToHash from './components/ScrollToHash'
 import FloatingWhatsApp from './components/FloatingWhatsApp'
@@ -29,6 +30,7 @@ function App() {
         <Route path="/book" element={<BookPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
+        <Route path="/auth/callback" element={<AuthCallbackPage />} />
         <Route path="/account" element={<AccountPage />} />
         <Route path="/driver" element={<DriverSchedulePage />} />
         <Route path="/admin/pricing" element={<AdminPricingPage />} />
