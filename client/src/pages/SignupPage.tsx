@@ -66,8 +66,7 @@ export default function SignupPage() {
             Create account
           </h1>
           <p className="text-sm text-brand-green/80 text-center">
-            Sign up as a guest to manage your bookings. Drivers and admins are
-            invited by Khayr Cape Experiences.
+            Sign up as a guest to manage your bookings.
           </p>
           {error && (
             <p className="text-sm text-red-800 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
