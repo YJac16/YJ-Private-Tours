@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { mockDb, useMockStore } from '../booking-app/lib/mock-store'
 import { isAuthError, requireAuth } from './_lib/authUser'
 import { methodNotAllowed, readJson } from './_lib/http'
+import { handleAdminDrivers } from './_lib/adminDriversHandler'
 
 function supabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL
@@ -70,6 +71,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const auth = await requireAuth(req, ['admin'])
     if (isAuthError(auth)) {
       return res.status(auth.status).json({ error: auth.error })
+    }
+
+    const resourceEarly = qstr(req, 'resource')
+    if (
+      resourceEarly === 'drivers' ||
+      String(req.url || '').includes('admin-drivers')
+    ) {
+      return handleAdminDrivers(req, res)
     }
 
     if (req.method === 'GET') {
@@ -433,7 +442,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(200).json({ success: true, booking: data })
     }
 
-    return methodNotAllowed(res, ['GET', 'PATCH'])
+    return methodNotAllowed(res, ['GET', 'POST', 'PATCH'])
   } catch (e: unknown) {
     return res.status(500).json({
       error: e instanceof Error ? e.message : 'Admin trips API failed',

@@ -21,6 +21,7 @@ const TOUR_SELECT_BASIC =
 function normalizeTour(t: Record<string, unknown>) {
   return {
     ...t,
+    slug: (t.slug as string) || null,
     price_per_person_cents:
       t.price_per_person_cents ?? t.additional_guest_price_cents ?? 0,
     included_items: (t.included_items as string[]) ?? [],
@@ -30,7 +31,9 @@ function normalizeTour(t: Record<string, unknown>) {
     good_to_know: (t.good_to_know as string[]) ?? [],
     experience_content: t.experience_content ?? null,
     admin_meta:
-      t.admin_meta && typeof t.admin_meta === 'object' ? t.admin_meta : {},
+      t.admin_meta && typeof t.admin_meta === 'object'
+        ? (t.admin_meta as Record<string, unknown>)
+        : {},
   }
 }
 

@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
-import { mockDb, useMockStore } from '../booking-app/lib/mock-store'
-import { isAuthError, requireAuth } from './_lib/authUser'
-import { methodNotAllowed, readJson } from './_lib/http'
+import { mockDb, useMockStore } from '../../booking-app/lib/mock-store'
+import { isAuthError, requireAuth } from './authUser'
+import { methodNotAllowed, readJson } from './http'
 
 function supabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL
@@ -14,7 +14,10 @@ function supabaseAdmin() {
 const DRIVER_SELECT =
   'id, name, full_name, is_active, photo_url, languages, years_experience, bio, rating_avg, rating_count, user_id, created_at'
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export async function handleAdminDrivers(
+  req: VercelRequest,
+  res: VercelResponse
+) {
   try {
     const auth = await requireAuth(req, ['admin'])
     if (isAuthError(auth)) {

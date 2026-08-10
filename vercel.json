@@ -5,18 +5,34 @@
   "framework": null,
   "rewrites": [
     {
+      "source": "/api/email-outbox",
+      "destination": "/api/cron?job=email-outbox"
+    },
+    {
+      "source": "/api/driver-reminders",
+      "destination": "/api/cron?job=driver-reminders"
+    },
+    {
+      "source": "/api/account-consent",
+      "destination": "/api/account-bookings?resource=consent"
+    },
+    {
+      "source": "/api/payment-retry",
+      "destination": "/api/payment-confirm?action=retry"
+    },
+    {
+      "source": "/api/admin-drivers",
+      "destination": "/api/admin-trips?resource=drivers"
+    },
+    {
       "source": "/((?!api/|robots\\.txt|sitemap\\.xml).*)",
       "destination": "/index.html"
     }
   ],
   "crons": [
     {
-      "path": "/api/driver-reminders",
+      "path": "/api/cron",
       "schedule": "0 6 * * *"
-    },
-    {
-      "path": "/api/email-outbox",
-      "schedule": "0 7 * * *"
     }
   ]
 }
