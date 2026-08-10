@@ -16,7 +16,7 @@
     },
     {
       "path": "/api/email-outbox",
-      "schedule": "*/10 * * * *"
+      "schedule": "0 7 * * *"
     }
   ]
 }
