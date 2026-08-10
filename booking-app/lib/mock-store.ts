@@ -4,6 +4,7 @@
  */
 
 import { calculatePrice } from './pricing'
+import { isRefundEligible } from './booking-lifecycle'
 
 export type MockDriver = {
   id: string
@@ -155,7 +156,7 @@ export type MockBooking = {
   vehicle_id: string
   booking_date: string
   start_time: string
-  status: 'pending' | 'paid' | 'cancelled'
+  status: 'pending' | 'paid' | 'cancelled' | 'expired'
   trip_status: string
   payment_status: string
   client_name: string
@@ -183,6 +184,16 @@ export type MockBooking = {
   vehicle_name_snapshot: string | null
   tour_name_snapshot: string | null
   driver_earnings_cents: number | null
+  cancel_reason?: string | null
+  cancelled_at?: string | null
+  cancelled_by?: string | null
+  refund_status?: string | null
+  refund_amount_cents?: number | null
+  refunded_at?: string | null
+  refund_external_id?: string | null
+  reschedule_requested_at?: string | null
+  reschedule_note?: string | null
+  reminder_sent_at?: string | null
   created_at: string
 }
 
@@ -270,6 +281,38 @@ const tours: MockTour[] = [
     additional_guest_price_cents: 50000,
     max_guests: 5,
   },
+  {
+    id: '22222222-2222-2222-2222-222222222205',
+    name: 'Hermanus Whale Experience',
+    description: 'A private land-based Hermanus whale-season journey from Cape Town.',
+    slug: 'hermanus',
+    duration_label: 'Full Day · 8–10 hours',
+    included_items: [
+      'Private Cape Town pickup and return',
+      'Private vehicle of your choice',
+      'Qualified local guide/driver',
+      'Land-based whale-season viewing opportunities',
+    ],
+    excluded_items: [
+      'Whale-watching boat tour',
+      'Boat tickets',
+      'Lunch and meals',
+    ],
+    image_url: '/chapmans-peak.jpg',
+    price_per_person_cents: 340000,
+    base_price_cents: 340000,
+    additional_guest_price_cents: 340000,
+    max_guests: 5,
+    admin_meta: {
+      status: 'active',
+      featured: true,
+      season: {
+        start: { m: 6, d: 1 },
+        end: { m: 10, d: 31 },
+        tz: 'Africa/Johannesburg',
+      },
+    },
+  },
 ]
 
 const vehicles: MockVehicle[] = [
@@ -289,15 +332,20 @@ const vehicles: MockVehicle[] = [
   },
   {
     id: '33333333-3333-3333-3333-333333333302',
-    name: 'Mercedes Benz GLC 250 Coupe',
-    description: 'Premium luxury experience',
+    name: 'Mercedes-Benz GLC 220 Coupe',
+    description: 'Premium Experience — luxury comfort and refined private travel',
     slug: 'mercedes',
     capacity_min: 1,
     capacity_max: 3,
     vehicle_price_cents: 450000,
     vehicle_surcharge_cents: 450000,
     luggage_capacity: 2,
-    features: ['Premium leather interior', 'Air conditioning', 'Complimentary bottled water', 'Luxury experience'],
+    features: [
+      'Air conditioning',
+      'Complimentary bottled water',
+      'Premium Experience',
+      'Refined travel',
+    ],
     image_url: '/Mercedes Benz.png',
     is_luxury: true,
   },
@@ -354,6 +402,16 @@ const bookings: MockBooking[] = []
 const unavailable: MockUnavailable[] = []
 const payments: MockPayment[] = []
 const quotes: MockQuote[] = []
+const bookingHistory: Array<{
+  id: string
+  booking_id: string
+  from_status: string | null
+  to_status: string
+  changed_by: string
+  reason: string | null
+  meta: Record<string, unknown> | null
+  created_at: string
+}> = []
 const invoices: MockInvoice[] = []
 const blockedDates = new Set<string>()
 
@@ -584,66 +642,77 @@ export const mockDb = {
     }
   },
 
-  slots(date: string, driverId: string) {
-    if (date < minBookableDate()) {
-      return {
-        slots: [],
-        reason: 'Bookings must be made at least 2 days in advance.',
-      }
-    }
-    if (blockedDates.has(date)) {
-      return { slots: [], reason: 'This date is unavailable.' }
-    }
+  slots(date: string, driverId: string, vehicleId?: string) {
     const dayBlocked = unavailable.some(
       (u) =>
         u.driver_id === driverId &&
         u.unavailable_date === date &&
         u.start_time == null
     )
-    if (dayBlocked) {
-      return { slots: [], reason: 'Driver is unavailable on this date.' }
+    if (dayBlocked || blockedDates.has(date) || date < minBookableDate()) {
+      return { slots: [] as Array<{
+        id: string
+        start_time: string
+        label: string
+        available: boolean
+        reason: string | null
+      }>, reason: dayBlocked ? 'Driver unavailable' : 'Date unavailable' }
     }
-
-    const blockedTimes = new Set(
-      unavailable
-        .filter(
-          (u) =>
-            u.driver_id === driverId &&
-            u.unavailable_date === date &&
-            u.start_time
-        )
-        .map((u) => normalizeTime(String(u.start_time)))
-    )
-    const bookedTimes = new Set(
-      bookings
-        .filter(
-          (b) =>
-            b.driver_id === driverId &&
-            b.booking_date === date &&
-            (b.status === 'paid' || b.status === 'pending')
-        )
-        .map((b) => normalizeTime(b.start_time))
-    )
-
+    // expire stale pending in mock
+    const cutoff = Date.now() - 30 * 60 * 1000
+    for (const b of bookings) {
+      if (
+        b.status === 'pending' &&
+        new Date(b.created_at).getTime() < cutoff
+      ) {
+        b.status = 'expired'
+        b.payment_status = 'cancelled'
+        b.trip_status = 'cancelled'
+      }
+    }
     return {
       slots: timeSlots
         .filter((s) => s.is_active)
         .sort((a, b) => a.sort_order - b.sort_order)
         .map((slot) => {
-          const time = slot.start_time
-          const available = !blockedTimes.has(time) && !bookedTimes.has(time)
-          return {
-            id: slot.id,
-            start_time: time,
-            label: slot.label,
-            available,
-            reason: !available
-              ? blockedTimes.has(time)
-                ? 'Driver blocked this slot'
-                : 'Already booked'
-              : null,
-          }
-        }),
+        const time = slot.start_time
+        const driverBusy =
+          unavailable.some(
+            (u) =>
+              u.driver_id === driverId &&
+              u.unavailable_date === date &&
+              u.start_time != null &&
+              normalizeTime(String(u.start_time)) === time
+          ) ||
+          bookings.some(
+            (b) =>
+              b.driver_id === driverId &&
+              b.booking_date === date &&
+              normalizeTime(b.start_time) === time &&
+              (b.status === 'paid' || b.status === 'pending')
+          )
+        const vehicleBusy = vehicleId
+          ? bookings.some(
+              (b) =>
+                b.vehicle_id === vehicleId &&
+                b.booking_date === date &&
+                normalizeTime(b.start_time) === time &&
+                (b.status === 'paid' || b.status === 'pending')
+            )
+          : false
+        const available = !driverBusy && !vehicleBusy
+        return {
+          id: slot.id,
+          start_time: time,
+          label: slot.label,
+          available,
+          reason: !available
+            ? vehicleBusy
+              ? 'Vehicle already booked'
+              : 'Already booked'
+            : null,
+        }
+      }),
     }
   },
 
@@ -692,7 +761,18 @@ export const mockDb = {
         normalizeTime(b.start_time) === time &&
         (b.status === 'paid' || b.status === 'pending')
     )
-    if (clash) throw new Error('This time slot is already booked.')
+    if (clash) throw new Error('This driver time slot is already reserved.')
+
+    const vehicleClash = bookings.find(
+      (b) =>
+        b.vehicle_id === input.vehicle_id &&
+        b.booking_date === input.booking_date &&
+        normalizeTime(b.start_time) === time &&
+        (b.status === 'paid' || b.status === 'pending')
+    )
+    if (vehicleClash) {
+      throw new Error('This vehicle is already reserved for the selected slot.')
+    }
 
     const booking: MockBooking = {
       id: uuid(),
@@ -729,15 +809,21 @@ export const mockDb = {
       vehicle_name_snapshot: input.vehicle_name_snapshot || null,
       tour_name_snapshot: input.tour_name_snapshot || null,
       driver_earnings_cents: null,
+      reminder_sent_at: null,
       created_at: new Date().toISOString(),
     }
     bookings.push(booking)
     return booking
   },
 
-  listBookings(driverId?: string | null, from?: string | null) {
+  listBookings(driverId?: string | null, from?: string | null, to?: string | null) {
     return bookings
-      .filter((b) => (!driverId || b.driver_id === driverId) && (!from || b.booking_date >= from))
+      .filter(
+        (b) =>
+          (!driverId || b.driver_id === driverId) &&
+          (!from || b.booking_date >= from) &&
+          (!to || b.booking_date <= to)
+      )
       .sort((a, b) =>
         a.booking_date === b.booking_date
           ? a.start_time.localeCompare(b.start_time)
@@ -749,6 +835,14 @@ export const mockDb = {
         vehicle: vehicles.find((v) => v.id === b.vehicle_id) ?? null,
         driver: drivers.find((d) => d.id === b.driver_id) ?? null,
       }))
+  },
+
+  markReminderSent(bookingId: string, at = new Date().toISOString()) {
+    const b = bookings.find((x) => x.id === bookingId)
+    if (!b) throw new Error('Booking not found')
+    if (b.reminder_sent_at) return false
+    b.reminder_sent_at = at
+    return true
   },
 
   listAccountBookings(userId: string, email?: string | null) {
@@ -856,6 +950,145 @@ export const mockDb = {
     return b
   },
 
+  /** Admin mutate with driver/vehicle conflict checks (Phase 3). */
+  adminUpdateBooking(
+    id: string,
+    updates: Partial<
+      Pick<
+        MockBooking,
+        | 'booking_date'
+        | 'start_time'
+        | 'driver_id'
+        | 'vehicle_id'
+        | 'trip_status'
+        | 'notes'
+        | 'pickup_address'
+        | 'special_requests'
+      >
+    >
+  ) {
+    const b = bookings.find((x) => x.id === id)
+    if (!b) throw new Error('Booking not found')
+    if (b.status === 'cancelled' || b.status === 'expired') {
+      throw new Error(`Cannot update ${b.status} booking`)
+    }
+
+    const nextDate = updates.booking_date || b.booking_date
+    const nextTime = updates.start_time
+      ? normalizeTime(updates.start_time)
+      : b.start_time
+    const nextDriver = updates.driver_id || b.driver_id
+    const nextVehicle =
+      updates.vehicle_id !== undefined ? updates.vehicle_id : b.vehicle_id
+
+    const active = (x: MockBooking) =>
+      x.id !== id &&
+      (x.status === 'pending' || x.status === 'paid') &&
+      x.booking_date === nextDate &&
+      x.start_time === nextTime
+
+    if (bookings.some((x) => active(x) && x.driver_id === nextDriver)) {
+      throw new Error('Driver slot conflict')
+    }
+    if (
+      nextVehicle &&
+      bookings.some((x) => active(x) && x.vehicle_id === nextVehicle)
+    ) {
+      throw new Error('Vehicle slot conflict')
+    }
+
+    const fromTrip = b.trip_status
+    const slotChanging =
+      nextDate !== b.booking_date ||
+      nextTime !== b.start_time ||
+      nextDriver !== b.driver_id ||
+      nextVehicle !== b.vehicle_id
+
+    b.booking_date = nextDate
+    b.start_time = nextTime
+    b.driver_id = nextDriver
+    if (nextVehicle) b.vehicle_id = nextVehicle
+    if (updates.trip_status !== undefined) b.trip_status = updates.trip_status
+    if (updates.notes !== undefined) b.notes = updates.notes
+    if (updates.pickup_address !== undefined) {
+      b.pickup_address = updates.pickup_address
+    }
+    if (updates.special_requests !== undefined) {
+      b.special_requests = updates.special_requests
+    }
+
+    const now = new Date().toISOString()
+    if (updates.trip_status !== undefined && updates.trip_status !== fromTrip) {
+      bookingHistory.push({
+        id: uuid(),
+        booking_id: b.id,
+        from_status: fromTrip || b.status,
+        to_status: updates.trip_status,
+        changed_by: 'admin',
+        reason: 'trip_status_update',
+        meta: { field: 'trip_status' },
+        created_at: now,
+      })
+    }
+    if (slotChanging) {
+      bookingHistory.push({
+        id: uuid(),
+        booking_id: b.id,
+        from_status: b.status,
+        to_status: b.status,
+        changed_by: 'admin',
+        reason: 'reschedule',
+        meta: { booking_date: nextDate, start_time: nextTime },
+        created_at: now,
+      })
+    }
+    return this.getBooking(id)
+  },
+
+  listCustomers() {
+    const map = new Map<
+      string,
+      {
+        email: string
+        name: string
+        phone: string | null
+        trip_count: number
+        last_booking_date: string | null
+        last_status: string | null
+        last_reference: string | null
+      }
+    >()
+    for (const b of bookings) {
+      const email = (b.client_email || '').trim().toLowerCase()
+      if (!email) continue
+      const existing = map.get(email)
+      if (!existing) {
+        map.set(email, {
+          email,
+          name: b.client_name || email,
+          phone: b.client_phone,
+          trip_count: 1,
+          last_booking_date: b.booking_date,
+          last_status: b.status,
+          last_reference: b.booking_reference,
+        })
+      } else {
+        existing.trip_count += 1
+        if (
+          !existing.last_booking_date ||
+          b.booking_date > existing.last_booking_date
+        ) {
+          existing.last_booking_date = b.booking_date
+          existing.last_status = b.status
+          existing.last_reference = b.booking_reference
+        }
+      }
+    }
+    return [...map.values()].sort((a, b) =>
+      (b.last_booking_date || '').localeCompare(a.last_booking_date || '')
+    )
+  },
+
   block(input: {
     driver_id: string
     unavailable_date: string
@@ -932,6 +1165,276 @@ export const mockDb = {
 
   getBooking(id: string) {
     return bookings.find((b) => b.id === id) ?? null
+  },
+
+  getAccountBookingDetail(
+    id: string,
+    userId: string,
+    email?: string | null,
+    isAdmin = false
+  ) {
+    const emailNorm = (email || '').trim().toLowerCase()
+    const list = this.listBookings().filter(
+      (b) =>
+        isAdmin ||
+        b.client_user_id === userId ||
+        (emailNorm && b.client_email.toLowerCase() === emailNorm)
+    )
+    const b = list.find((x) => x.id === id)
+    if (!b) return null
+    return {
+      ...b,
+      refund_eligible: b.status === 'paid' && isRefundEligible(b.booking_date, b.start_time),
+    }
+  },
+
+  listBookingHistory(bookingId: string) {
+    return bookingHistory
+      .filter((h) => h.booking_id === bookingId)
+      .slice()
+      .sort((a, b) => b.created_at.localeCompare(a.created_at))
+  },
+
+  cancelAccountBooking(input: {
+    bookingId: string
+    actor: 'client' | 'driver' | 'admin' | 'system'
+    reason?: string | null
+    requestRefund?: boolean
+  }) {
+    const b = bookings.find((x) => x.id === input.bookingId)
+    if (!b) return { ok: false as const, status: 404, error: 'Booking not found' }
+    if (b.status === 'cancelled' || b.status === 'expired') {
+      return {
+        ok: true as const,
+        booking_id: b.id,
+        status: b.status,
+        refund_status: b.refund_status || 'none',
+        refund_amount_cents: b.refund_amount_cents ?? null,
+        refund_eligible: false,
+        already_cancelled: true,
+        message: 'Already cancelled',
+      }
+    }
+    if (b.status !== 'pending' && b.status !== 'paid') {
+      return {
+        ok: false as const,
+        status: 400,
+        error: `Cannot cancel booking in status ${b.status}`,
+      }
+    }
+    const eligible =
+      b.status === 'paid' && isRefundEligible(b.booking_date, b.start_time)
+    const wantRefund = input.requestRefund !== false
+    let refundStatus = 'none'
+    let refundAmount: number | null = null
+    let message = 'Booking cancelled'
+    if (b.status === 'paid') {
+      if (!eligible) {
+        refundStatus = 'ineligible'
+        message =
+          'Booking cancelled. Cancellations within 24 hours of the tour are not refundable.'
+      } else if (wantRefund) {
+        refundStatus = 'pending'
+        refundAmount = b.grand_total_cents || b.final_price_cents || 0
+        message =
+          'Booking cancelled. Full refund has been requested and will confirm shortly.'
+      }
+    } else {
+      message = 'Pending booking cancelled; slot released'
+      const p = payments.find((x) => x.booking_id === b.id && x.status === 'pending')
+      if (p) p.status = 'failed'
+    }
+    const from = b.status
+    const now = new Date().toISOString()
+    b.status = 'cancelled'
+    b.payment_status =
+      refundStatus === 'pending' ? 'refund_pending' : 'cancelled'
+    b.trip_status = 'cancelled'
+    b.cancel_reason = input.reason || null
+    b.cancelled_at = now
+    b.cancelled_by = input.actor
+    b.refund_status = refundStatus
+    b.refund_amount_cents = refundAmount
+    bookingHistory.push({
+      id: uuid(),
+      booking_id: b.id,
+      from_status: from,
+      to_status: 'cancelled',
+      changed_by: input.actor,
+      reason: input.reason || null,
+      meta: { refund_status: refundStatus },
+      created_at: now,
+    })
+    return {
+      ok: true as const,
+      booking_id: b.id,
+      status: 'cancelled',
+      refund_status: refundStatus,
+      refund_amount_cents: refundAmount,
+      refund_eligible: eligible,
+      already_cancelled: false,
+      message,
+    }
+  },
+
+  requestReschedule(bookingId: string, note: string) {
+    const b = bookings.find((x) => x.id === bookingId)
+    if (!b) return { ok: false as const, status: 404, error: 'Booking not found' }
+    if (b.status !== 'paid' && b.status !== 'pending') {
+      return {
+        ok: false as const,
+        status: 400,
+        error: 'Only active bookings can request reschedule',
+      }
+    }
+    if (!isRefundEligible(b.booking_date, b.start_time)) {
+      return {
+        ok: false as const,
+        status: 400,
+        error:
+          'Reschedule requests must be made at least 24 hours before the tour',
+      }
+    }
+    const now = new Date().toISOString()
+    b.reschedule_requested_at = now
+    b.reschedule_note = note
+    bookingHistory.push({
+      id: uuid(),
+      booking_id: b.id,
+      from_status: b.status,
+      to_status: b.status,
+      changed_by: 'client',
+      reason: 'reschedule_request',
+      meta: { note },
+      created_at: now,
+    })
+    return {
+      ok: true as const,
+      booking_id: b.id,
+      message:
+        'Reschedule requested. We will confirm availability and follow up.',
+    }
+  },
+
+  /** Phase 5: mint a fresh mock checkout URL for an unpaid pending booking. */
+  retryPaymentCheckout(bookingId: string) {
+    const b = bookings.find((x) => x.id === bookingId)
+    if (!b) return { ok: false as const, status: 404, error: 'Booking not found' }
+    if (b.status !== 'pending') {
+      return {
+        ok: false as const,
+        status: 400,
+        error:
+          b.status === 'paid'
+            ? 'Booking is already paid'
+            : `Cannot retry payment for status ${b.status}`,
+      }
+    }
+    const amount = b.grand_total_cents || b.final_price_cents || 0
+    if (amount < 100) {
+      return {
+        ok: false as const,
+        status: 400,
+        error: 'Booking amount is invalid for checkout',
+      }
+    }
+    const checkoutId = `ch_retry_${uuid().slice(0, 8)}`
+    const checkoutUrl = `https://payments.yoco.com/mock-checkout/${checkoutId}`
+    b.yoco_payment_reference = checkoutId
+    b.payment_status = 'pending'
+    const p = payments.find((x) => x.booking_id === b.id)
+    if (p) {
+      p.external_id = checkoutId
+      p.status = 'pending'
+      p.amount_cents = amount
+      p.paid_at = null
+    } else {
+      payments.push({
+        id: uuid(),
+        booking_id: b.id,
+        amount_cents: amount,
+        external_id: checkoutId,
+        status: 'pending',
+        paid_at: null,
+      })
+    }
+    bookingHistory.push({
+      id: uuid(),
+      booking_id: b.id,
+      from_status: 'pending',
+      to_status: 'pending',
+      changed_by: 'client',
+      reason: 'payment_retry',
+      meta: { checkout_id: checkoutId },
+      created_at: new Date().toISOString(),
+    })
+    return {
+      ok: true as const,
+      booking_id: b.id,
+      checkout_url: checkoutUrl,
+      checkout_id: checkoutId,
+      amount_cents: amount,
+      booking_reference: b.booking_reference || null,
+    }
+  },
+
+  /** Phase 5: printable receipt snapshot for a paid booking. */
+  getReceipt(bookingId: string) {
+    const b = this.listBookings().find((x) => x.id === bookingId)
+    if (!b) return { ok: false as const, status: 404, error: 'Booking not found' }
+    if (b.status !== 'paid') {
+      return {
+        ok: false as const,
+        status: 400,
+        error: 'Receipts are only available for paid bookings',
+      }
+    }
+    const p = payments.find((x) => x.booking_id === b.id && x.status === 'paid')
+    const prefixes = businessSettings.prefixes as Record<string, string>
+    const receiptPrefix = prefixes.receipt || 'KCE-R'
+    const tpl = (businessSettings.pdf_templates as Record<string, unknown>)
+      ?.receipt as Record<string, string> | undefined
+    return {
+      ok: true as const,
+      receipt: {
+        receipt_number:
+          b.booking_reference
+            ? `${receiptPrefix}-${b.booking_reference.replace(/^KC-?/i, '')}`
+            : `${receiptPrefix}-${b.id.slice(0, 8).toUpperCase()}`,
+        issued_at: p?.paid_at || new Date().toISOString(),
+        booking_id: b.id,
+        booking_reference: b.booking_reference || null,
+        booking_date: b.booking_date,
+        start_time: b.start_time,
+        client_name: b.client_name,
+        client_email: b.client_email,
+        tour_name: b.tour?.name || null,
+        vehicle_name: b.vehicle?.name || null,
+        driver_name: b.driver?.full_name || b.driver?.name || null,
+        amount_cents: b.grand_total_cents || b.final_price_cents || 0,
+        currency: 'ZAR',
+        payment_status: b.payment_status || 'paid',
+        yoco_reference: b.yoco_payment_reference || p?.external_id || null,
+        paid_at: p?.paid_at || null,
+        business_name:
+          (businessSettings.company_name as string) || 'KhayrCape Experiences',
+        template: {
+          header: tpl?.header || 'KhayrCape Experiences',
+          footer: tpl?.footer || 'Thank you for booking with us.',
+          terms: tpl?.terms || '',
+        },
+      },
+    }
+  },
+
+  markRefundSucceeded(bookingId: string, amountCents?: number | null) {
+    const b = bookings.find((x) => x.id === bookingId)
+    if (!b) return false
+    b.refund_status = 'succeeded'
+    b.payment_status = 'refunded'
+    b.refunded_at = new Date().toISOString()
+    if (amountCents != null) b.refund_amount_cents = amountCents
+    return true
   },
 
   listQuotes() {
@@ -1162,7 +1665,12 @@ export const mockDb = {
 
   convertQuoteToBooking(
     quoteId: string,
-    opts?: { driver_id?: string; start_time?: string }
+    opts?: {
+      driver_id?: string
+      start_time?: string
+      vehicle_id?: string
+      tour_id?: string
+    }
   ) {
     const quote = quotes.find((q) => q.id === quoteId)
     if (!quote) throw new Error('Quote not found')
@@ -1183,26 +1691,66 @@ export const mockDb = {
 
     const prefixes = businessSettings.prefixes as Record<string, string>
     const booking_reference = this.nextDocumentNumber(prefixes?.booking || 'KCE-B')
-    const driver_id =
-      opts?.driver_id ||
-      drivers[0]?.id ||
-      '11111111-1111-1111-1111-111111111111'
-    const start_time = normalizeTime(opts?.start_time || '08:00')
-    const tour = quote.tour_id ? tours.find((t) => t.id === quote.tour_id) : null
-    const vehicle = quote.vehicle_id
-      ? vehicles.find((v) => v.id === quote.vehicle_id)
-      : null
+    const driver_id = opts?.driver_id || ''
+    const start_time = normalizeTime(opts?.start_time || '')
+    const tour_id = opts?.tour_id || quote.tour_id || ''
+    const vehicle_id = opts?.vehicle_id || quote.vehicle_id || ''
+    const travel_date = quote.travel_date || ''
+
+    if (!driver_id) throw new Error('driver_id is required to convert a quote')
+    if (!start_time) throw new Error('start_time is required to convert a quote')
+    if (!travel_date) throw new Error('Quote is missing travel_date')
+    if (!tour_id || !vehicle_id) {
+      throw new Error('Quote must have tour_id and vehicle_id')
+    }
+
+    const cutoff = Date.now() - 30 * 60 * 1000
+    for (const b of bookings) {
+      if (b.status === 'pending' && new Date(b.created_at).getTime() < cutoff) {
+        b.status = 'expired'
+        b.payment_status = 'cancelled'
+        b.trip_status = 'cancelled'
+      }
+    }
+
+    const clash = bookings.find(
+      (b) =>
+        b.driver_id === driver_id &&
+        b.booking_date === travel_date &&
+        normalizeTime(b.start_time) === start_time &&
+        (b.status === 'paid' || b.status === 'pending')
+    )
+    if (clash) throw new Error('This driver time slot is already reserved')
+
+    const vehicleClash = bookings.find(
+      (b) =>
+        b.vehicle_id === vehicle_id &&
+        b.booking_date === travel_date &&
+        normalizeTime(b.start_time) === start_time &&
+        (b.status === 'paid' || b.status === 'pending')
+    )
+    if (vehicleClash) {
+      throw new Error('This vehicle is already reserved for the selected slot')
+    }
+
+    const tour = tours.find((t) => t.id === tour_id)
+    const vehicle = vehicles.find((v) => v.id === vehicle_id)
     const driver = drivers.find((d) => d.id === driver_id)
+    if (!driver) throw new Error('Invalid driver')
+    if (!tour) throw new Error('Invalid tour')
+    if (!vehicle) throw new Error('Invalid vehicle')
+
     const snap = quote.pricing_snapshot
     const grand =
       Number(quote.grand_total_cents) || Number(snap?.grand_total_cents) || 0
+    if (!grand || grand < 100) throw new Error('Quote pricing is missing or invalid')
 
     const booking: MockBooking = {
       id: uuid(),
       driver_id,
-      tour_id: quote.tour_id || tours[0].id,
-      vehicle_id: quote.vehicle_id || vehicles[0].id,
-      booking_date: quote.travel_date || new Date().toISOString().slice(0, 10),
+      tour_id,
+      vehicle_id,
+      booking_date: travel_date,
       start_time,
       status: 'pending',
       trip_status: 'scheduled',
@@ -1228,9 +1776,9 @@ export const mockDb = {
       final_price_cents: grand,
       booking_reference,
       yoco_payment_reference: null,
-      driver_name_snapshot: driver?.full_name || driver?.name || null,
-      vehicle_name_snapshot: vehicle?.name || null,
-      tour_name_snapshot: tour?.name || null,
+      driver_name_snapshot: driver.full_name || driver.name || null,
+      vehicle_name_snapshot: vehicle.name || null,
+      tour_name_snapshot: tour.name || null,
       driver_earnings_cents: null,
       created_at: new Date().toISOString(),
     }

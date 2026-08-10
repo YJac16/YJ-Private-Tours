@@ -118,6 +118,12 @@ export type Tour = {
     display_order?: number
     status?: 'active' | 'draft' | 'hidden'
     recommended_vehicle_id?: string | null
+    featured?: boolean
+    season?: {
+      start?: { m?: number; d?: number }
+      end?: { m?: number; d?: number }
+      tz?: string
+    }
   } | null
 }
 
@@ -142,8 +148,13 @@ export async function fetchCatalog() {
   return json<Catalog>(await fetch(`${API}/catalog`))
 }
 
-export async function fetchSlots(date: string, driverId: string) {
+export async function fetchSlots(
+  date: string,
+  driverId: string,
+  vehicleId?: string
+) {
   const q = new URLSearchParams({ date, driver_id: driverId })
+  if (vehicleId) q.set('vehicle_id', vehicleId)
   return json<{ slots: Slot[]; reason?: string }>(
     await fetch(`${API}/slots?${q}`)
   )
@@ -170,12 +181,14 @@ export type BookPayload = {
 
 export async function createBooking(
   payload: BookPayload,
-  accessToken?: string | null
+  accessToken?: string | null,
+  idempotencyKey?: string | null
 ) {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   }
   if (accessToken) headers.Authorization = `Bearer ${accessToken}`
+  if (idempotencyKey) headers['Idempotency-Key'] = idempotencyKey
   return json<{
     success: boolean
     booking_id: string
@@ -187,6 +200,8 @@ export async function createBooking(
     pricing?: PriceBreakdown
     message?: string
     warning?: string
+    resume_thank_you?: string
+    idempotent_replay?: boolean
   }>(
     await fetch(`${API}/book`, {
       method: 'POST',
@@ -196,8 +211,18 @@ export async function createBooking(
   )
 }
 
-export async function confirmPayment(bookingId: string) {
-  return json<{ success: boolean; booking_id: string; status?: string }>(
+/** Read-only booking/payment status. Does NOT mark paid. */
+export async function fetchPaymentStatus(bookingId: string) {
+  return json<{
+    success: boolean
+    booking_id: string
+    booking_reference?: string | null
+    status?: string
+    payment_status?: string | null
+    paid?: boolean
+    amount_cents?: number | null
+    confirmed_via?: string
+  }>(
     await fetch(`${API}/payment-confirm`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -206,11 +231,37 @@ export async function confirmPayment(bookingId: string) {
   )
 }
 
+/** Guest payment retry (booking id + email match). No auth required. */
+export async function retryGuestPayment(bookingId: string, clientEmail: string) {
+  return json<{
+    ok: boolean
+    booking_id: string
+    checkout_url: string
+    checkout_id?: string
+    amount_cents?: number
+    booking_reference?: string | null
+  }>(
+    await fetch(`${API}/payment-retry`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        booking_id: bookingId,
+        client_email: clientEmail,
+      }),
+    })
+  )
+}
+
+/** @deprecated Use fetchPaymentStatus — payment-confirm no longer marks paid. */
+export async function confirmPayment(bookingId: string) {
+  return fetchPaymentStatus(bookingId)
+}
+
 function pinHeaders(pin: string): HeadersInit {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   }
-  // JWT / mock tokens use Bearer; legacy PIN still sent as header
+  // Prefer JWT (authApi). Legacy PIN still accepted on older admin/driver helpers.
   if (pin.startsWith('mock.') || pin.includes('.') || pin.length > 24) {
     headers.Authorization = `Bearer ${pin}`
   } else {

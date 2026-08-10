@@ -15,7 +15,11 @@ import AdminPricingPage from './pages/AdminPricingPage'
 import LoginPage from './pages/LoginPage'
 import SignupPage from './pages/SignupPage'
 import AccountPage from './pages/AccountPage'
+import AccountBookingDetailPage from './pages/AccountBookingDetailPage'
 import AuthCallbackPage from './pages/AuthCallbackPage'
+import ForgotPasswordPage from './pages/ForgotPasswordPage'
+import ResetPasswordPage from './pages/ResetPasswordPage'
+import AccountReceiptPage from './pages/AccountReceiptPage'
 import ScrollToTop from './components/ScrollToTop'
 import ScrollToHash from './components/ScrollToHash'
 import FloatingWhatsApp from './components/FloatingWhatsApp'
@@ -31,7 +35,14 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/account" element={<AccountPage />} />
+        <Route path="/account/bookings/:bookingId" element={<AccountBookingDetailPage />} />
+        <Route
+          path="/account/bookings/:bookingId/receipt"
+          element={<AccountReceiptPage />}
+        />
         <Route path="/driver" element={<DriverSchedulePage />} />
         <Route path="/admin/pricing" element={<AdminPricingPage />} />
         <Route path="/thank-you" element={<ThankYou />} />

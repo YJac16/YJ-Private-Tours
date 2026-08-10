@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import {
   HiOutlineClock,
   HiOutlineCreditCard,
@@ -27,9 +27,19 @@ import {
   getDefaultExperience,
   mergeExperienceContent,
 } from '../data/experienceDefaults'
-import { DEFAULT_HIGHLIGHTS } from '../lib/experienceTypes'
+import {
+  DEFAULT_HIGHLIGHTS,
+  HERMANUS_HIGHLIGHTS,
+  type ExperienceContent,
+} from '../lib/experienceTypes'
+import {
+  formatSeasonLabel,
+  isDateInSeason,
+  isTourPubliclyVisible,
+  WHALE_SEASON,
+} from '../lib/seasonalVisibility'
 import { whatsappWithMessage } from '../lib/whatsappLinks'
-import type { ExperienceContent } from '../lib/experienceTypes'
+import type { Vehicle } from '../lib/bookingApi'
 
 const HIGHLIGHT_ICONS = [
   HiOutlineBadgeCheck,
@@ -41,6 +51,56 @@ const HIGHLIGHT_ICONS = [
   HiOutlineLightBulb,
   HiOutlineGift,
 ] as const
+
+const HERMANUS_VEHICLE_CARDS = [
+  {
+    slug: 'suzuki',
+    image: '/Suzuki XL6.jpg',
+    fallbackName: 'Suzuki XL6',
+    capacityLabel: 'Up to 5 guests',
+    premium: false,
+  },
+  {
+    slug: 'corolla',
+    image: '/Toyota Corolla Cross.jpg',
+    fallbackName: 'Toyota Corolla Cross GR Sport',
+    capacityLabel: 'Up to 3 guests',
+    premium: false,
+  },
+  {
+    slug: 'mercedes',
+    image: '/Mercedes Benz.png',
+    fallbackName: 'Mercedes-Benz GLC 220 Coupe',
+    capacityLabel: 'Up to 3 guests · Premium Experience',
+    premium: true,
+  },
+] as const
+
+function findCatalogVehicle(
+  vehicles: Vehicle[],
+  slugKey: string
+): Vehicle | undefined {
+  return vehicles.find((v) => {
+    const s = (v.slug || '').toLowerCase()
+    const n = (v.name || '').toLowerCase()
+    return s === slugKey || s.includes(slugKey) || n.includes(slugKey)
+  })
+}
+
+function boatEnquiryMessage(date: string | null, guests: string | null): string {
+  const dateLine = date?.trim() ? date.trim() : '[DATE]'
+  const guestsLine = guests?.trim() ? guests.trim() : '[NUMBER]'
+  return [
+    'Hi KhayrCape, I am interested in the Hermanus Whale Experience.',
+    '',
+    `Date: ${dateLine}`,
+    `Guests: ${guestsLine}`,
+    '',
+    'I would also like to enquire about the possibility of arranging a whale-watching boat experience.',
+    '',
+    'I understand that the boat experience is separate from the KhayrCape tour and is subject to external operator availability, weather and sea conditions.',
+  ].join('\n')
+}
 
 function NotFound() {
   return (
@@ -76,6 +136,38 @@ function NotFound() {
   )
 }
 
+function HermanusUnavailable({ title }: { title: string }) {
+  const seasonLabel = formatSeasonLabel(WHALE_SEASON)
+  return (
+    <>
+      <Navbar />
+      <main className="min-h-screen bg-brand-cream flex items-center justify-center px-4">
+        <div className="text-center max-w-md">
+          <span className="inline-block mb-3 text-xs font-semibold tracking-wide uppercase text-brand-green bg-brand-gold px-3 py-1.5 rounded-full">
+            Seasonal
+          </span>
+          <h1 className="text-2xl font-bold text-brand-green mb-3">{title}</h1>
+          <p className="text-brand-green/85 mb-2 text-base font-medium">
+            Available {seasonLabel}
+          </p>
+          <p className="text-brand-green/75 mb-6 text-sm leading-relaxed">
+            The Hermanus Whale Experience is only offered during whale season
+            (June – October). Please browse our other private experiences in the
+            meantime.
+          </p>
+          <Link
+            to="/#tours"
+            className="inline-flex items-center justify-center min-h-12 px-5 py-3 bg-brand-green hover:bg-brand-green-dark text-brand-cream font-semibold rounded-lg transition-colors"
+          >
+            View experiences
+          </Link>
+        </div>
+      </main>
+      <Footer />
+    </>
+  )
+}
+
 function SectionHeading({ children }: { children: React.ReactNode }) {
   return (
     <h2 className="text-xl sm:text-2xl font-bold text-brand-green mb-4 md:mb-6">
@@ -86,26 +178,35 @@ function SectionHeading({ children }: { children: React.ReactNode }) {
 
 export default function ExperienceDetail() {
   const { slug = '' } = useParams<{ slug: string }>()
-  const { tourBySlug, loading: catalogLoading } = useCatalog()
+  const [searchParams] = useSearchParams()
+  const { catalog, tourBySlug, loading: catalogLoading } = useCatalog()
+  const catalogVehicles = catalog?.vehicles ?? []
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
   const [openFaq, setOpenFaq] = useState<number | null>(0)
+  const [showStickyBook, setShowStickyBook] = useState(false)
+  const bottomCtaRef = useRef<HTMLElement>(null)
 
+  const isHermanus = slug === 'hermanus'
+  const inWhaleSeason = isDateInSeason(new Date(), WHALE_SEASON)
   const catalogTour = slug ? tourBySlug(slug) : undefined
+  const defaults = slug ? getDefaultExperience(slug) : null
 
-  const content: ExperienceContent | null = useMemo(() => {
-    if (!slug) return null
+  const hermanusOutOfSeason =
+    isHermanus &&
+    (!inWhaleSeason ||
+      (!catalogLoading && !catalogTour && !!defaults && !inWhaleSeason))
+
+  let content: ExperienceContent | null = null
+  if (slug) {
     if (catalogTour) {
-      return resolveExperienceContent(catalogTour)
+      content = resolveExperienceContent(catalogTour)
+    } else if (defaults) {
+      content = mergeExperienceContent(slug) ?? defaults
     }
-    const defaults = getDefaultExperience(slug)
-    if (defaults) {
-      return mergeExperienceContent(slug) ?? defaults
-    }
-    return null
-  }, [slug, catalogTour])
+  }
 
   useEffect(() => {
-    if (!content) return
+    if (!content || hermanusOutOfSeason) return
     const prevTitle = document.title
     document.title = content.seo_title || content.display_name
 
@@ -126,7 +227,7 @@ export default function ExperienceDetail() {
         meta.setAttribute('content', prevDesc)
       }
     }
-  }, [content])
+  }, [content, hermanusOutOfSeason])
 
   useEffect(() => {
     if (lightboxIndex === null) return
@@ -137,8 +238,36 @@ export default function ExperienceDetail() {
     return () => window.removeEventListener('keydown', onKey)
   }, [lightboxIndex])
 
-  if (!slug || (!content && !catalogLoading)) {
+  useEffect(() => {
+    if (hermanusOutOfSeason) {
+      setShowStickyBook(false)
+      return
+    }
+    const onScroll = () => {
+      const pastHero = window.scrollY > 320
+      const el = bottomCtaRef.current
+      let nearBottomCta = false
+      if (el) {
+        const rect = el.getBoundingClientRect()
+        nearBottomCta = rect.top < window.innerHeight - 72
+      }
+      setShowStickyBook(pastHero && !nearBottomCta)
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    onScroll()
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [content, hermanusOutOfSeason])
+
+  if (!slug || (!content && !catalogLoading && !hermanusOutOfSeason)) {
     return <NotFound />
+  }
+
+  if (hermanusOutOfSeason) {
+    return (
+      <HermanusUnavailable
+        title={defaults?.display_name || 'Hermanus Whale Experience'}
+      />
+    )
   }
 
   if (!content) {
@@ -154,15 +283,36 @@ export default function ExperienceDetail() {
   }
 
   const bookPath = `/book?tour=${slug}`
-  const waUrl = whatsappWithMessage(
-    `Hi! I'd like to book the ${content.display_name} with Khayr Cape Experiences.`
-  )
   const aboutParagraphs = content.detailed_description
     .split(/\n\n+/)
     .map((p) => p.trim())
     .filter(Boolean)
 
-  const relatedSlugs = Object.keys(EXPERIENCE_DEFAULTS).filter((s) => s !== slug)
+  const highlights = isHermanus ? HERMANUS_HIGHLIGHTS : DEFAULT_HIGHLIGHTS
+
+  const boatWaUrl = isHermanus
+    ? whatsappWithMessage(
+        boatEnquiryMessage(
+          searchParams.get('date'),
+          searchParams.get('guests')
+        )
+      )
+    : null
+
+  const relatedSlugs = Object.keys(EXPERIENCE_DEFAULTS).filter((relSlug) => {
+    if (relSlug === slug) return false
+    if (relSlug === 'hermanus' && !inWhaleSeason) return false
+    const relCatalog = tourBySlug(relSlug)
+    if (relCatalog && !isTourPubliclyVisible(relCatalog)) return false
+    if (
+      !relCatalog &&
+      relSlug === 'hermanus' &&
+      !isDateInSeason(new Date(), WHALE_SEASON)
+    ) {
+      return false
+    }
+    return true
+  })
 
   return (
     <>
@@ -179,7 +329,9 @@ export default function ExperienceDetail() {
           <div className="absolute inset-x-0 bottom-0 px-4 pb-6 sm:pb-10 z-10">
             <div className="max-w-4xl mx-auto">
               <span className="inline-block mb-3 text-xs sm:text-sm font-semibold tracking-wide uppercase text-brand-green bg-brand-gold px-3 py-1.5 rounded-full shadow-sm">
-                Private Experience
+                {isHermanus && inWhaleSeason
+                  ? 'WHALE SEASON'
+                  : 'Private Experience'}
               </span>
               <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-brand-cream leading-tight mb-2 drop-shadow-sm">
                 {content.display_name}
@@ -194,7 +346,11 @@ export default function ExperienceDetail() {
                 </p>
                 {catalogTour ? (
                   <div className="bg-brand-cream/95 rounded-lg px-3 py-2 shadow-sm">
-                    <PriceWithInfo tour={catalogTour} compact />
+                    <PriceWithInfo
+                      tour={catalogTour}
+                      vehicles={catalogVehicles}
+                      compact
+                    />
                   </div>
                 ) : catalogLoading ? (
                   <p className="text-sm text-brand-cream/90">Loading rates…</p>
@@ -208,15 +364,6 @@ export default function ExperienceDetail() {
                   <HiOutlineCreditCard className="text-xl shrink-0" />
                   Book Online
                 </Link>
-                <a
-                  href={waUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-2 min-h-12 px-5 py-3.5 bg-[#25D366] hover:bg-[#20BD5A] text-white font-semibold rounded-lg transition-colors shadow-md text-sm sm:text-base"
-                >
-                  <FaWhatsapp className="text-xl shrink-0" />
-                  WhatsApp
-                </a>
               </div>
             </div>
           </div>
@@ -244,7 +391,7 @@ export default function ExperienceDetail() {
           <section>
             <SectionHeading>Experience Highlights</SectionHeading>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-              {DEFAULT_HIGHLIGHTS.map((label, i) => {
+              {highlights.map((label, i) => {
                 const Icon = HIGHLIGHT_ICONS[i % HIGHLIGHT_ICONS.length]
                 return (
                   <div
@@ -263,13 +410,70 @@ export default function ExperienceDetail() {
             </div>
           </section>
 
+          {/* Hermanus: Choose Your Vehicle */}
+          {isHermanus && (
+            <section>
+              <SectionHeading>Choose Your Vehicle</SectionHeading>
+              <p className="text-sm text-brand-green/80 mb-4 leading-relaxed">
+                Select your vehicle during booking. Capacity limits apply to keep
+                every journey private and comfortable.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {HERMANUS_VEHICLE_CARDS.map((card) => {
+                  const fromCatalog = findCatalogVehicle(
+                    catalogVehicles,
+                    card.slug
+                  )
+                  const name = fromCatalog?.name || card.fallbackName
+                  const capacity =
+                    fromCatalog?.capacity_max != null
+                      ? `Up to ${fromCatalog.capacity_max} guests${
+                          card.premium ? ' · Premium Experience' : ''
+                        }`
+                      : card.capacityLabel
+                  return (
+                    <article
+                      key={card.slug}
+                      className="bg-brand-cream-light rounded-xl border border-brand-cream-dark overflow-hidden shadow-sm flex flex-col"
+                    >
+                      <div className="aspect-16/10 bg-brand-cream-dark/30 overflow-hidden relative">
+                        <img
+                          src={fromCatalog?.image_url || card.image}
+                          alt=""
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                        />
+                        {card.premium && (
+                          <span className="absolute top-2 left-2 text-[10px] sm:text-xs font-semibold tracking-wide uppercase text-brand-green bg-brand-gold px-2 py-1 rounded-full">
+                            Premium Experience
+                          </span>
+                        )}
+                      </div>
+                      <div className="p-4 flex-1">
+                        <h3 className="font-bold text-brand-green text-sm sm:text-base leading-snug mb-1">
+                          {name}
+                        </h3>
+                        <p className="text-xs sm:text-sm text-brand-green/80">
+                          {capacity}
+                        </p>
+                      </div>
+                    </article>
+                  )
+                })}
+              </div>
+            </section>
+          )}
+
           {/* Timeline */}
           {content.timeline.length > 0 && (
             <section>
               <SectionHeading>Journey Timeline</SectionHeading>
               <ol className="relative space-y-0 border-l-2 border-brand-gold/60 ml-3 sm:ml-4">
                 {content.timeline.map((stop, i) => (
-                  <li key={`${stop.title}-${i}`} className="relative pl-6 sm:pl-8 pb-8 last:pb-0">
+                  <li
+                    key={`${stop.title}-${i}`}
+                    className="relative pl-6 sm:pl-8 pb-8 last:pb-0"
+                  >
                     <span className="absolute -left-2.25 top-1.5 w-4 h-4 rounded-full bg-brand-gold border-2 border-brand-cream shadow-sm" />
                     <div className="bg-brand-cream-light rounded-xl border border-brand-cream-dark p-4 sm:p-5 shadow-sm">
                       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 mb-2">
@@ -299,6 +503,45 @@ export default function ExperienceDetail() {
                   </li>
                 ))}
               </ol>
+            </section>
+          )}
+
+          {/* Hermanus: Whale Season Information */}
+          {isHermanus && (
+            <section>
+              <SectionHeading>Whale Season Information</SectionHeading>
+              <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {[
+                  {
+                    label: 'Season',
+                    value: formatSeasonLabel(WHALE_SEASON),
+                  },
+                  { label: 'Experience', value: 'Full Day' },
+                  { label: 'Duration', value: 'Approximately 8–10 hours' },
+                  { label: 'Start', value: 'Cape Town' },
+                  { label: 'Destination', value: 'Hermanus' },
+                  {
+                    label: 'Wildlife',
+                    value: 'Sightings are not guaranteed',
+                  },
+                  {
+                    label: 'Boat',
+                    value: 'Not included — enquiry only',
+                  },
+                ].map((row) => (
+                  <div
+                    key={row.label}
+                    className="bg-brand-cream-light rounded-xl border border-brand-cream-dark p-4 shadow-sm"
+                  >
+                    <dt className="text-xs font-semibold uppercase tracking-wide text-brand-green/65 mb-1">
+                      {row.label}
+                    </dt>
+                    <dd className="text-sm sm:text-base font-medium text-brand-green">
+                      {row.value}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
             </section>
           )}
 
@@ -383,6 +626,50 @@ export default function ExperienceDetail() {
             </section>
           )}
 
+          {/* Hermanus: boat enquiry */}
+          {isHermanus && boatWaUrl && (
+            <section className="bg-brand-cream-light rounded-2xl border border-brand-cream-dark p-5 sm:p-7 shadow-sm">
+              <SectionHeading>Want to take it onto the water?</SectionHeading>
+              <p className="text-sm sm:text-base text-brand-green/90 leading-relaxed mb-3">
+                For guests interested in a whale-watching boat experience,
+                KhayrCape can assist with an enquiry to an external licensed
+                whale-watching operator.
+              </p>
+              <p className="text-sm text-brand-green/85 leading-relaxed mb-2">
+                The boat is <strong className="font-semibold">not included</strong>{' '}
+                in this land-based Hermanus experience. Arrangements are separate
+                from your KhayrCape tour and are subject to:
+              </p>
+              <ul className="space-y-1.5 mb-5 text-sm text-brand-green/90">
+                {[
+                  'Operator availability',
+                  'Weather',
+                  'Sea conditions',
+                  'Operator requirements',
+                  'Availability on the selected date',
+                ].map((item) => (
+                  <li key={item} className="flex items-start gap-2.5">
+                    <span className="mt-2 w-1.5 h-1.5 rounded-full bg-brand-gold shrink-0" />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+              <p className="text-xs text-brand-green/70 mb-4">
+                No boat availability is ever guaranteed. This enquiry does not
+                create a paid boat booking.
+              </p>
+              <a
+                href={boatWaUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 min-h-12 px-5 py-3.5 bg-[#25D366] hover:bg-[#20BD5A] text-white font-semibold rounded-lg transition-colors shadow-md text-sm sm:text-base"
+              >
+                <FaWhatsapp className="text-xl shrink-0" />
+                Enquire about boat tour
+              </a>
+            </section>
+          )}
+
           {/* Perfect For */}
           {content.perfect_for.length > 0 && (
             <section>
@@ -415,6 +702,45 @@ export default function ExperienceDetail() {
                   </li>
                 ))}
               </ul>
+            </section>
+          )}
+
+          {/* Hermanus: Important Information */}
+          {isHermanus && (
+            <section>
+              <SectionHeading>Important Information</SectionHeading>
+              <dl className="space-y-3">
+                {[
+                  { label: 'Whale season', value: 'June – October' },
+                  { label: 'Experience', value: 'Full Day' },
+                  {
+                    label: 'Duration',
+                    value: 'Approximately 8–10 hours',
+                  },
+                  { label: 'Start', value: 'Cape Town' },
+                  { label: 'Destination', value: 'Hermanus' },
+                  {
+                    label: 'Wildlife',
+                    value: 'Sightings are not guaranteed.',
+                  },
+                  {
+                    label: 'Boat',
+                    value: 'Not included. Enquiry only.',
+                  },
+                ].map((row) => (
+                  <div
+                    key={row.label}
+                    className="flex flex-col sm:flex-row sm:gap-4 border-b border-brand-cream-dark/80 pb-3 last:border-0"
+                  >
+                    <dt className="text-xs sm:text-sm font-semibold uppercase tracking-wide text-brand-green/65 sm:w-36 shrink-0">
+                      {row.label}
+                    </dt>
+                    <dd className="text-sm sm:text-base text-brand-green/90">
+                      {row.value}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
             </section>
           )}
 
@@ -456,7 +782,10 @@ export default function ExperienceDetail() {
           )}
 
           {/* Ready To Book */}
-          <section className="bg-brand-green rounded-2xl p-5 sm:p-8 shadow-lg text-brand-cream">
+          <section
+            ref={bottomCtaRef}
+            className="bg-brand-green rounded-2xl p-5 sm:p-8 shadow-lg text-brand-cream"
+          >
             <h2 className="text-xl sm:text-2xl font-bold mb-2">Ready To Book?</h2>
             <p className="text-brand-cream/90 text-sm sm:text-base mb-1">
               {content.display_name}
@@ -467,7 +796,11 @@ export default function ExperienceDetail() {
             </p>
             {catalogTour ? (
               <div className="mb-5 bg-brand-cream rounded-lg px-3 py-2 inline-block">
-                <PriceWithInfo tour={catalogTour} compact />
+                <PriceWithInfo
+                  tour={catalogTour}
+                  vehicles={catalogVehicles}
+                  compact
+                />
               </div>
             ) : null}
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 max-w-md">
@@ -478,15 +811,6 @@ export default function ExperienceDetail() {
                 <HiOutlineCreditCard className="text-xl shrink-0" />
                 Book Online
               </Link>
-              <a
-                href={waUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 min-h-12 px-5 py-3.5 bg-[#25D366] hover:bg-[#20BD5A] text-white font-semibold rounded-lg transition-colors text-sm sm:text-base"
-              >
-                <FaWhatsapp className="text-xl shrink-0" />
-                WhatsApp
-              </a>
             </div>
           </section>
 
@@ -522,7 +846,11 @@ export default function ExperienceDetail() {
                           {rel.duration_label}
                         </p>
                         {relCatalog ? (
-                          <PriceWithInfo tour={relCatalog} compact />
+                          <PriceWithInfo
+                            tour={relCatalog}
+                            vehicles={catalogVehicles}
+                            compact
+                          />
                         ) : null}
                         <div className="mt-auto pt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
                           <Link
@@ -547,6 +875,21 @@ export default function ExperienceDetail() {
           )}
         </div>
       </main>
+
+      {showStickyBook && (
+        <div className="fixed inset-x-0 bottom-0 z-40 lg:hidden border-t border-brand-cream-dark bg-brand-cream/95 backdrop-blur px-3 pt-2.5 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-8px_24px_rgba(0,0,0,0.08)]">
+          <div className="max-w-4xl mx-auto">
+            <Link
+              to={bookPath}
+              className="w-full inline-flex items-center justify-center gap-2 min-h-12 px-4 rounded-lg bg-brand-gold text-brand-green font-semibold"
+            >
+              <HiOutlineCreditCard className="text-xl shrink-0" />
+              Book Online
+            </Link>
+          </div>
+        </div>
+      )}
+
       <Footer />
 
       {/* Lightbox */}

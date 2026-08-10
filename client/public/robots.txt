@@ -7,4 +7,4 @@ Disallow: /account
 Disallow: /login
 Disallow: /signup
 
-Sitemap: https://khayrcape.com/sitemap.xml
+Sitemap: https://khayrcapeexperiences.com/sitemap.xml

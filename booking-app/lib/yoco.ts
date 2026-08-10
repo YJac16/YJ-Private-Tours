@@ -16,9 +16,12 @@ export type YocoCheckoutResult = {
 export async function createYocoCheckout(opts: {
   amountCents: number
   bookingId: string
+  bookingReference?: string
   clientName?: string
   clientEmail?: string
   tourName?: string
+  /** Override default key — use a unique suffix when retrying after an expired checkout. */
+  idempotencyKey?: string
 }): Promise<YocoCheckoutResult> {
   const secretKey = process.env.YOCO_SECRET_KEY
   if (!secretKey) {
@@ -35,21 +38,27 @@ export async function createYocoCheckout(opts: {
     throw new Error('Amount must be at least 100 cents (R1)')
   }
 
+  const refQ = opts.bookingReference
+    ? `&ref=${encodeURIComponent(opts.bookingReference)}`
+    : ''
+
   const res = await fetch(YOCO_CHECKOUT_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${secretKey}`,
-      'Idempotency-Key': `booking-${opts.bookingId}-${amount}`,
+      'Idempotency-Key':
+        opts.idempotencyKey || `booking-${opts.bookingId}-${amount}`,
     },
     body: JSON.stringify({
       amount,
       currency: 'ZAR',
-      successUrl: `${site}/thank-you?payment=success&booking_id=${opts.bookingId}`,
-      cancelUrl: `${site}/book?cancelled=1&booking_id=${opts.bookingId}`,
-      failureUrl: `${site}/thank-you?payment=failure&booking_id=${opts.bookingId}`,
+      successUrl: `${site}/thank-you?payment=success&booking_id=${opts.bookingId}${refQ}`,
+      cancelUrl: `${site}/book?cancelled=1&booking_id=${opts.bookingId}${refQ}`,
+      failureUrl: `${site}/thank-you?payment=failure&booking_id=${opts.bookingId}${refQ}`,
       metadata: {
         booking_id: opts.bookingId,
+        booking_reference: opts.bookingReference || '',
         clientName: opts.clientName || '',
         clientEmail: opts.clientEmail || '',
         tourName: opts.tourName || '',
@@ -75,6 +84,54 @@ export async function createYocoCheckout(opts: {
     currency: data.currency ?? 'ZAR',
     status: data.status,
   }
+}
+
+/**
+ * Refund a completed Yoco checkout (full or partial).
+ * Note: Yoco test keys often reject refunds — live keys required for real refunds.
+ */
+export async function createYocoRefund(opts: {
+  checkoutId: string
+  amountCents?: number | null
+  idempotencyKey: string
+}): Promise<{ ok: true; status: number; data: Record<string, unknown> } | { ok: false; status: number; error: string }> {
+  const secretKey = process.env.YOCO_SECRET_KEY
+  if (!secretKey) {
+    return { ok: false, status: 500, error: 'YOCO_SECRET_KEY is not configured' }
+  }
+  const checkoutId = String(opts.checkoutId || '').trim()
+  if (!checkoutId) {
+    return { ok: false, status: 400, error: 'Missing checkout id for refund' }
+  }
+
+  const body: Record<string, unknown> = {}
+  if (opts.amountCents != null && Number.isFinite(opts.amountCents)) {
+    body.amount = Math.round(Number(opts.amountCents))
+  }
+
+  const res = await fetch(
+    `${YOCO_CHECKOUT_URL}/${encodeURIComponent(checkoutId)}/refund`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${secretKey}`,
+        'Idempotency-Key': opts.idempotencyKey,
+      },
+      body: JSON.stringify(body),
+    }
+  )
+  const data = (await res.json().catch(() => ({}))) as Record<string, unknown>
+  if (!res.ok && res.status !== 202) {
+    const msg =
+      (data?.message as string) ||
+      (data?.error as string) ||
+      (data?.detail as string) ||
+      JSON.stringify(data) ||
+      'Yoco refund failed'
+    return { ok: false, status: res.status, error: msg }
+  }
+  return { ok: true, status: res.status, data }
 }
 
 /** Default tour prices in ZAR cents (server authority). */

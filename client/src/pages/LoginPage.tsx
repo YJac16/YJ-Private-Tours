@@ -1,5 +1,5 @@
 import { type FormEvent, useState } from 'react'
-import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import { useAuth, type UserRole } from '../lib/auth'
@@ -18,7 +18,12 @@ export default function LoginPage() {
     useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  const from = (location.state as { from?: string } | null)?.from || '/'
+  const [searchParams] = useSearchParams()
+  const nextParam = searchParams.get('next')
+  const from =
+    nextParam ||
+    (location.state as { from?: string } | null)?.from ||
+    '/'
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -86,6 +91,14 @@ export default function LoginPage() {
           >
             {busy ? 'Signing in…' : 'Sign in'}
           </button>
+          <p className="text-sm text-center">
+            <Link
+              to="/forgot-password"
+              className="text-brand-green/80 underline font-medium"
+            >
+              Forgot password?
+            </Link>
+          </p>
           {!supabaseConfigured && (
             <div className="space-y-2 border-t border-brand-cream-dark pt-4">
               <p className="text-xs text-brand-green/70 text-center">

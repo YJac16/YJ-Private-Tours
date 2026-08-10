@@ -2,6 +2,7 @@ import { type FormEvent, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
+import InformedConsentForm from '../components/InformedConsentForm'
 import { RequireAuth } from '../components/RequireAuth'
 import { useAuth } from '../lib/auth'
 import {
@@ -9,6 +10,101 @@ import {
   type AccountBooking,
 } from '../lib/authApi'
 import { formatZar } from '../lib/pricing'
+
+function ConsentAccountSection({
+  accessToken,
+  fullName,
+  email,
+  phone,
+}: {
+  accessToken: string | null
+  fullName: string
+  email: string
+  phone: string
+}) {
+  const [loading, setLoading] = useState(true)
+  const [form, setForm] = useState<{
+    id: string
+    version: string
+    title: string
+    body_html: string
+  } | null>(null)
+  const [signed, setSigned] = useState(false)
+  const [signedAt, setSignedAt] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [reloadKey, setReloadKey] = useState(0)
+
+  useEffect(() => {
+    if (!accessToken) return
+    let cancelled = false
+    ;(async () => {
+      setLoading(true)
+      setError(null)
+      try {
+        const res = await fetch('/api/account-consent', {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        })
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.error || 'Could not load consent')
+        if (!cancelled) {
+          setForm(data.form || null)
+          setSigned(Boolean(data.signed))
+          setSignedAt(data.consent?.signed_at || null)
+        }
+      } catch (e) {
+        if (!cancelled) {
+          setError(e instanceof Error ? e.message : 'Could not load consent')
+        }
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [accessToken, reloadKey])
+
+  if (!accessToken) return null
+
+  return (
+    <section className="bg-brand-cream border border-brand-cream-dark rounded-2xl p-5 space-y-3 shadow-sm">
+      <h2 className="text-lg font-bold text-brand-green">
+        Informed consent
+      </h2>
+      <p className="text-sm text-brand-green/80">
+        Sign once for your account. You will not need to resign for future
+        bookings unless we publish a new consent version.
+      </p>
+      {loading ? (
+        <p className="text-sm text-brand-green/70">Loading…</p>
+      ) : error ? (
+        <p className="text-sm text-red-800">{error}</p>
+      ) : signed ? (
+        <p className="text-sm text-green-900 bg-green-50 border border-green-200 rounded-xl px-3 py-2">
+          Consent on file
+          {signedAt
+            ? ` · signed ${new Date(signedAt).toLocaleString('en-ZA')}`
+            : ''}
+          {form ? ` · ${form.version}` : ''}
+        </p>
+      ) : form ? (
+        <InformedConsentForm
+          form={form}
+          accessToken={accessToken}
+          defaultName={fullName}
+          defaultEmail={email}
+          defaultPhone={phone}
+          onSigned={() => setReloadKey((k) => k + 1)}
+          compact
+        />
+      ) : (
+        <p className="text-sm text-brand-green/70">
+          Consent form is not available yet.
+        </p>
+      )}
+    </section>
+  )
+}
 
 function AccountInner() {
   const {
@@ -26,6 +122,9 @@ function AccountInner() {
   const [phone, setPhone] = useState(profile?.phone || '')
   const [note, setNote] = useState('')
   const [bookings, setBookings] = useState<AccountBooking[]>([])
+  const [bookingFilter, setBookingFilter] = useState<
+    '' | 'upcoming' | 'past' | 'cancelled'
+  >('')
   const [saving, setSaving] = useState(false)
   const [resending, setResending] = useState(false)
   const [loadingBookings, setLoadingBookings] = useState(true)
@@ -45,7 +144,10 @@ function AccountInner() {
     ;(async () => {
       setLoadingBookings(true)
       try {
-        const data = await fetchAccountBookings(accessToken)
+        const data = await fetchAccountBookings(
+          accessToken,
+          bookingFilter || undefined
+        )
         if (!cancelled) setBookings(data.bookings)
       } catch (e) {
         if (!cancelled) {
@@ -58,7 +160,7 @@ function AccountInner() {
     return () => {
       cancelled = true
     }
-  }, [accessToken])
+  }, [accessToken, bookingFilter])
 
   const onSave = async (e: FormEvent) => {
     e.preventDefault()
@@ -206,6 +308,13 @@ function AccountInner() {
             </button>
           </form>
 
+          <ConsentAccountSection
+            accessToken={accessToken}
+            fullName={fullName}
+            email={email}
+            phone={phone}
+          />
+
           <section className="bg-brand-cream border border-brand-cream-dark rounded-2xl p-5 space-y-3 shadow-sm">
             <h2 className="text-lg font-bold text-brand-green">Book a tour</h2>
             <p className="text-sm text-brand-green/80">
@@ -228,7 +337,32 @@ function AccountInner() {
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-lg font-bold text-brand-green">My bookings</h2>
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+              <h2 className="text-lg font-bold text-brand-green">My bookings</h2>
+              <div className="flex gap-2 text-sm overflow-x-auto pb-1 -mx-1 px-1">
+                {(
+                  [
+                    ['', 'All'],
+                    ['upcoming', 'Upcoming'],
+                    ['past', 'Past'],
+                    ['cancelled', 'Cancelled'],
+                  ] as const
+                ).map(([value, label]) => (
+                  <button
+                    key={value || 'all'}
+                    type="button"
+                    onClick={() => setBookingFilter(value)}
+                    className={`shrink-0 min-h-11 px-3 rounded-lg border ${
+                      bookingFilter === value
+                        ? 'bg-brand-green text-brand-cream border-brand-green'
+                        : 'border-brand-cream-dark text-brand-green'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
             {loadingBookings ? (
               <p className="text-sm text-brand-green/70">Loading…</p>
             ) : bookings.length === 0 ? (
@@ -245,7 +379,7 @@ function AccountInner() {
                   return (
                     <li
                       key={b.id}
-                      className="bg-brand-cream border border-brand-cream-dark rounded-2xl p-4 space-y-1 shadow-sm"
+                      className="bg-brand-cream border border-brand-cream-dark rounded-2xl p-4 space-y-2 shadow-sm"
                     >
                       <div className="flex flex-wrap justify-between gap-2">
                         <p className="font-semibold text-brand-green">
@@ -270,6 +404,12 @@ function AccountInner() {
                           {b.special_requests || b.notes}
                         </p>
                       )}
+                      <Link
+                        to={`/account/bookings/${b.id}`}
+                        className="inline-flex text-sm font-semibold text-brand-green underline min-h-11 items-center"
+                      >
+                        View details
+                      </Link>
                     </li>
                   )
                 })}

@@ -22,6 +22,8 @@ import ReportsTab from './tabs/ReportsTab'
 import SettingsTab from './tabs/SettingsTab'
 import DriversTab from './tabs/DriversTab'
 import TripsTab from './tabs/TripsTab'
+import CalendarTab from './tabs/CalendarTab'
+import CustomersTab from './tabs/CustomersTab'
 
 function AdminBusinessInner() {
   const { accessToken, signOut } = useAuth()
@@ -161,6 +163,13 @@ function AdminBusinessInner() {
               {activeTab === 'reports' && <ReportsTab pin={pin} />}
               {activeTab === 'drivers' && <DriversTab token={pin} />}
               {activeTab === 'trips' && <TripsTab token={pin} />}
+              {activeTab === 'calendar' && (
+                <CalendarTab
+                  token={pin}
+                  onOpenTrips={() => setActiveTab('trips')}
+                />
+              )}
+              {activeTab === 'customers' && <CustomersTab token={pin} />}
               {activeTab === 'settings' && <SettingsTab pin={pin} />}
             </div>
           </div>

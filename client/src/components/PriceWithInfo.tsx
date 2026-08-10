@@ -1,15 +1,18 @@
 import { useId, useState } from 'react'
 import { HiOutlineInformationCircle } from 'react-icons/hi'
-import { PRICE_INFO_TEXT } from '../lib/experienceTypes'
-import type { PricingTour } from '../lib/pricing'
-import { formatZar, resolvePricePerPerson } from '../lib/pricing'
-
-export function formatStartingFromPerGuest(tour: PricingTour): string {
-  return `Starting from ${formatZar(resolvePricePerPerson(tour))} per guest`
-}
+import {
+  HERMANUS_PRICE_INFO_TEXT,
+  PRICE_INFO_TEXT,
+} from '../lib/experienceTypes'
+import type { PricingTour, PricingVehicle } from '../lib/pricing'
+import {
+  formatStartingFromNote,
+  formatStartingFromPerGuest,
+} from '../lib/pricing'
 
 type Props = {
   tour: PricingTour
+  vehicles?: PricingVehicle[]
   className?: string
   showVehicleNote?: boolean
   compact?: boolean
@@ -17,12 +20,15 @@ type Props = {
 
 export default function PriceWithInfo({
   tour,
+  vehicles = [],
   className = '',
   showVehicleNote = true,
   compact = false,
 }: Props) {
   const [open, setOpen] = useState(false)
   const tipId = useId()
+  const infoText =
+    tour.slug === 'hermanus' ? HERMANUS_PRICE_INFO_TEXT : PRICE_INFO_TEXT
 
   return (
     <div className={className}>
@@ -32,7 +38,7 @@ export default function PriceWithInfo({
             compact ? 'text-sm' : 'text-base'
           }`}
         >
-          {formatStartingFromPerGuest(tour)}
+          {formatStartingFromPerGuest(tour, vehicles)}
         </p>
         <button
           type="button"
@@ -47,7 +53,7 @@ export default function PriceWithInfo({
       </div>
       {showVehicleNote && (
         <p className="text-xs text-brand-green/75 mt-0.5">
-          Private vehicle selected during booking
+          {formatStartingFromNote(tour)}
         </p>
       )}
       {open && (
@@ -56,7 +62,7 @@ export default function PriceWithInfo({
           role="note"
           className="mt-2 text-xs leading-relaxed text-brand-green/90 bg-brand-cream-dark/40 border border-brand-cream-dark rounded-lg px-3 py-2"
         >
-          {PRICE_INFO_TEXT}
+          {infoText}
         </p>
       )}
     </div>

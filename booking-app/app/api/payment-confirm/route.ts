@@ -1,16 +1,23 @@
-import { NextResponse } from 'next/server'
-import { mockDb, useMockStore } from '@/lib/mock-store'
-import { supabaseAdmin } from '@/lib/supabase-server'
-import { notifyDriverBooking } from '@/lib/notify'
-
 /**
- * Confirm a booking after the guest returns from Yoco (success redirect).
- * Production should also verify via Yoco webhook; this covers local/test reliably.
+ * Read-only payment/booking status. NEVER marks paid.
+ * Next twin of api/payment-confirm.ts
  */
-export async function POST(req: Request) {
+import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
+import { mockDb, useMockStore } from '@/lib/mock-store'
+import { expireStalePendingBookings } from '@/lib/booking-lifecycle'
+
+function supabaseAdmin() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!url || !key) throw new Error('Supabase is not configured')
+  return createClient(url, key, { auth: { persistSession: false } })
+}
+
+export async function POST(request: NextRequest) {
   try {
-    const body = await req.json()
-    const bookingId = body.booking_id as string | undefined
+    const body = (await request.json()) as { booking_id?: string }
+    const bookingId = String(body.booking_id || '')
     if (!bookingId) {
       return NextResponse.json({ error: 'booking_id required' }, { status: 400 })
     }
@@ -20,40 +27,24 @@ export async function POST(req: Request) {
       if (!booking) {
         return NextResponse.json({ error: 'Booking not found' }, { status: 404 })
       }
-      if (booking.status === 'paid') {
-        return NextResponse.json({ success: true, already_paid: true, booking_id: bookingId })
-      }
-      mockDb.confirmPayment(bookingId)
-      const catalog = mockDb.catalog()
-      void notifyDriverBooking(
-        {
-          bookingId: booking.id,
-          status: 'paid',
-          bookingDate: booking.booking_date,
-          startTime: booking.start_time,
-          clientName: booking.client_name,
-          clientEmail: booking.client_email,
-          clientPhone: booking.client_phone,
-          tourName: catalog.tours.find((t) => t.id === booking.tour_id)?.name,
-          vehicleName: catalog.vehicles.find((v) => v.id === booking.vehicle_id)?.name,
-          driverName: catalog.drivers.find((d) => d.id === booking.driver_id)?.name,
-          notes: booking.notes,
-        },
-        'paid'
-      )
-      return NextResponse.json({ success: true, booking_id: bookingId, status: 'paid' })
+      return NextResponse.json({
+        success: true,
+        booking_id: booking.id,
+        booking_reference: booking.booking_reference ?? null,
+        status: booking.status,
+        payment_status: booking.payment_status ?? booking.status,
+        paid: booking.status === 'paid',
+        confirmed_via: 'status_only',
+      })
     }
 
-    const { data: booking, error } = await supabaseAdmin
+    const sb = supabaseAdmin()
+    await expireStalePendingBookings(sb)
+
+    const { data: booking, error } = await sb
       .from('bookings')
       .select(
-        `
-        id, status, booking_date, start_time, client_name, client_email, client_phone, notes, driver_id,
-        tour:tours(name),
-        vehicle:vehicles(name),
-        driver:drivers(name),
-        payments(amount_cents)
-      `
+        'id, status, payment_status, booking_reference, grand_total_cents, final_price_cents'
       )
       .eq('id', bookingId)
       .maybeSingle()
@@ -62,54 +53,20 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Booking not found' }, { status: 404 })
     }
 
-    if (booking.status === 'paid') {
-      return NextResponse.json({ success: true, already_paid: true, booking_id: bookingId })
-    }
-
-    const { error: updateError } = await supabaseAdmin
-      .from('bookings')
-      .update({ status: 'paid' })
-      .eq('id', bookingId)
-
-    if (updateError) {
-      return NextResponse.json({ error: updateError.message }, { status: 500 })
-    }
-
-    await supabaseAdmin
-      .from('payments')
-      .update({
-        status: 'paid',
-        paid_at: new Date().toISOString(),
-      })
-      .eq('booking_id', bookingId)
-      .eq('status', 'pending')
-
-    const tour = booking.tour as { name?: string } | null
-    const vehicle = booking.vehicle as { name?: string } | null
-    const driver = booking.driver as { name?: string } | null
-    const payments = booking.payments as Array<{ amount_cents?: number }> | null
-
-    void notifyDriverBooking(
-      {
-        bookingId: booking.id,
-        status: 'paid',
-        bookingDate: booking.booking_date,
-        startTime: booking.start_time,
-        clientName: booking.client_name,
-        clientEmail: booking.client_email,
-        clientPhone: booking.client_phone,
-        tourName: tour?.name,
-        vehicleName: vehicle?.name,
-        driverName: driver?.name,
-        notes: booking.notes,
-        amountCents: payments?.[0]?.amount_cents,
-      },
-      'paid'
+    return NextResponse.json({
+      success: true,
+      booking_id: booking.id,
+      booking_reference: booking.booking_reference ?? null,
+      status: booking.status,
+      payment_status: booking.payment_status ?? null,
+      amount_cents: booking.grand_total_cents ?? booking.final_price_cents ?? null,
+      paid: booking.status === 'paid',
+      confirmed_via: 'status_only',
+    })
+  } catch (e: unknown) {
+    return NextResponse.json(
+      { error: e instanceof Error ? e.message : 'Status lookup failed' },
+      { status: 500 }
     )
-
-    return NextResponse.json({ success: true, booking_id: bookingId, status: 'paid' })
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Unknown error'
-    return NextResponse.json({ error: message }, { status: 500 })
   }
 }

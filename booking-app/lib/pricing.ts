@@ -195,9 +195,43 @@ export function formatZar(cents: number): string {
   return `R${(cents / 100).toLocaleString('en-ZA', { maximumFractionDigits: 0 })}`
 }
 
-export function formatTourFromPrice(tour: PricingTour, vehiclePriceCents = 0): string {
-  const ppp = resolvePricePerPerson(tour)
-  const from = vehiclePriceCents + ppp
+/** Cheapest vehicle that fits `passengerCount` (prefer non-luxury). */
+export function cheapestVehicleForGuests(
+  vehicles: PricingVehicle[],
+  passengerCount: number
+): PricingVehicle | null {
+  const fitting = vehiclesForGuestCount(vehicles, passengerCount)
+  if (!fitting.length) return null
+  const standard = fitting.filter((v) => !v.is_luxury)
+  const pool = standard.length ? standard : fitting
+  return [...pool].sort(
+    (a, b) => resolveVehiclePrice(a) - resolveVehiclePrice(b)
+  )[0]
+}
+
+/**
+ * Minimum total for N guests: per-person × N + cheapest fitting vehicle.
+ * Default N=1 for experience “starting from” displays.
+ */
+export function startingFromCents(
+  tour: PricingTour,
+  vehicles: PricingVehicle[],
+  passengerCount = 1
+): number {
+  const guests = Math.max(1, Math.round(passengerCount))
+  const vehicle = cheapestVehicleForGuests(vehicles, guests)
+  const vehicleCents = vehicle ? resolveVehiclePrice(vehicle) : 0
+  return vehicleCents + resolvePricePerPerson(tour) * guests
+}
+
+export function formatTourFromPrice(
+  tour: PricingTour,
+  vehiclePriceCentsOrVehicles: number | PricingVehicle[] = 0
+): string {
+  const from =
+    typeof vehiclePriceCentsOrVehicles === 'number'
+      ? vehiclePriceCentsOrVehicles + resolvePricePerPerson(tour)
+      : startingFromCents(tour, vehiclePriceCentsOrVehicles, 1)
   return `From ${formatZar(from)}`
 }
 
@@ -205,8 +239,18 @@ export function formatTourPaxRate(tour: PricingTour): string {
   return `${formatZar(resolvePricePerPerson(tour))} per person`
 }
 
-export function formatTourPriceLine(tour: PricingTour, vehiclePriceCents = 0): string {
-  return `${formatTourFromPrice(tour, vehiclePriceCents)} · ${formatTourPaxRate(tour)}`
+export function formatTourPriceLine(
+  tour: PricingTour,
+  vehiclePriceCentsOrVehicles: number | PricingVehicle[] = 0
+): string {
+  return `${formatTourFromPrice(tour, vehiclePriceCentsOrVehicles)} · ${formatTourPaxRate(tour)}`
+}
+
+export function formatStartingFromPerGuest(
+  tour: PricingTour,
+  vehicles: PricingVehicle[] = []
+): string {
+  return `Starting from ${formatZar(startingFromCents(tour, vehicles, 1))} per guest`
 }
 
 export function generateBookingReference(): string {

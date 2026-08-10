@@ -123,12 +123,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
 
       const from = req.query.from ? String(req.query.from) : undefined
+      const to = req.query.to ? String(req.query.to) : undefined
       const driverId = driver.id
 
       if (useMockStore()) {
         return res.status(200).json({
           driver,
-          bookings: mockDb.listBookings(driverId, from),
+          bookings: mockDb.listBookings(driverId, from, to),
           unavailable: mockDb
             .listUnavailable()
             .filter((u) => u.driver_id === driverId),
@@ -154,6 +155,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         .order('start_time', { ascending: true })
 
       if (from) query = query.gte('booking_date', from)
+      if (to) query = query.lte('booking_date', to)
 
       const { data, error } = await query
       if (error) return res.status(500).json({ error: error.message })
@@ -235,6 +237,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (!existing) {
           return res.status(404).json({ error: 'Booking not found for this driver' })
         }
+        if (body.status === 'paid') {
+          return res.status(400).json({
+            error: 'Drivers cannot mark bookings paid; Yoco webhook is the source of truth',
+          })
+        }
+        if (body.status === 'cancelled') {
+          const result = mockDb.cancelAccountBooking({
+            bookingId: booking_id,
+            actor: 'driver',
+            reason: body.notes ? String(body.notes) : 'Cancelled by driver',
+            requestRefund: true,
+          })
+          if (!result.ok) {
+            return res.status(result.status).json({ error: result.error })
+          }
+          return res.status(200).json({
+            success: true,
+            booking: mockDb.getBooking(booking_id),
+            cancel: result,
+          })
+        }
         const booking = mockDb.updateBooking(booking_id, {
           booking_date: body.booking_date as string | undefined,
           start_time: body.start_time as string | undefined,
@@ -245,30 +268,96 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(200).json({ success: true, booking })
       }
 
+      const sb = supabaseAdmin()
+
+      if (body.status === 'paid') {
+        return res.status(400).json({
+          error: 'Drivers cannot mark bookings paid; Yoco webhook is the source of truth',
+        })
+      }
+
+      if (body.status === 'cancelled') {
+        const { data: owned } = await sb
+          .from('bookings')
+          .select('id')
+          .eq('id', booking_id)
+          .eq('driver_id', driver.id)
+          .maybeSingle()
+        if (!owned) {
+          return res.status(404).json({ error: 'Booking not found for this driver' })
+        }
+        const { cancelBooking } = await import('../booking-app/lib/booking-lifecycle')
+        const result = await cancelBooking(sb, {
+          bookingId: booking_id,
+          actor: 'driver',
+          reason: body.notes ? String(body.notes) : 'Cancelled by driver',
+          requestRefund: true,
+        })
+        if (!result.ok) {
+          return res.status(result.status).json({ error: result.error })
+        }
+        const { data } = await sb.from('bookings').select('*').eq('id', booking_id).single()
+        return res.status(200).json({ success: true, booking: data, cancel: result })
+      }
+
+      const { data: before } = await sb
+        .from('bookings')
+        .select(
+          `
+          id, status, booking_date, start_time, client_name, client_email, client_phone,
+          notes, booking_reference, grand_total_cents, final_price_cents,
+          tour:tours(name), vehicle:vehicles(name), driver:drivers(name, full_name)
+        `
+        )
+        .eq('id', booking_id)
+        .eq('driver_id', driver.id)
+        .maybeSingle()
+      if (!before) {
+        return res.status(404).json({ error: 'Booking not found for this driver' })
+      }
+
       const updates: Record<string, unknown> = {}
       if (body.booking_date) updates.booking_date = body.booking_date
       if (body.start_time) updates.start_time = String(body.start_time).slice(0, 5)
       if (body.status) {
         updates.status = body.status
-        if (body.status === 'paid') updates.payment_status = 'paid'
-        if (body.status === 'cancelled') {
-          updates.payment_status = 'cancelled'
-          updates.trip_status = 'cancelled'
-        }
       }
       if (body.trip_status) updates.trip_status = body.trip_status
       if (body.notes !== undefined) updates.notes = body.notes
 
-      const sb = supabaseAdmin()
       const { data, error } = await sb
         .from('bookings')
         .update(updates)
         .eq('id', booking_id)
         .eq('driver_id', driver.id)
-        .select()
+        .select(
+          `
+          id, status, booking_date, start_time, client_name, client_email, client_phone,
+          notes, booking_reference, grand_total_cents, final_price_cents,
+          tour:tours(name), vehicle:vehicles(name), driver:drivers(name, full_name)
+        `
+        )
         .single()
 
       if (error) return res.status(400).json({ error: error.message })
+
+      const slotChanged =
+        (body.booking_date && body.booking_date !== before.booking_date) ||
+        (body.start_time &&
+          String(body.start_time).slice(0, 5) !== String(before.start_time).slice(0, 5))
+      if (slotChanged) {
+        const { bookingRowToEmailDetails, notifyDriverBooking } = await import(
+          '../booking-app/lib/notify'
+        )
+        void notifyDriverBooking(
+          bookingRowToEmailDetails({
+            ...data,
+            changeNote: `Was ${before.booking_date} ${String(before.start_time).slice(0, 5)} → now ${data.booking_date} ${String(data.start_time).slice(0, 5)}`,
+          }),
+          'rescheduled'
+        )
+      }
+
       return res.status(200).json({ success: true, booking: data })
     }
 

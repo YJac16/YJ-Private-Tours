@@ -2,6 +2,7 @@
 import { mockDb, useMockStore } from '../booking-app/lib/mock-store'
 import { createClient } from '@supabase/supabase-js'
 import { DEFAULT_BOOKING_SETTINGS, parseBookingSettings } from '../booking-app/lib/pricing'
+import { isTourPubliclyVisible } from '../booking-app/lib/seasonalVisibility'
 import { methodNotAllowed } from './_lib/http'
 
 function supabaseAdmin() {
@@ -12,10 +13,10 @@ function supabaseAdmin() {
 }
 
 const TOUR_SELECT_FULL =
-  'id, name, description, slug, duration_label, included_items, excluded_items, image_url, price_per_person_cents, base_price_cents, additional_guest_price_cents, max_guests, short_description, hero_tagline, detailed_description, hero_image_url, gallery_images, map_embed_url, seo_title, seo_description, seo_image, pricing_notes, perfect_for, good_to_know, experience_content'
+  'id, name, description, slug, duration_label, included_items, excluded_items, image_url, price_per_person_cents, base_price_cents, additional_guest_price_cents, max_guests, short_description, hero_tagline, detailed_description, hero_image_url, gallery_images, map_embed_url, seo_title, seo_description, seo_image, pricing_notes, perfect_for, good_to_know, experience_content, admin_meta'
 
 const TOUR_SELECT_BASIC =
-  'id, name, description, slug, duration_label, included_items, excluded_items, image_url, price_per_person_cents, base_price_cents, additional_guest_price_cents, max_guests'
+  'id, name, description, slug, duration_label, included_items, excluded_items, image_url, price_per_person_cents, base_price_cents, additional_guest_price_cents, max_guests, admin_meta'
 
 function normalizeTour(t: Record<string, unknown>) {
   return {
@@ -28,6 +29,8 @@ function normalizeTour(t: Record<string, unknown>) {
     perfect_for: (t.perfect_for as string[]) ?? [],
     good_to_know: (t.good_to_know as string[]) ?? [],
     experience_content: t.experience_content ?? null,
+    admin_meta:
+      t.admin_meta && typeof t.admin_meta === 'object' ? t.admin_meta : {},
   }
 }
 
@@ -39,6 +42,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const catalog = mockDb.catalog()
       return res.status(200).json({
         ...catalog,
+        tours: (catalog.tours || []).filter((t: { slug?: string; admin_meta?: Record<string, unknown> }) =>
+          isTourPubliclyVisible({
+            slug: t.slug,
+            admin_meta: t.admin_meta,
+          })
+        ),
         yoco_public_key: process.env.NEXT_PUBLIC_YOCO_PUBLIC_KEY || null,
       })
     }
@@ -87,9 +96,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       (settingsRow?.value as Record<string, unknown>) || DEFAULT_BOOKING_SETTINGS
     )
 
-    const normalizedTours = (tours ?? []).map((t) =>
-      normalizeTour(t as Record<string, unknown>)
-    )
+    const normalizedTours = (tours ?? [])
+      .map((t) => normalizeTour(t as Record<string, unknown>))
+      .filter((t) =>
+        isTourPubliclyVisible({
+          slug: t.slug as string,
+          admin_meta: t.admin_meta as Record<string, unknown>,
+        })
+      )
 
     const normalizedVehicles = (vehicles ?? []).map((v) => ({
       ...v,

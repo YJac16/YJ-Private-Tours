@@ -2,12 +2,17 @@ import { NextResponse } from 'next/server'
 import { mockDb, useMockStore } from '@/lib/mock-store'
 import { supabaseAdmin } from '@/lib/supabase-server'
 
+/**
+ * Legacy Next driver route (PIN). Production Vite app uses JWT `/api/driver`.
+ * PIN has no default — DRIVER_PIN must be set explicitly. Prefer JWT.
+ */
 function unauthorized() {
   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 }
 
-function checkPin(req: Request, bodyPin?: string) {
-  const expected = process.env.DRIVER_PIN || '0420'
+function checkPin(req: Request, bodyPin?: string): boolean {
+  const expected = process.env.DRIVER_PIN
+  if (!expected) return false
   const headerPin = req.headers.get('x-driver-pin')
   return (headerPin || bodyPin) === expected
 }
@@ -18,13 +23,20 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
   const driverId = searchParams.get('driver_id')
   const from = searchParams.get('from')
+  const to = searchParams.get('to')
+
+  // Require driver_id — never dump the full fleet with a shared PIN.
+  if (!driverId) {
+    return NextResponse.json(
+      { error: 'driver_id required (legacy PIN route is scoped per driver)' },
+      { status: 400 }
+    )
+  }
 
   if (useMockStore()) {
     return NextResponse.json({
-      bookings: mockDb.listBookings(driverId, from),
-      unavailable: mockDb.listUnavailable().filter((u) =>
-        driverId ? u.driver_id === driverId : true
-      ),
+      bookings: mockDb.listBookings(driverId, from, to),
+      unavailable: mockDb.listUnavailable().filter((u) => u.driver_id === driverId),
     })
   }
 
@@ -45,11 +57,12 @@ export async function GET(req: Request) {
       vehicle:vehicles(id, name, slug)
     `
     )
+    .eq('driver_id', driverId)
     .order('booking_date', { ascending: true })
     .order('start_time', { ascending: true })
 
-  if (driverId) query = query.eq('driver_id', driverId)
   if (from) query = query.gte('booking_date', from)
+  if (to) query = query.lte('booking_date', to)
 
   const { data, error } = await query
   if (error) {
@@ -59,6 +72,7 @@ export async function GET(req: Request) {
   const { data: unavailable } = await supabaseAdmin
     .from('driver_unavailable')
     .select('*')
+    .eq('driver_id', driverId)
     .order('unavailable_date', { ascending: true })
 
   return NextResponse.json({
@@ -72,12 +86,34 @@ export async function PATCH(req: Request) {
     const body = await req.json()
     if (!checkPin(req, body.pin)) return unauthorized()
 
-    const { booking_id, booking_date, start_time, status, notes } = body
+    const { booking_id, booking_date, start_time, status, notes, driver_id } = body
     if (!booking_id) {
       return NextResponse.json({ error: 'booking_id required' }, { status: 400 })
     }
+    if (!driver_id) {
+      return NextResponse.json(
+        { error: 'driver_id required (legacy PIN route is scoped per driver)' },
+        { status: 400 }
+      )
+    }
+    if (status === 'paid') {
+      return NextResponse.json(
+        {
+          error:
+            'Cannot mark bookings paid via PIN route; Yoco webhook is the source of truth',
+        },
+        { status: 400 }
+      )
+    }
 
     if (useMockStore()) {
+      const owned = mockDb.listBookings(driver_id).find((b) => b.id === booking_id)
+      if (!owned) {
+        return NextResponse.json(
+          { error: 'Booking not found for this driver' },
+          { status: 404 }
+        )
+      }
       const booking = mockDb.updateBooking(booking_id, {
         booking_date,
         start_time,
@@ -101,6 +137,7 @@ export async function PATCH(req: Request) {
       .from('bookings')
       .update(updates)
       .eq('id', booking_id)
+      .eq('driver_id', driver_id)
       .select()
       .single()
 
@@ -165,11 +202,22 @@ export async function DELETE(req: Request) {
 
   const { searchParams } = new URL(req.url)
   const id = searchParams.get('id')
+  const driverId = searchParams.get('driver_id')
   if (!id) {
     return NextResponse.json({ error: 'id required' }, { status: 400 })
   }
+  if (!driverId) {
+    return NextResponse.json(
+      { error: 'driver_id required (legacy PIN route is scoped per driver)' },
+      { status: 400 }
+    )
+  }
 
   if (useMockStore()) {
+    const row = mockDb.listUnavailable().find((u) => u.id === id)
+    if (!row || row.driver_id !== driverId) {
+      return NextResponse.json({ error: 'Block not found' }, { status: 404 })
+    }
     mockDb.unblock(id)
     return NextResponse.json({ success: true })
   }
@@ -178,6 +226,7 @@ export async function DELETE(req: Request) {
     .from('driver_unavailable')
     .delete()
     .eq('id', id)
+    .eq('driver_id', driverId)
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 400 })

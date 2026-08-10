@@ -119,14 +119,16 @@ export default function SignupPage() {
                 />
               </label>
               <label className="flex items-start gap-3 text-sm text-brand-green cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={privacyAccepted}
-                  onChange={(e) => setPrivacyAccepted(e.target.checked)}
-                  className="mt-1 size-4 accent-brand-green"
-                  required
-                />
-                <span>
+                <span className="mt-0.5 inline-flex min-h-11 min-w-11 items-center justify-center shrink-0">
+                  <input
+                    type="checkbox"
+                    checked={privacyAccepted}
+                    onChange={(e) => setPrivacyAccepted(e.target.checked)}
+                    className="size-5 accent-brand-green"
+                    required
+                  />
+                </span>
+                <span className="pt-2">
                   I agree to the{' '}
                   <Link to="/privacy" target="_blank" className="underline font-semibold">
                     Privacy Policy

@@ -43,6 +43,10 @@ type AuthState = {
   signOut: () => Promise<void>
   refreshProfile: () => Promise<void>
   resendEmailConfirmation: (email?: string) => Promise<void>
+  /** Send Supabase password-reset email (redirects to /auth/callback?next=/reset-password). */
+  requestPasswordReset: (email: string) => Promise<void>
+  /** Set a new password while a recovery session is active. */
+  updatePassword: (password: string) => Promise<void>
   updateProfile: (patch: {
     full_name?: string
     phone?: string | null
@@ -64,9 +68,11 @@ type MockStored = {
   phone: string | null
 }
 
-function authCallbackUrl(): string {
+function authCallbackUrl(nextPath?: string): string {
   if (typeof window === 'undefined') return ''
-  return `${window.location.origin}/auth/callback`
+  const base = `${window.location.origin}/auth/callback`
+  if (!nextPath) return base
+  return `${base}?next=${encodeURIComponent(nextPath)}`
 }
 
 function readMock(): MockStored | null {
@@ -179,6 +185,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     })
     if (error) throw error
   }, [user])
+
+  const requestPasswordReset = useCallback(async (email: string) => {
+    if (!supabase) throw new Error('Supabase is not configured')
+    const target = email.trim()
+    if (!target) throw new Error('Email is required')
+    const { error } = await supabase.auth.resetPasswordForEmail(target, {
+      redirectTo: authCallbackUrl('/reset-password'),
+    })
+    if (error) throw error
+  }, [])
+
+  const updatePassword = useCallback(async (password: string) => {
+    if (!supabase) throw new Error('Supabase is not configured')
+    if (password.length < 8) {
+      throw new Error('Password must be at least 8 characters')
+    }
+    const { error } = await supabase.auth.updateUser({ password })
+    if (error) throw error
+  }, [])
 
   const updateProfile = useCallback(
     async (patch: {
@@ -360,6 +385,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signOut,
       refreshProfile,
       resendEmailConfirmation,
+      requestPasswordReset,
+      updatePassword,
       updateProfile,
       mockSignIn,
     }),
@@ -375,6 +402,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signOut,
       refreshProfile,
       resendEmailConfirmation,
+      requestPasswordReset,
+      updatePassword,
       updateProfile,
       mockSignIn,
     ]

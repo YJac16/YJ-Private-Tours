@@ -16,7 +16,7 @@ Booking API with date/time slots, driver + vehicle selection, and a driver sched
    - Copy `.env.example` to `.env.local`.
    - Set `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`.
    - Optional: `YOCO_SECRET_KEY` + `SITE_URL` for payments.
-   - Optional: `DRIVER_PIN` for `/driver` portal (default `0420`).
+   - Optional: `DRIVER_PIN` for legacy Next PIN route only (no default — prefer Supabase Auth JWT via Vite `/driver`).
 
 3. **Run**
    - `npm install`

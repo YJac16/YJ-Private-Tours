@@ -460,6 +460,152 @@ export const EXPERIENCE_DEFAULTS: Record<string, ExperienceContent> = {
       'Guest rate plus private vehicle fee selected during booking.',
     duration_label: '5–6 hours',
   },
+  hermanus: {
+    display_name: 'Hermanus Whale Experience',
+    short_description: 'A Private Whale-Season Journey from Cape Town',
+    hero_tagline:
+      'Discover Hermanus during whale season with private transport, a qualified local guide and a relaxed day exploring the spectacular Whale Coast.',
+    detailed_description:
+      'This is a PRIVATE, LAND-BASED Hermanus experience from Cape Town during whale season.\n\nThe experience focuses on private transport, a qualified local guide, the scenic Overberg journey, Hermanus sightseeing, the Hermanus coastline, land-based whale viewing during whale season, a flexible private itinerary, and family-friendly Muslim-friendly service.\n\nIMPORTANT: This is NOT a whale-watching boat tour. KhayrCape does NOT operate a whale-watching boat. The boat is NOT included in the tour or checkout.',
+    hero_image: '/chapmans-peak.jpg',
+    gallery_images: [
+      '/chapmans-peak.jpg',
+      '/blouberg.JPG',
+      '/muizenberg.jpg',
+      '/clifton.JPG',
+    ],
+    timeline: [
+      {
+        title: 'Private Cape Town Pickup',
+        description:
+          'Private pickup from your selected Cape Town location — hotel, Airbnb, or preferred address.',
+        duration: '15–30 min',
+        icon: 'pickup',
+      },
+      {
+        title: 'Scenic Overberg Journey',
+        description:
+          'Travel from Cape Town toward Hermanus with a qualified local guide along the scenic Overberg route.',
+        duration: '1.5–2 hrs',
+        icon: 'scenic',
+        image: '/chapmans-peak.jpg',
+      },
+      {
+        title: 'Hermanus',
+        description:
+          "Explore selected Hermanus locations depending on timing, weather and guest preferences — Cliff Path, Gearing's Point, Old Harbour, waterfront and scenic coastal viewpoints.",
+        duration: 'Flexible',
+        icon: 'coast',
+        image: '/blouberg.JPG',
+      },
+      {
+        title: 'Whale-Season Viewing',
+        description:
+          'During whale season, look for Southern Right Whales and other marine wildlife from suitable land-based viewpoints. Sightings cannot be guaranteed.',
+        duration: 'Flexible',
+        icon: 'whale',
+        image: '/muizenberg.jpg',
+      },
+      {
+        title: 'Flexible Private Stops',
+        description:
+          'Coffee, lunch stop (not included), shopping, photography and sightseeing as preferred. Halal-friendly options available on request.',
+        duration: 'Flexible',
+        icon: 'relax',
+      },
+      {
+        title: 'Return to Cape Town',
+        description:
+          'Private return to your original or preferred drop-off location.',
+        duration: '1.5–2 hrs',
+        icon: 'return',
+      },
+    ],
+    included: [
+      'Private Cape Town pickup and return',
+      'Private vehicle of your choice',
+      'Qualified local guide/driver',
+      'Scenic Overberg journey',
+      'Hermanus sightseeing',
+      'Land-based whale-season viewing opportunities',
+      'Flexible private itinerary',
+      'Booking coordination',
+      'Family-friendly service',
+      'Muslim-friendly service',
+    ],
+    excluded: [
+      'Whale-watching boat tour',
+      'Boat tickets',
+      'Boat operator fees',
+      'Lunch and meals',
+      'Personal purchases',
+      'Optional activities',
+      'Entrance fees where applicable',
+      'Any activity not explicitly included',
+    ],
+    perfect_for: [
+      'Whale-season travellers',
+      'Families and couples',
+      'Nature and coastline lovers',
+      'Private Cape Town day trips',
+      'Muslim-friendly travellers',
+    ],
+    good_to_know: [
+      'Whale season is typically June through October.',
+      'Wildlife sightings cannot be guaranteed.',
+      'The whale-watching boat experience is not included.',
+      'Your Hermanus Whale Experience includes private transport, qualified guiding and the land-based Hermanus experience.',
+      'If you would like to enquire about a boat tour, KhayrCape can assist with an enquiry to an external operator, subject to availability, weather and sea conditions.',
+      'Lunch is not included unless specifically arranged. Halal-friendly options can be recommended on request.',
+    ],
+    faqs: [
+      {
+        question: 'When is the Hermanus Whale Experience available?',
+        answer:
+          'The Hermanus Whale Experience is a seasonal experience available from June through October.',
+      },
+      {
+        question: 'Are whales guaranteed?',
+        answer:
+          'No. Whales are wild animals and sightings cannot be guaranteed.',
+      },
+      {
+        question: 'Is the boat tour included?',
+        answer:
+          'No. The whale-watching boat experience is not included in the KhayrCape tour price.',
+      },
+      {
+        question: 'Can KhayrCape arrange a boat?',
+        answer:
+          'KhayrCape can assist with an enquiry to an external licensed whale-watching operator, subject to operator availability, weather and sea conditions.',
+      },
+      {
+        question: 'Can I pay for the boat through KhayrCape?',
+        answer:
+          'No. The boat experience is separate from the KhayrCape booking and is not part of the checkout.',
+      },
+      {
+        question: 'Is lunch included?',
+        answer:
+          'Lunch is not included unless specifically stated. Halal-friendly options can be arranged or recommended on request.',
+      },
+      {
+        question: 'Which vehicle can I choose?',
+        answer:
+          'Suzuki XL6: up to 5 guests. Toyota Corolla Cross GR Sport: up to 3 guests. Mercedes-Benz GLC 220 Coupe: up to 3 guests (Premium Experience).',
+      },
+    ],
+    map_embed_url:
+      'https://maps.google.com/maps?q=Hermanus+Western+Cape&t=&z=12&ie=UTF8&iwloc=&output=embed',
+    seo_title:
+      'Hermanus Whale Experience from Cape Town | KhayrCape Experiences',
+    seo_description:
+      'Experience Hermanus during whale season with a private day experience from Cape Town, including private transport, a qualified local guide, scenic coastal sightseeing and land-based whale-viewing opportunities.',
+    seo_image: '/chapmans-peak.jpg',
+    pricing_notes:
+      'From R5,900 per private group (1 guest + cheapest private vehicle). Boat tour not included.',
+    duration_label: 'Full Day · 8–10 hours',
+  },
 }
 
 export function getDefaultExperience(slug: string): ExperienceContent | null {

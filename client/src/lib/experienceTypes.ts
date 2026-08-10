@@ -45,5 +45,19 @@ export const DEFAULT_HIGHLIGHTS = [
   'Complimentary Bottled Water',
 ] as const
 
+export const HERMANUS_HIGHLIGHTS = [
+  'Whale Season',
+  'Hermanus Coastline',
+  'Private Transport',
+  'Qualified Local Guide',
+  'Scenic Overberg Journey',
+  'Family Friendly',
+  'Muslim Friendly',
+  'Photography Opportunities',
+] as const
+
 export const PRICE_INFO_TEXT =
-  'Your final tour price is calculated based on the number of guests and your selected private vehicle. Vehicle pricing is shown during checkout.'
+  'Starting from shows the minimum for 1 guest with the cheapest private vehicle included. Your final price depends on guest count and the vehicle you choose at booking.'
+
+export const HERMANUS_PRICE_INFO_TEXT =
+  'From price is per private group for 1 guest with the cheapest private vehicle included. Final price depends on guest count and vehicle. The whale-watching boat is not included.'

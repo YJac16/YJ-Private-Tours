@@ -161,7 +161,7 @@ export default function Navbar() {
           aria-label="KhayrCape Experiences home"
         >
           <img
-            src="/logo vector.png"
+            src="/logo-vector-no-background.png"
             alt="KhayrCape Experiences"
             className="h-9 md:h-11 w-auto object-contain"
           />
@@ -177,10 +177,10 @@ export default function Navbar() {
               <Link
                 key={item.label}
                 to={item.to}
-                className="flex flex-col items-center justify-center py-1 px-0.5 min-w-0 text-brand-green hover:bg-brand-cream-dark/40 rounded-lg"
+                className="flex flex-col items-center justify-center py-2 px-0.5 min-h-12 min-w-0 text-brand-green hover:bg-brand-cream-dark/40 rounded-lg"
               >
                 <Icon className="shrink-0 text-base" aria-hidden />
-                <span className="text-[10px] font-semibold leading-tight truncate w-full text-center">
+                <span className="text-[11px] font-semibold leading-tight truncate w-full text-center">
                   {item.label}
                 </span>
               </Link>
@@ -224,13 +224,6 @@ export default function Navbar() {
         }`}
       >
         <nav className="px-4 pb-4 pt-2 bg-brand-cream border-t border-brand-cream-dark flex flex-col gap-1">
-          <button
-            type="button"
-            onClick={goHome}
-            className="py-3 text-left text-brand-green font-medium border-b border-brand-cream-dark"
-          >
-            Home
-          </button>
           {drawerLinks.map((link) => (
             <Link
               key={link.hash}
@@ -241,6 +234,10 @@ export default function Navbar() {
               {link.label}
             </Link>
           ))}
+          <div className="my-1 border-t border-brand-cream-dark" />
+          <p className="px-2 pt-1 text-[11px] font-semibold uppercase tracking-wide text-brand-green/55">
+            Account
+          </p>
           <AuthLinks mobile />
         </nav>
       </div>

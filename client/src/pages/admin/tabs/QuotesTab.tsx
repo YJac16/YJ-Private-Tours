@@ -293,6 +293,17 @@ export default function QuotesTab({ pin, tours, vehicles }: Props) {
   }
 
   const convertToBooking = async (quoteId: string) => {
+    const quote = quotes.find((q) => q.id === quoteId)
+    const start_time = window.prompt(
+      'Start time for this booking (HH:MM)',
+      '08:00'
+    )
+    if (!start_time?.trim()) return
+    const driver_id = window.prompt(
+      'Driver ID (UUID from Drivers tab) — required for availability check'
+    )
+    if (!driver_id?.trim()) return
+
     setBusy(true)
     setError(null)
     try {
@@ -300,6 +311,10 @@ export default function QuotesTab({ pin, tours, vehicles }: Props) {
         resource: 'quotes',
         action: 'convert_quote',
         quote_id: quoteId,
+        driver_id: driver_id.trim(),
+        start_time: start_time.trim().slice(0, 5),
+        vehicle_id: quote?.vehicle_id || undefined,
+        tour_id: quote?.tour_id || undefined,
       })
       await load()
       setWizardOpen(false)

@@ -11,8 +11,8 @@
  *   OPERATOR_DRIVER_PASSWORD
  *
  * Accounts:
- *   yaseenjacobs97@gmail.com  → admin  → /admin/pricing
- *   yaseenjacobs@icloud.com   → driver → /driver
+ *   yaseenjacobs@icloud.com   → admin  → /admin/pricing
+ *   yaseenjacobs97@gmail.com  → driver → /driver
  */
 
 import { createClient } from '@supabase/supabase-js'
@@ -76,13 +76,13 @@ const sb = createClient(url, serviceKey, {
 
 const users = [
   {
-    email: 'yaseenjacobs97@gmail.com',
+    email: 'yaseenjacobs@icloud.com',
     password: adminPassword,
     role: 'admin',
     full_name: 'Yaseen Jacobs',
   },
   {
-    email: 'yaseenjacobs@icloud.com',
+    email: 'yaseenjacobs97@gmail.com',
     password: driverPassword,
     role: 'driver',
     full_name: 'Yaseen Jacobs',

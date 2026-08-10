@@ -10,10 +10,21 @@ import {
   type PricingTour,
   type PricingVehicle,
 } from '../booking-app/lib/pricing'
+import { isTourPubliclyVisible } from '../booking-app/lib/seasonalVisibility'
 import { createYocoCheckout } from '../booking-app/lib/yoco'
 import { notifyDriverBooking } from '../booking-app/lib/notify'
+import { expireStalePendingBookings } from '../booking-app/lib/booking-lifecycle'
 import { methodNotAllowed, readJson } from './_lib/http'
 import { getAuthContext } from './_lib/authUser'
+
+function headerValue(req: VercelRequest, name: string): string {
+  const raw = req.headers[name.toLowerCase()]
+  return Array.isArray(raw) ? String(raw[0] || '') : String(raw || '')
+}
+
+function isSlotConflictMessage(msg: string) {
+  return /already reserved|already booked|duplicate key|unique/i.test(msg)
+}
 
 function normalizeTime(t: string) {
   return t.slice(0, 5)
@@ -37,7 +48,7 @@ async function loadPricingContext(
       sb
         .from('tours')
         .select(
-          'id, name, slug, price_per_person_cents, base_price_cents, additional_guest_price_cents, max_guests'
+          'id, name, slug, price_per_person_cents, base_price_cents, additional_guest_price_cents, max_guests, admin_meta'
         )
         .eq('id', tour_id)
         .single(),
@@ -68,7 +79,15 @@ async function loadPricingContext(
       ...tour,
       price_per_person_cents:
         tour.price_per_person_cents ?? tour.additional_guest_price_cents ?? 0,
-    } as PricingTour & { name: string },
+      admin_meta:
+        tour.admin_meta && typeof tour.admin_meta === 'object'
+          ? tour.admin_meta
+          : {},
+    } as PricingTour & {
+      name: string
+      slug?: string
+      admin_meta?: Record<string, unknown>
+    },
     vehicle: {
       ...vehicle,
       vehicle_price_cents:
@@ -112,6 +131,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const notes = body.notes
       ? String(body.notes)
       : special_requests
+    const idempotencyKey = (
+      headerValue(req, 'idempotency-key') ||
+      String(body.idempotency_key || '')
+    ).trim()
 
     const adult_count = Math.round(
       Number(body.adult_count ?? body.guest_count) || 1
@@ -139,6 +162,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const driver = catalog.drivers.find((d) => d.id === driver_id)
       if (!tour || !vehicle) {
         return res.status(400).json({ error: 'Invalid tour or vehicle' })
+      }
+
+      if (
+        !isTourPubliclyVisible(
+          {
+            slug: tour.slug,
+            admin_meta: (tour as { admin_meta?: Record<string, unknown> })
+              .admin_meta,
+          },
+          new Date(),
+          { travelDate: booking_date }
+        )
+      ) {
+        return res.status(400).json({
+          error:
+            'This experience is not available for the selected date (seasonal or hidden).',
+        })
       }
 
       const guestError = validateBookingGuests(
@@ -198,7 +238,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       })
       void notifyDriverBooking(
         {
-          bookingId: booking.id,
+          bookingId: booking_reference || booking.id,
           status: 'pending',
           bookingDate: booking_date,
           startTime: start_time,
@@ -227,6 +267,86 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const sb = supabaseAdmin()
+    await expireStalePendingBookings(sb)
+
+    if (idempotencyKey) {
+      const { data: existingKey } = await sb
+        .from('booking_idempotency_keys')
+        .select('booking_id')
+        .eq('idempotency_key', idempotencyKey)
+        .maybeSingle()
+
+      if (existingKey?.booking_id) {
+        const { data: existing } = await sb
+          .from('bookings')
+          .select(
+            'id, status, booking_reference, grand_total_cents, yoco_payment_reference'
+          )
+          .eq('id', existingKey.booking_id)
+          .maybeSingle()
+
+        if (existing && existing.status !== 'expired' && existing.status !== 'cancelled') {
+          if (existing.status === 'paid') {
+            const site = (
+              process.env.SITE_URL ||
+              (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '') ||
+              ''
+            ).replace(/\/$/, '')
+            return res.status(200).json({
+              success: true,
+              booking_id: existing.id,
+              booking_reference: existing.booking_reference,
+              payment: true,
+              amount_cents: existing.grand_total_cents,
+              idempotent_replay: true,
+              message: 'Booking already paid',
+              resume_thank_you: site
+                ? `${site}/thank-you?payment=success&booking_id=${existing.id}`
+                : undefined,
+            })
+          }
+
+          const { data: tourRow } = await sb
+            .from('tours')
+            .select('name')
+            .eq('id', tour_id)
+            .maybeSingle()
+
+          const amount = Number(existing.grand_total_cents) || 0
+          const checkout = await createYocoCheckout({
+            amountCents: amount,
+            bookingId: existing.id,
+            bookingReference: existing.booking_reference || undefined,
+            clientName: client_name,
+            clientEmail: client_email,
+            tourName: tourRow?.name,
+          })
+
+          await sb
+            .from('payments')
+            .update({ external_id: checkout.id, status: 'pending' })
+            .eq('booking_id', existing.id)
+            .eq('status', 'pending')
+
+          await sb
+            .from('bookings')
+            .update({ yoco_payment_reference: checkout.id })
+            .eq('id', existing.id)
+
+          return res.status(200).json({
+            success: true,
+            booking_id: existing.id,
+            booking_reference: existing.booking_reference,
+            payment: true,
+            amount_cents: amount,
+            checkout_url: checkout.redirectUrl,
+            checkout_id: checkout.id,
+            idempotent_replay: true,
+          })
+        }
+      }
+    }
+
     const time = normalizeTime(start_time)
     const { tour, vehicle, driver, settings } = await loadPricingContext(
       sb,
@@ -234,6 +354,47 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       vehicle_id,
       driver_id
     )
+
+    if (
+      !isTourPubliclyVisible(
+        {
+          slug: tour.slug,
+          admin_meta: (
+            tour as { admin_meta?: Record<string, unknown> }
+          ).admin_meta,
+        },
+        new Date(),
+        { travelDate: booking_date }
+      )
+    ) {
+      return res.status(400).json({
+        error:
+          'This experience is not available for the selected date (seasonal or hidden).',
+      })
+    }
+
+    if (client_user_id) {
+      const { data: currentForm } = await sb
+        .from('consent_form_versions')
+        .select('id')
+        .eq('is_current', true)
+        .maybeSingle()
+      if (currentForm?.id) {
+        const { data: signed } = await sb
+          .from('client_consents')
+          .select('id')
+          .eq('user_id', client_user_id)
+          .eq('version_id', currentForm.id)
+          .maybeSingle()
+        if (!signed) {
+          return res.status(403).json({
+            error:
+              'Please sign the informed consent form on your account before completing payment.',
+            code: 'CONSENT_REQUIRED',
+          })
+        }
+      }
+    }
 
     const guestError = validateBookingGuests(
       adult_count,
@@ -286,12 +447,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .single()
 
     if (bookingError) {
-      return res.status(400).json({ error: bookingError.message })
+      const status = isSlotConflictMessage(bookingError.message) ? 409 : 400
+      return res.status(status).json({
+        error: isSlotConflictMessage(bookingError.message)
+          ? 'That driver or vehicle slot is no longer available. Please choose another time.'
+          : bookingError.message,
+      })
+    }
+
+    if (idempotencyKey) {
+      await sb.from('booking_idempotency_keys').upsert({
+        idempotency_key: idempotencyKey,
+        booking_id: booking.id,
+      })
     }
 
     const checkout = await createYocoCheckout({
       amountCents: breakdown.grand_total_cents,
       bookingId: booking.id,
+      bookingReference: booking_reference,
       clientName: client_name,
       clientEmail: client_email,
       tourName: tour.name,
@@ -312,7 +486,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     void notifyDriverBooking(
       {
-        bookingId: booking.id,
+        bookingId: booking_reference || booking.id,
         status: 'pending',
         bookingDate: booking_date,
         startTime: time,
@@ -325,7 +499,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         notes: special_requests || notes,
         amountCents: breakdown.grand_total_cents,
       },
-      'created'
+      'created',
+      sb
     )
 
     return res.status(200).json({

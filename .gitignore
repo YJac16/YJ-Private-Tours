@@ -8,3 +8,7 @@ node_modules
 
 .vercel
 .env*.local
+
+.operator-passwords.local
+
+.operator-passwords.local

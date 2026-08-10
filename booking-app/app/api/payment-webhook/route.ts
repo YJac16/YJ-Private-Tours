@@ -1,166 +1,190 @@
 /**
- * POST /api/payment-webhook
- *
- * Yoco webhook (payment.succeeded) + simple confirm payloads.
- * Verify webhook signature in production when YOCO_WEBHOOK_SECRET is set.
+ * POST /api/payment-webhook — Next twin of Vercel api/payment-webhook.ts
+ * Prefer the Vercel handler in production.
  */
-
 import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
 import { mockDb, useMockStore } from '@/lib/mock-store'
-import { supabaseAdmin } from '@/lib/supabase-server'
+import {
+  alertOps,
+  markBookingPaidFromVerifiedPayment,
+  markBookingRefundSucceeded,
+} from '@/lib/booking-lifecycle'
+import {
+  extractWebhookAmountCents,
+  extractWebhookBookingId,
+  extractWebhookCheckoutId,
+  extractWebhookCurrency,
+  isPaymentSuccessEvent,
+  isRefundSuccessEvent,
+  verifyYocoWebhook,
+} from '@/lib/yoco-webhook'
 
-function extractBookingId(body: Record<string, unknown>): string | null {
-  if (typeof body.booking_id === 'string') return body.booking_id
-
-  const metadata = (body.metadata ||
-    (body.payload as Record<string, unknown> | undefined)?.metadata ||
-    (body.data as Record<string, unknown> | undefined)?.metadata) as
-    | Record<string, unknown>
-    | undefined
-
-  if (metadata && typeof metadata.booking_id === 'string') {
-    return metadata.booking_id
-  }
-
-  const payload = body.payload as Record<string, unknown> | undefined
-  if (payload && typeof payload.booking_id === 'string') return payload.booking_id
-
-  return null
-}
-
-function extractAmount(body: Record<string, unknown>): number | null {
-  if (typeof body.amount_cents === 'number') return body.amount_cents
-  if (typeof body.amount === 'number') return body.amount
-  const payload = body.payload as Record<string, unknown> | undefined
-  if (payload && typeof payload.amount === 'number') return payload.amount
-  const data = body.data as Record<string, unknown> | undefined
-  if (data && typeof data.amount === 'number') return data.amount
-  return null
-}
-
-function extractExternalId(body: Record<string, unknown>): string | null {
-  if (typeof body.external_id === 'string') return body.external_id
-  if (typeof body.id === 'string' && body.id.startsWith('pay_')) return body.id
-  const payload = body.payload as Record<string, unknown> | undefined
-  if (payload && typeof payload.id === 'string') return payload.id
-  const data = body.data as Record<string, unknown> | undefined
-  if (data && typeof data.id === 'string') return data.id
-  return null
+function supabaseAdmin() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!url || !key) throw new Error('Supabase is not configured')
+  return createClient(url, key, { auth: { persistSession: false } })
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const body = (await request.json()) as Record<string, unknown>
+    const rawBody = await request.text()
+    const headers: Record<string, string> = {}
+    request.headers.forEach((v, k) => {
+      headers[k] = v
+    })
 
-    const eventType = String(body.type || body.event || '')
-    // Ignore non-success events if typed
-    if (eventType && !/succeed|paid|completed/i.test(eventType) && eventType !== '') {
-      if (!/payment\.succeeded|checkout\.completed/i.test(eventType)) {
-        // still allow explicit booking_id confirms without type
-        if (!body.booking_id) {
-          return NextResponse.json({ ignored: true, type: eventType })
-        }
-      }
+    const verified = verifyYocoWebhook(rawBody, headers)
+    if (!verified.ok) {
+      return NextResponse.json({ error: verified.error }, { status: verified.status })
     }
 
-    const booking_id = extractBookingId(body)
-    const amount_cents = extractAmount(body)
-    const external_id = extractExternalId(body)
+    const { event, eventId, eventType } = verified
+    const bookingId = extractWebhookBookingId(event)
+    const amountCents = extractWebhookAmountCents(event)
+    const currency = extractWebhookCurrency(event)
+    const checkoutId = extractWebhookCheckoutId(event)
 
-    if (!booking_id) {
+    if (isRefundSuccessEvent(eventType)) {
+      if (!bookingId) {
+        return NextResponse.json({
+          ignored: true,
+          type: eventType,
+          event_id: eventId,
+        })
+      }
+      if (useMockStore()) {
+        mockDb.markRefundSucceeded(bookingId, amountCents)
+        return NextResponse.json({
+          success: true,
+          refunded: true,
+          booking_id: bookingId,
+          event_id: eventId,
+        })
+      }
+      const sb = supabaseAdmin()
+      const { data: existingEvent } = await sb
+        .from('processed_webhook_events')
+        .select('event_id')
+        .eq('event_id', eventId)
+        .maybeSingle()
+      if (existingEvent) {
+        return NextResponse.json({
+          success: true,
+          already_processed: true,
+          event_id: eventId,
+        })
+      }
+      const refundResult = await markBookingRefundSucceeded(sb, {
+        bookingId,
+        amountCents,
+        refundId: checkoutId,
+      })
+      if (refundResult.ok === false) {
+        return NextResponse.json(
+          { error: refundResult.error, event_id: eventId },
+          { status: refundResult.status }
+        )
+      }
+      await sb.from('processed_webhook_events').upsert({
+        event_id: eventId,
+        booking_id: bookingId,
+        event_type: eventType,
+      })
+      return NextResponse.json({
+        success: true,
+        refunded: true,
+        already: refundResult.already,
+        booking_id: bookingId,
+        event_id: eventId,
+      })
+    }
+
+    if (!isPaymentSuccessEvent(eventType)) {
+      return NextResponse.json({ ignored: true, type: eventType, event_id: eventId })
+    }
+
+    if (!bookingId) {
       return NextResponse.json(
-        { error: 'Could not resolve booking_id from webhook payload.' },
+        { error: 'Could not resolve booking_id from webhook' },
         { status: 400 }
       )
     }
 
     if (useMockStore()) {
-      const booking = mockDb.getBooking(booking_id)
+      const booking = mockDb.getBooking(bookingId)
       if (!booking) {
-        return NextResponse.json({ error: 'Booking not found.' }, { status: 404 })
+        return NextResponse.json({ error: 'Booking not found' }, { status: 404 })
       }
-      mockDb.confirmPayment(booking_id)
-      if (amount_cents) {
-        mockDb.recordPayment({
-          booking_id,
-          amount_cents,
-          external_id,
-          status: 'paid',
+      if (booking.status === 'paid') {
+        return NextResponse.json({
+          success: true,
+          already_paid: true,
+          booking_id: bookingId,
+          event_id: eventId,
         })
       }
+      const expected = booking.grand_total_cents ?? booking.final_price_cents
+      if (amountCents != null && expected != null && amountCents !== expected) {
+        return NextResponse.json(
+          { error: 'Payment amount does not match booking total' },
+          { status: 409 }
+        )
+      }
+      mockDb.confirmPayment(bookingId)
       return NextResponse.json({
         success: true,
-        booking_id,
-        message: 'Booking confirmed (mock).',
+        booking_id: bookingId,
+        event_id: eventId,
       })
     }
 
-    const { data: booking, error: fetchError } = await supabaseAdmin
-      .from('bookings')
-      .select('id, status')
-      .eq('id', booking_id)
-      .single()
+    const sb = supabaseAdmin()
+    const { data: existingEvent } = await sb
+      .from('processed_webhook_events')
+      .select('event_id, booking_id')
+      .eq('event_id', eventId)
+      .maybeSingle()
 
-    if (fetchError || !booking) {
-      return NextResponse.json({ error: 'Booking not found.' }, { status: 404 })
-    }
-
-    if (booking.status === 'paid') {
+    if (existingEvent) {
       return NextResponse.json({
         success: true,
-        message: 'Booking already confirmed (idempotent).',
-        booking_id,
+        already_processed: true,
+        booking_id: existingEvent.booking_id,
+        event_id: eventId,
       })
     }
 
-    if (booking.status !== 'pending') {
+    const result = await markBookingPaidFromVerifiedPayment(sb, {
+      bookingId,
+      amountCents,
+      currency,
+      checkoutId,
+      eventId,
+      requireAmountMatch: true,
+    })
+
+    if (result.ok === false) {
+      if (result.alert) void alertOps(result.alert)
       return NextResponse.json(
-        { error: 'Booking cannot be confirmed (e.g. cancelled).' },
-        { status: 400 }
+        { error: result.error, event_id: eventId },
+        { status: result.status }
       )
     }
 
-    const { error: updateError } = await supabaseAdmin
-      .from('bookings')
-      .update({ status: 'paid' })
-      .eq('id', booking_id)
-
-    if (updateError) {
-      return NextResponse.json({ error: 'Failed to confirm booking.' }, { status: 500 })
-    }
-
-    // Update existing pending payment or insert
-    const { data: existingPay } = await supabaseAdmin
-      .from('payments')
-      .select('id')
-      .eq('booking_id', booking_id)
-      .maybeSingle()
-
-    if (existingPay) {
-      await supabaseAdmin
-        .from('payments')
-        .update({
-          status: 'paid',
-          paid_at: new Date().toISOString(),
-          external_id: external_id ?? undefined,
-          ...(amount_cents ? { amount_cents } : {}),
-        })
-        .eq('id', existingPay.id)
-    } else if (amount_cents && amount_cents > 0) {
-      await supabaseAdmin.from('payments').insert({
-        booking_id,
-        status: 'paid',
-        amount_cents,
-        currency: 'ZAR',
-        external_id: external_id ?? null,
-        paid_at: new Date().toISOString(),
-      })
-    }
+    await sb.from('processed_webhook_events').upsert({
+      event_id: eventId,
+      booking_id: result.booking_id,
+      event_type: eventType,
+    })
 
     return NextResponse.json({
       success: true,
-      message: 'Booking confirmed and payment recorded.',
-      booking_id,
+      booking_id: result.booking_id,
+      booking_reference: result.booking_reference,
+      already_paid: result.already_paid,
+      event_id: eventId,
     })
   } catch (err) {
     console.error('[/api/payment-webhook]', err)

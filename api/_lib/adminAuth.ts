@@ -3,19 +3,18 @@ import { getAuthContext } from './authUser'
 
 /**
  * Admin PIN check for Pricing & Business Management APIs.
- * If ADMIN_PIN is set, only ADMIN_PIN is accepted.
- * Otherwise DRIVER_PIN || '0420'.
+ * Only accepts ADMIN_PIN when explicitly configured — no hardcoded default.
+ * Prefer Supabase Auth admin JWT via assertAdminAccess.
  */
 export function checkAdminPin(req: VercelRequest, bodyPin?: string): boolean {
   const expected = process.env.ADMIN_PIN
-    ? process.env.ADMIN_PIN
-    : process.env.DRIVER_PIN || '0420'
+  if (!expected) return false
   const headerPin = req.headers['x-driver-pin']
   const h = Array.isArray(headerPin) ? headerPin[0] : headerPin
   return (h || bodyPin) === expected
 }
 
-/** Prefer JWT admin role; fall back to admin PIN for legacy clients. */
+/** Prefer JWT admin role; fall back to ADMIN_PIN only when set in env. */
 export async function assertAdminAccess(
   req: VercelRequest,
   bodyPin?: string

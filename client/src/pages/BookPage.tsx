@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import PriceSummary from '../components/PriceSummary'
+import InformedConsentForm from '../components/InformedConsentForm'
 import {
   createBooking,
   fetchCatalog,
@@ -20,11 +21,11 @@ import {
   calculatePrice,
   defaultVehicleForGuests,
   formatTourFromPrice,
-  formatTourPaxRate,
   formatZar,
   maxGuestsForTour,
   resolvePricePerPerson,
   resolveVehiclePrice,
+  startingFromCents,
   validateBookingGuests,
   vehicleFitsGuests,
   vehiclesForGuestCount,
@@ -41,12 +42,6 @@ const STEPS = [
   'Checkout',
 ] as const
 
-const DEFAULT_TIMES: Slot[] = [
-  { id: '08:00', start_time: '08:00', label: 'Morning — 08:00', available: true, reason: null },
-  { id: '12:30', start_time: '12:30', label: 'Afternoon — 12:30', available: true, reason: null },
-  { id: '16:30', start_time: '16:30', label: 'Sunset — 16:30', available: true, reason: null },
-]
-
 export default function BookPage() {
   const [searchParams] = useSearchParams()
   const { profile, accessToken } = useAuth()
@@ -61,11 +56,27 @@ export default function BookPage() {
   })
   const [slots, setSlots] = useState<Slot[]>([])
   const [slotsReason, setSlotsReason] = useState<string | null>(null)
+  const [slotsLoading, setSlotsLoading] = useState(false)
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [successId, setSuccessId] = useState<string | null>(null)
+  const [successRef, setSuccessRef] = useState<string | null>(null)
+  const [consentForm, setConsentForm] = useState<{
+    id: string
+    version: string
+    title: string
+    body_html: string
+  } | null>(null)
+  const [consentSigned, setConsentSigned] = useState(false)
+  const [consentLoading, setConsentLoading] = useState(false)
+  const [idempotencyKey, setIdempotencyKey] = useState(() =>
+    typeof crypto !== 'undefined' && 'randomUUID' in crypto
+      ? crypto.randomUUID()
+      : `book-${Date.now()}-${Math.random().toString(36).slice(2)}`
+  )
   const cancelled = searchParams.get('cancelled') === '1'
+  const cancelledBookingId = searchParams.get('booking_id')
 
   const [tourId, setTourId] = useState('')
   const [peopleCount, setPeopleCount] = useState(2)
@@ -99,8 +110,41 @@ export default function BookPage() {
   }, [profile])
 
   useEffect(() => {
+    if (!accessToken) {
+      setConsentForm(null)
+      setConsentSigned(false)
+      return
+    }
+    let cancelled = false
+    ;(async () => {
+      setConsentLoading(true)
+      try {
+        const res = await fetch('/api/account-consent', {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        })
+        const data = await res.json()
+        if (!cancelled && res.ok) {
+          setConsentForm(data.form || null)
+          setConsentSigned(Boolean(data.signed))
+        }
+      } catch {
+        /* ignore — pay step will surface errors */
+      } finally {
+        if (!cancelled) setConsentLoading(false)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [accessToken])
+
+  useEffect(() => {
     if (noteParam) setSpecialRequests((s) => s || noteParam)
   }, [noteParam])
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [step])
 
   const selectedTour = tours.find((t) => t.id === tourId)
   const selectedVehicle = vehicles.find((v) => v.id === vehicleId)
@@ -212,18 +256,20 @@ export default function BookPage() {
     const activeDriver = driverId || drivers[0]?.id
     if (!date || !activeDriver) {
       setSlots([])
+      setSlotsReason(null)
       return
     }
     let cancelledSlots = false
     ;(async () => {
+      setSlotsLoading(true)
       try {
-        const res = await fetchSlots(date, activeDriver)
+        const res = await fetchSlots(date, activeDriver, vehicleId || undefined)
         if (cancelledSlots) return
         setSlots(res.slots)
         setSlotsReason(res.reason ?? null)
         setStartTime((prev) => {
           if (!prev) return prev
-          if (!res.slots.length) return prev
+          if (!res.slots.length) return ''
           const stillOk = res.slots.some(
             (s) => s.start_time === prev && s.available
           )
@@ -232,16 +278,23 @@ export default function BookPage() {
       } catch (e) {
         if (!cancelledSlots) {
           setSlots([])
-          setSlotsReason(e instanceof Error ? e.message : 'Failed to load times')
+          setSlotsReason(
+            e instanceof Error
+              ? e.message
+              : 'Could not load available times. Please try again.'
+          )
+          setStartTime('')
         }
+      } finally {
+        if (!cancelledSlots) setSlotsLoading(false)
       }
     })()
     return () => {
       cancelledSlots = true
     }
-  }, [date, driverId, drivers])
+  }, [date, driverId, drivers, vehicleId])
 
-  const timeOptions = slots.length > 0 ? slots : DEFAULT_TIMES
+  const timeOptions = slots
 
   const canNext = () => {
     if (step === 0) return Boolean(tourId)
@@ -251,7 +304,8 @@ export default function BookPage() {
         Boolean(date) &&
         isBookableDate(date) &&
         !blockedDates.includes(date) &&
-        Boolean(startTime)
+        Boolean(startTime) &&
+        timeOptions.some((s) => s.start_time === startTime && s.available)
       )
     }
     if (step === 2) return Boolean(driverId)
@@ -269,6 +323,9 @@ export default function BookPage() {
     if (step === 5) {
       return Boolean(name.trim() && email.trim() && phone.trim() && pickupAddress.trim())
     }
+    if (step === 6) {
+      return Boolean(accessToken && consentSigned && termsAccepted)
+    }
     return true
   }
 
@@ -283,6 +340,16 @@ export default function BookPage() {
 
   const handlePay = async () => {
     if (!selectedTour || !selectedVehicle || !selectedDriver) return
+    if (!accessToken) {
+      setError('Please sign in to complete payment and keep your consent on file.')
+      setStep(5)
+      return
+    }
+    if (!consentSigned) {
+      setError('Please sign the informed consent form before payment.')
+      setStep(6)
+      return
+    }
     if (!termsAccepted) {
       setError('Please accept the Terms & Conditions and Privacy Policy.')
       setStep(4)
@@ -326,14 +393,25 @@ export default function BookPage() {
           flight_number: flightNumber.trim() || undefined,
           special_requests: specialRequests.trim() || undefined,
         },
-        accessToken
+        accessToken,
+        idempotencyKey
       )
+      if (res.resume_thank_you) {
+        window.location.href = res.resume_thank_you
+        return
+      }
       if (res.checkout_url) {
         window.location.href = res.checkout_url
         return
       }
       if (res.warning) setError(res.warning)
       setSuccessId(res.booking_id)
+      setSuccessRef(res.booking_reference || null)
+      setIdempotencyKey(
+        typeof crypto !== 'undefined' && 'randomUUID' in crypto
+          ? crypto.randomUUID()
+          : `book-${Date.now()}-${Math.random().toString(36).slice(2)}`
+      )
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Booking failed')
     } finally {
@@ -342,6 +420,23 @@ export default function BookPage() {
   }
 
   const stickySummary = Boolean(liveBreakdown && step >= 1 && step < 6)
+  const showMobileBar = step < STEPS.length && !loading
+  const primaryDisabled =
+    step < STEPS.length - 1
+      ? !canNext()
+      : submitting || !breakdown || !termsAccepted
+  const primaryLabel =
+    step < STEPS.length - 1
+      ? 'Continue'
+      : submitting
+        ? 'Redirecting to Yoco…'
+        : breakdown
+          ? `Pay ${formatZar(breakdown.grand_total_cents)}`
+          : 'Pay with Yoco'
+  const onPrimary = () => {
+    if (step < STEPS.length - 1) goNext()
+    else void handlePay()
+  }
 
   if (successId) {
     return (
@@ -354,7 +449,9 @@ export default function BookPage() {
             </h1>
             <p className="text-brand-green/90 mb-6 leading-relaxed">
               Reference:{' '}
-              <span className="font-mono text-sm">{successId.slice(0, 8)}</span>
+              <span className="font-mono text-sm font-semibold">
+                {successRef || successId}
+              </span>
             </p>
             <Link
               to="/"
@@ -372,7 +469,7 @@ export default function BookPage() {
   return (
     <>
       <Navbar />
-      <main className="min-h-[70vh] bg-brand-cream-light px-4 py-8 sm:py-12 pb-28">
+      <main className="min-h-[70vh] bg-brand-cream-light px-4 py-8 sm:py-12 pb-36 lg:pb-28">
         <div className="max-w-5xl mx-auto">
           <h1 className="text-2xl sm:text-3xl font-bold text-brand-green text-center mb-2">
             Book your private experience
@@ -382,7 +479,10 @@ export default function BookPage() {
           </p>
           {cancelled && (
             <p className="mb-6 text-sm text-amber-900 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 text-center">
-              Payment was cancelled. You can continue whenever you&apos;re ready.
+              Payment was cancelled
+              {cancelledBookingId ? ' for this checkout' : ''}. Your unpaid hold
+              expires automatically after 30 minutes so the slot can be booked
+              again. You can continue whenever you&apos;re ready.
             </p>
           )}
 
@@ -395,7 +495,7 @@ export default function BookPage() {
                 <button
                   type="button"
                   onClick={() => i < step && setStep(i)}
-                  className={`w-full text-center text-[10px] lg:text-xs font-medium py-2.5 rounded-lg min-h-10 transition-colors ${
+                  className={`w-full text-center text-xs font-medium py-3 rounded-lg min-h-11 transition-colors ${
                     i === step
                       ? 'bg-brand-green text-brand-cream shadow-sm'
                       : i < step
@@ -408,9 +508,49 @@ export default function BookPage() {
               </li>
             ))}
           </ol>
-          <p className="sm:hidden text-center text-sm font-semibold text-brand-green mb-4">
-            Step {step + 1} of {STEPS.length}: {STEPS[step]}
-          </p>
+
+          <div className="sm:hidden mb-5 space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-sm font-semibold text-brand-green">
+                Step {step + 1} of {STEPS.length}: {STEPS[step]}
+              </p>
+              <p className="text-xs text-brand-green/60 tabular-nums">
+                {Math.round(((step + 1) / STEPS.length) * 100)}%
+              </p>
+            </div>
+            <div
+              className="h-1.5 rounded-full bg-brand-cream-dark/60 overflow-hidden"
+              role="progressbar"
+              aria-valuenow={step + 1}
+              aria-valuemin={1}
+              aria-valuemax={STEPS.length}
+              aria-label="Booking progress"
+            >
+              <div
+                className="h-full bg-brand-green transition-all duration-300"
+                style={{ width: `${((step + 1) / STEPS.length) * 100}%` }}
+              />
+            </div>
+            <div className="flex gap-1 overflow-x-auto pb-0.5">
+              {STEPS.map((label, i) => (
+                <button
+                  key={label}
+                  type="button"
+                  disabled={i > step}
+                  onClick={() => i < step && setStep(i)}
+                  className={`shrink-0 px-2.5 py-1.5 rounded-md text-[11px] font-medium min-h-9 ${
+                    i === step
+                      ? 'bg-brand-green text-brand-cream'
+                      : i < step
+                        ? 'bg-brand-green/15 text-brand-green'
+                        : 'bg-brand-cream text-brand-green/40'
+                  }`}
+                >
+                  {i + 1}
+                </button>
+              ))}
+            </div>
+          </div>
 
           <div
             className={`grid gap-6 ${stickySummary ? 'lg:grid-cols-[1fr_300px]' : ''}`}
@@ -429,15 +569,7 @@ export default function BookPage() {
                         Select your experience
                       </legend>
                       {tours.map((t) => {
-                        const cheapest = [...vehicles]
-                          .filter((v) => !v.is_luxury)
-                          .sort(
-                            (a, b) =>
-                              resolveVehiclePrice(a) - resolveVehiclePrice(b)
-                          )[0]
-                        const fromCents =
-                          (cheapest ? resolveVehiclePrice(cheapest) : 0) +
-                          resolvePricePerPerson(t)
+                        const fromCents = startingFromCents(t, vehicles, 1)
                         return (
                           <button
                             key={t.id}
@@ -477,7 +609,7 @@ export default function BookPage() {
                                   {t.description}
                                 </p>
                                 <p className="text-xs text-brand-green/70">
-                                  {formatTourPaxRate(t)} + vehicle fee
+                                  1 guest + cheapest vehicle included
                                 </p>
                               </div>
                             </div>
@@ -567,18 +699,27 @@ export default function BookPage() {
                         <legend className="text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-green/70 mb-2">
                           Start time *
                         </legend>
-                        {slotsReason &&
-                          timeOptions.every((s) => !s.available) && (
-                            <p className="text-sm text-amber-900 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 mb-2">
-                              {slotsReason}
-                            </p>
-                          )}
+                        {slotsLoading && (
+                          <p className="text-sm text-brand-green/70 mb-2">
+                            Checking availability…
+                          </p>
+                        )}
+                        {!slotsLoading && slotsReason && (
+                          <p className="text-sm text-amber-900 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 mb-2">
+                            {slotsReason}
+                          </p>
+                        )}
+                        {!slotsLoading && !timeOptions.length && !slotsReason && (
+                          <p className="text-sm text-amber-900 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 mb-2">
+                            No available times for this date and driver.
+                          </p>
+                        )}
                         <div className="grid gap-2">
                           {timeOptions.map((s) => (
                             <button
                               key={s.id}
                               type="button"
-                              disabled={!s.available}
+                              disabled={!s.available || slotsLoading}
                               onClick={() => setStartTime(s.start_time)}
                               className={`w-full text-left px-4 py-3.5 min-h-13 rounded-xl border transition-colors disabled:opacity-40 ${
                                 startTime === s.start_time
@@ -587,6 +728,11 @@ export default function BookPage() {
                               }`}
                             >
                               {s.label}
+                              {!s.available && s.reason ? (
+                                <span className="block text-xs opacity-80 mt-0.5">
+                                  {s.reason}
+                                </span>
+                              ) : null}
                             </button>
                           ))}
                         </div>
@@ -837,6 +983,30 @@ export default function BookPage() {
                       <h2 className="text-lg font-bold text-brand-green">
                         Your details
                       </h2>
+                      {!accessToken ? (
+                        <p className="text-sm text-brand-green/80 bg-white border border-brand-cream-dark rounded-xl px-3 py-2">
+                          <Link
+                            to={`/login?next=${encodeURIComponent('/book')}`}
+                            className="font-semibold underline"
+                          >
+                            Sign in
+                          </Link>{' '}
+                          or{' '}
+                          <Link
+                            to={`/signup?next=${encodeURIComponent('/book')}`}
+                            className="font-semibold underline"
+                          >
+                            create an account
+                          </Link>{' '}
+                          before checkout so your informed consent stays on file
+                          for future bookings.
+                        </p>
+                      ) : (
+                        <p className="text-sm text-brand-green/80 bg-white border border-brand-cream-dark rounded-xl px-3 py-2">
+                          Signed in — your profile details are prefilled. Consent
+                          is signed once per account.
+                        </p>
+                      )}
                       <Field label="Full name" required value={name} onChange={setName} autoComplete="name" />
                       <Field label="Email" type="email" required value={email} onChange={setEmail} autoComplete="email" />
                       <Field label="Phone number" type="tel" required value={phone} onChange={setPhone} autoComplete="tel" />
@@ -868,6 +1038,48 @@ export default function BookPage() {
                         Confirm to create your booking (Pending Payment) and
                         continue to Yoco.
                       </p>
+                      {!accessToken && (
+                        <p className="text-sm text-amber-950 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
+                          Sign in is required before payment.{' '}
+                          <Link
+                            to={`/login?next=${encodeURIComponent('/book')}`}
+                            className="font-semibold underline"
+                          >
+                            Sign in
+                          </Link>
+                        </p>
+                      )}
+                      {accessToken && consentLoading && (
+                        <p className="text-sm text-brand-green/70">
+                          Checking consent…
+                        </p>
+                      )}
+                      {accessToken && !consentLoading && consentSigned && (
+                        <p className="text-sm text-green-900 bg-green-50 border border-green-200 rounded-xl px-3 py-2">
+                          Informed consent on file — you do not need to sign again
+                          for this booking.
+                        </p>
+                      )}
+                      {accessToken &&
+                        !consentLoading &&
+                        !consentSigned &&
+                        consentForm && (
+                          <div className="space-y-2">
+                            <p className="text-sm text-brand-green/85">
+                              Please sign the informed consent form once before
+                              paying. Future bookings will skip this step.
+                            </p>
+                            <InformedConsentForm
+                              form={consentForm}
+                              accessToken={accessToken}
+                              defaultName={name}
+                              defaultEmail={email}
+                              defaultPhone={phone}
+                              onSigned={() => setConsentSigned(true)}
+                              compact
+                            />
+                          </div>
+                        )}
                       {breakdown && (
                         <PriceSummary
                           breakdown={breakdown}
@@ -900,7 +1112,7 @@ export default function BookPage() {
                     </p>
                   )}
 
-                  <div className="flex gap-2 pt-2 max-w-lg">
+                  <div className="hidden lg:flex gap-2 pt-2 max-w-lg">
                     {step > 0 && (
                       <button
                         type="button"
@@ -973,6 +1185,54 @@ export default function BookPage() {
           </div>
         </div>
       </main>
+
+      {showMobileBar && (
+        <div className="lg:hidden fixed inset-x-0 bottom-0 z-40 border-t border-brand-cream-dark bg-brand-cream/95 backdrop-blur px-3 pt-2.5 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-8px_24px_rgba(0,0,0,0.08)]">
+          <div className="max-w-5xl mx-auto flex items-center gap-2">
+            {step > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  setError(null)
+                  setStep((s) => s - 1)
+                }}
+                className="min-h-12 px-4 rounded-xl border border-brand-cream-dark bg-white text-brand-green font-semibold shrink-0"
+              >
+                Back
+              </button>
+            )}
+            <div className="flex-1 min-w-0">
+              {liveBreakdown || breakdown ? (
+                <p className="text-xs text-brand-green/70 leading-tight">
+                  Total
+                </p>
+              ) : (
+                <p className="text-xs text-brand-green/70 leading-tight">
+                  {STEPS[step]}
+                </p>
+              )}
+              <p className="font-bold text-brand-green tabular-nums text-base truncate">
+                {breakdown
+                  ? formatZar(breakdown.grand_total_cents)
+                  : liveBreakdown
+                    ? formatZar(liveBreakdown.grand_total_cents)
+                    : selectedTour
+                      ? formatTourFromPrice(selectedTour, vehicles)
+                      : '—'}
+              </p>
+            </div>
+            <button
+              type="button"
+              disabled={primaryDisabled}
+              onClick={onPrimary}
+              className="min-h-12 px-5 rounded-xl bg-brand-green text-brand-cream font-semibold disabled:opacity-40 shadow-sm shrink-0"
+            >
+              {primaryLabel}
+            </button>
+          </div>
+        </div>
+      )}
+
       <Footer />
       <style>{`
         @keyframes fadeIn {

@@ -42,6 +42,8 @@ export type AccountBooking = {
   client_email: string
   client_phone: string | null
   notes: string | null
+  driver_id?: string
+  vehicle_id?: string | null
   booking_reference?: string | null
   grand_total_cents?: number | null
   final_price_cents?: number | null
@@ -49,9 +51,28 @@ export type AccountBooking = {
   special_requests?: string | null
   guest_count?: number
   passenger_count?: number
+  cancel_reason?: string | null
+  cancelled_at?: string | null
+  cancelled_by?: string | null
+  refund_status?: string | null
+  refund_amount_cents?: number | null
+  refunded_at?: string | null
+  refund_eligible?: boolean
+  reschedule_requested_at?: string | null
+  reschedule_note?: string | null
   tour?: { id: string; name: string; slug: string | null } | null
   vehicle?: { id: string; name: string; slug: string | null } | null
   driver?: { id: string; name: string; full_name?: string | null } | null
+}
+
+export type BookingHistoryRow = {
+  id: string
+  from_status: string | null
+  to_status: string
+  changed_by: string | null
+  reason: string | null
+  meta?: Record<string, unknown> | null
+  created_at: string
 }
 
 export type DriverProfile = {
@@ -102,19 +123,142 @@ export type DriverUnavailable = {
   reason: string | null
 }
 
-export async function fetchAccountBookings(token: string) {
+export async function fetchAccountBookings(
+  token: string,
+  status?: 'upcoming' | 'past' | 'cancelled' | ''
+) {
+  const q = status ? `?status=${encodeURIComponent(status)}` : ''
   return json<{ bookings: AccountBooking[] }>(
-    await fetch(`${API}/account-bookings`, {
+    await fetch(`${API}/account-bookings${q}`, {
       headers: authHeaders(token),
     })
   )
 }
 
-export async function fetchDriverMe(token: string, driverId?: string) {
+export async function fetchAccountBookingDetail(token: string, bookingId: string) {
+  return json<{ booking: AccountBooking; history: BookingHistoryRow[] }>(
+    await fetch(
+      `${API}/account-bookings?id=${encodeURIComponent(bookingId)}`,
+      {
+        headers: authHeaders(token),
+      }
+    )
+  )
+}
+
+export async function cancelAccountBooking(
+  token: string,
+  bookingId: string,
+  opts?: { reason?: string; requestRefund?: boolean }
+) {
+  return json<{
+    ok: boolean
+    booking_id: string
+    status: string
+    refund_status: string
+    refund_amount_cents: number | null
+    refund_eligible: boolean
+    already_cancelled: boolean
+    message: string
+  }>(
+    await fetch(`${API}/account-bookings`, {
+      method: 'POST',
+      headers: authHeaders(token),
+      body: JSON.stringify({
+        action: 'cancel',
+        booking_id: bookingId,
+        reason: opts?.reason || null,
+        request_refund: opts?.requestRefund !== false,
+      }),
+    })
+  )
+}
+
+export async function requestAccountReschedule(
+  token: string,
+  bookingId: string,
+  note: string
+) {
+  return json<{ ok: boolean; booking_id: string; message: string }>(
+    await fetch(`${API}/account-bookings`, {
+      method: 'POST',
+      headers: authHeaders(token),
+      body: JSON.stringify({
+        action: 'request_reschedule',
+        booking_id: bookingId,
+        note,
+      }),
+    })
+  )
+}
+
+export async function retryAccountPayment(token: string, bookingId: string) {
+  return json<{
+    ok: boolean
+    booking_id: string
+    checkout_url: string
+    checkout_id: string
+    amount_cents: number
+    booking_reference: string | null
+  }>(
+    await fetch(`${API}/account-bookings`, {
+      method: 'POST',
+      headers: authHeaders(token),
+      body: JSON.stringify({
+        action: 'retry_payment',
+        booking_id: bookingId,
+      }),
+    })
+  )
+}
+
+export type AccountReceipt = {
+  receipt_number: string
+  issued_at: string
+  booking_id: string
+  booking_reference: string | null
+  booking_date: string
+  start_time: string
+  client_name: string
+  client_email: string
+  tour_name: string | null
+  vehicle_name: string | null
+  driver_name: string | null
+  amount_cents: number
+  currency: string
+  payment_status: string
+  yoco_reference: string | null
+  paid_at: string | null
+  business_name?: string
+  template: {
+    header: string
+    footer: string
+    terms: string
+  }
+}
+
+export async function fetchAccountReceipt(token: string, bookingId: string) {
+  return json<{ ok: boolean; receipt: AccountReceipt }>(
+    await fetch(`${API}/account-bookings`, {
+      method: 'POST',
+      headers: authHeaders(token),
+      body: JSON.stringify({
+        action: 'receipt',
+        booking_id: bookingId,
+      }),
+    })
+  )
+}
+
+export async function fetchDriverMe(
+  token: string,
+  opts?: { driverId?: string; from?: string; to?: string }
+) {
   const q = new URLSearchParams()
-  if (driverId) q.set('driver_id', driverId)
+  if (opts?.driverId) q.set('driver_id', opts.driverId)
   const today = new Date().toISOString().slice(0, 10)
-  q.set('from', today)
+  q.set('from', opts?.from || today)
+  if (opts?.to) q.set('to', opts.to)
   const qs = q.toString()
   return json<{
     driver: DriverProfile
@@ -228,10 +372,69 @@ export async function adminUpdateDriver(
   )
 }
 
-export async function adminListTrips(token: string) {
+export type AdminTripFilters = {
+  q?: string
+  status?: string
+  trip_status?: string
+  driver_id?: string
+  from?: string
+  to?: string
+}
+
+export type AdminCustomer = {
+  email: string
+  name: string
+  phone: string | null
+  trip_count: number
+  last_booking_date: string | null
+  last_status: string | null
+  last_reference: string | null
+}
+
+export async function adminListTrips(
+  token: string,
+  filters?: AdminTripFilters
+) {
+  const q = new URLSearchParams()
+  if (filters?.q) q.set('q', filters.q)
+  if (filters?.status) q.set('status', filters.status)
+  if (filters?.trip_status) q.set('trip_status', filters.trip_status)
+  if (filters?.driver_id) q.set('driver_id', filters.driver_id)
+  if (filters?.from) q.set('from', filters.from)
+  if (filters?.to) q.set('to', filters.to)
+  const qs = q.toString()
   return json<{ bookings: AccountBooking[] }>(
-    await fetch(`${API}/admin-trips`, {
+    await fetch(`${API}/admin-trips${qs ? `?${qs}` : ''}`, {
       headers: authHeaders(token),
+    })
+  )
+}
+
+export async function adminListCustomers(token: string) {
+  return json<{ customers: AdminCustomer[] }>(
+    await fetch(`${API}/admin-trips?resource=customers`, {
+      headers: authHeaders(token),
+    })
+  )
+}
+
+export async function adminUpdateTrip(
+  token: string,
+  body: Record<string, unknown>
+) {
+  return json<{
+    success: boolean
+    booking: AccountBooking
+    cancel?: {
+      refund_status: string
+      refund_eligible: boolean
+      message: string
+    }
+  }>(
+    await fetch(`${API}/admin-trips`, {
+      method: 'PATCH',
+      headers: authHeaders(token),
+      body: JSON.stringify(body),
     })
   )
 }

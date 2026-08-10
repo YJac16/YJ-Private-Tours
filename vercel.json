@@ -8,5 +8,15 @@
       "source": "/((?!api/|robots\\.txt|sitemap\\.xml).*)",
       "destination": "/index.html"
     }
+  ],
+  "crons": [
+    {
+      "path": "/api/driver-reminders",
+      "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/email-outbox",
+      "schedule": "*/10 * * * *"
+    }
   ]
 }

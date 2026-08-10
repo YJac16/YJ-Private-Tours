@@ -8,6 +8,7 @@ import {
 } from '../booking-app/lib/pricing'
 import { assertAdminAccess } from './_lib/adminAuth'
 import { methodNotAllowed, readJson } from './_lib/http'
+import { expireStalePendingBookings } from '../booking-app/lib/booking-lifecycle'
 
 function supabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL
@@ -318,6 +319,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             const result = mockDb.convertQuoteToBooking(String(body.quote_id || body.id), {
               driver_id: body.driver_id ? String(body.driver_id) : undefined,
               start_time: body.start_time ? String(body.start_time) : undefined,
+              vehicle_id: body.vehicle_id ? String(body.vehicle_id) : undefined,
+              tour_id: body.tour_id ? String(body.tour_id) : undefined,
             })
             return res.status(200).json({ success: true, ...result })
           }
@@ -631,45 +634,123 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
               ? String(customer.whatsapp)
               : null
 
+          const driverId = String(body.driver_id || '')
+          const startTime = String(body.start_time || '').slice(0, 5)
+          const travelDate = quote.travel_date
+            ? String(quote.travel_date)
+            : ''
+          const vehicleId = String(body.vehicle_id || quote.vehicle_id || '')
+          const tourId = String(body.tour_id || quote.tour_id || '')
+
+          if (!driverId) {
+            return res.status(400).json({
+              error: 'driver_id is required to convert a quote to a booking',
+            })
+          }
+          if (!startTime) {
+            return res.status(400).json({
+              error: 'start_time is required to convert a quote to a booking',
+            })
+          }
+          if (!travelDate) {
+            return res.status(400).json({
+              error: 'Quote is missing travel_date',
+            })
+          }
+          if (!tourId || !vehicleId) {
+            return res.status(400).json({
+              error: 'Quote must have tour_id and vehicle_id (or pass them in the convert request)',
+            })
+          }
+
+          await expireStalePendingBookings(sb)
+
+          // Same integrity checks as public booking
+          const { data: driverRow } = await sb
+            .from('drivers')
+            .select('id, name, full_name, is_active')
+            .eq('id', driverId)
+            .maybeSingle()
+          if (!driverRow || driverRow.is_active === false) {
+            return res.status(400).json({ error: 'Invalid or inactive driver' })
+          }
+
+          const { data: vehicleRow } = await sb
+            .from('vehicles')
+            .select('id, name')
+            .eq('id', vehicleId)
+            .maybeSingle()
+          if (!vehicleRow) {
+            return res.status(400).json({ error: 'Invalid vehicle' })
+          }
+
+          const { data: tourRow } = await sb
+            .from('tours')
+            .select('id, name')
+            .eq('id', tourId)
+            .maybeSingle()
+          if (!tourRow) {
+            return res.status(400).json({ error: 'Invalid tour' })
+          }
+
+          const { data: dayBlocked } = await sb
+            .from('driver_unavailable')
+            .select('id')
+            .eq('driver_id', driverId)
+            .eq('unavailable_date', travelDate)
+            .is('start_time', null)
+            .maybeSingle()
+          if (dayBlocked) {
+            return res.status(409).json({ error: 'Driver is unavailable on this date' })
+          }
+
+          const { data: slotBlocked } = await sb
+            .from('driver_unavailable')
+            .select('id')
+            .eq('driver_id', driverId)
+            .eq('unavailable_date', travelDate)
+            .eq('start_time', startTime)
+            .maybeSingle()
+          if (slotBlocked) {
+            return res.status(409).json({ error: 'Driver is unavailable for this slot' })
+          }
+
+          const { data: driverClash } = await sb
+            .from('bookings')
+            .select('id')
+            .eq('driver_id', driverId)
+            .eq('booking_date', travelDate)
+            .eq('start_time', startTime)
+            .in('status', ['pending', 'paid'])
+            .maybeSingle()
+          if (driverClash) {
+            return res.status(409).json({
+              error: 'This driver time slot is already reserved',
+            })
+          }
+
+          const { data: vehicleClash } = await sb
+            .from('bookings')
+            .select('id')
+            .eq('vehicle_id', vehicleId)
+            .eq('booking_date', travelDate)
+            .eq('start_time', startTime)
+            .in('status', ['pending', 'paid'])
+            .maybeSingle()
+          if (vehicleClash) {
+            return res.status(409).json({
+              error: 'This vehicle is already reserved for the selected slot',
+            })
+          }
+
           const settings = await getBusinessSettings(sb)
           const prefixes = (settings.prefixes as Record<string, string>) || {}
           const bookingRef = await allocateNumber(sb, prefixes.booking || 'KCE-B')
           const invoiceNumber = await allocateNumber(sb, prefixes.invoice || 'KCE-INV')
 
-          const driverId =
-            String(body.driver_id || '') ||
-            process.env.DEFAULT_DRIVER_ID ||
-            '11111111-1111-1111-1111-111111111111'
-          const startTime = String(body.start_time || '08:00').slice(0, 5)
-          const travelDate = quote.travel_date || new Date().toISOString().slice(0, 10)
-
-          let tourName: string | null = null
-          let vehicleName: string | null = null
-          let driverName: string | null = null
-          if (quote.tour_id) {
-            const { data: t } = await sb
-              .from('tours')
-              .select('name')
-              .eq('id', quote.tour_id)
-              .maybeSingle()
-            tourName = t?.name ?? null
-          }
-          if (quote.vehicle_id) {
-            const { data: v } = await sb
-              .from('vehicles')
-              .select('name')
-              .eq('id', quote.vehicle_id)
-              .maybeSingle()
-            vehicleName = v?.name ?? null
-          }
-          {
-            const { data: d } = await sb
-              .from('drivers')
-              .select('name, full_name')
-              .eq('id', driverId)
-              .maybeSingle()
-            driverName = d?.full_name || d?.name || null
-          }
+          const tourName = tourRow.name
+          const vehicleName = vehicleRow.name
+          const driverName = driverRow.full_name || driverRow.name
 
           const snap =
             quote.pricing_snapshot && typeof quote.pricing_snapshot === 'object'
@@ -680,14 +761,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             Number(snap?.grand_total_cents) ||
             0
 
+          if (!grand || grand < 100) {
+            return res.status(400).json({
+              error: 'Quote pricing is missing or invalid (grand_total_cents)',
+            })
+          }
+
           const { data: booking, error: bErr } = await sb
             .from('bookings')
             .insert({
               booking_date: travelDate,
               start_time: startTime,
               driver_id: driverId,
-              tour_id: quote.tour_id,
-              vehicle_id: quote.vehicle_id,
+              tour_id: tourId,
+              vehicle_id: vehicleId,
               client_name,
               client_email: client_email || `${quote.quote_number}@quote.local`,
               client_phone,
@@ -713,7 +800,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             })
             .select()
             .single()
-          if (bErr) throw new Error(bErr.message)
+          if (bErr) {
+            const conflict = /already reserved|duplicate|unique/i.test(bErr.message)
+            return res.status(conflict ? 409 : 400).json({ error: bErr.message })
+          }
 
           const { data: invoice, error: iErr } = await sb
             .from('invoices')

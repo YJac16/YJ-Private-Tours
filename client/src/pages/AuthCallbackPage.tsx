@@ -12,13 +12,14 @@ function safeNextPath(raw: string | null): string {
 }
 
 /**
- * Handles Supabase email confirmation / email-change redirects.
+ * Handles Supabase email confirmation, email-change, and password-recovery redirects.
  * Supports PKCE `?code=` and hash tokens (`detectSessionInUrl`).
  */
 export default function AuthCallbackPage() {
   const navigate = useNavigate()
   const [error, setError] = useState<string | null>(null)
   const [status, setStatus] = useState('Confirming your email…')
+  const [title, setTitle] = useState('Email confirmation')
 
   useEffect(() => {
     let cancelled = false
@@ -32,10 +33,16 @@ export default function AuthCallbackPage() {
       try {
         const url = new URL(window.location.href)
         const next = safeNextPath(url.searchParams.get('next'))
+        const isRecovery = next.startsWith('/reset-password')
+        if (isRecovery) {
+          setTitle('Password reset')
+          setStatus('Verifying reset link…')
+        }
+
         const code = url.searchParams.get('code')
-        const hashError = new URLSearchParams(url.hash.replace(/^#/, '')).get(
-          'error_description'
-        )
+        const hashParams = new URLSearchParams(url.hash.replace(/^#/, ''))
+        const hashError = hashParams.get('error_description')
+        const hashType = hashParams.get('type')
 
         if (hashError) {
           throw new Error(decodeURIComponent(hashError.replace(/\+/g, ' ')))
@@ -51,7 +58,9 @@ export default function AuthCallbackPage() {
           if (sessionError) throw sessionError
           if (!data.session) {
             throw new Error(
-              'No confirmation session found. The link may have expired — try signing in or resending confirmation.'
+              isRecovery
+                ? 'No reset session found. The link may have expired — request a new password reset.'
+                : 'No confirmation session found. The link may have expired — try signing in or resending confirmation.'
             )
           }
         }
@@ -59,7 +68,7 @@ export default function AuthCallbackPage() {
         // Sync profiles.email to Auth email after confirm / email change
         const { data: userData } = await supabase.auth.getUser()
         const authed = userData.user
-        if (authed?.email) {
+        if (authed?.email && !isRecovery && hashType !== 'recovery') {
           await supabase
             .from('profiles')
             .update({
@@ -70,11 +79,17 @@ export default function AuthCallbackPage() {
         }
 
         if (cancelled) return
-        setStatus('Email confirmed. Redirecting…')
+        setStatus(
+          isRecovery
+            ? 'Link verified. Choose a new password…'
+            : 'Email confirmed. Redirecting…'
+        )
         navigate(next, { replace: true })
       } catch (e) {
         if (cancelled) return
-        setError(e instanceof Error ? e.message : 'Email confirmation failed')
+        setError(
+          e instanceof Error ? e.message : 'Email confirmation failed'
+        )
       }
     })()
 
@@ -88,13 +103,17 @@ export default function AuthCallbackPage() {
       <Navbar />
       <main className="min-h-[70vh] bg-brand-cream-light px-4 py-12">
         <div className="max-w-md mx-auto bg-brand-cream border border-brand-cream-dark rounded-2xl p-6 sm:p-8 shadow-sm space-y-4 text-center">
-          <h1 className="text-2xl font-bold text-brand-green">Email confirmation</h1>
+          <h1 className="text-2xl font-bold text-brand-green">{title}</h1>
           {error ? (
             <>
               <p className="text-sm text-red-800 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
                 {error}
               </p>
               <p className="text-sm text-brand-green/80">
+                <Link to="/forgot-password" className="underline font-medium">
+                  Reset password
+                </Link>
+                {' · '}
                 <Link to="/login" className="underline font-medium">
                   Sign in
                 </Link>

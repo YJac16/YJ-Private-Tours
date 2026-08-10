@@ -16,10 +16,14 @@ import {
 import { formatZar } from '../lib/pricing'
 
 type TripFilter = 'today' | 'upcoming' | 'completed' | 'cancelled'
-type HubTab = 'trips' | 'profile'
+type HubTab = 'trips' | 'calendar' | 'profile'
 
 function todayYmd() {
   return new Date().toISOString().slice(0, 10)
+}
+
+function daysInMonth(year: number, monthIndex: number) {
+  return new Date(year, monthIndex + 1, 0).getDate()
 }
 
 function mapsUrl(address?: string | null) {
@@ -42,6 +46,11 @@ function DriverHubInner() {
   const [editDate, setEditDate] = useState('')
   const [editTime, setEditTime] = useState('')
   const [filter, setFilter] = useState<TripFilter>('upcoming')
+  const [calCursor, setCalCursor] = useState(() => {
+    const n = new Date()
+    return new Date(n.getFullYear(), n.getMonth(), 1)
+  })
+  const [selectedDay, setSelectedDay] = useState<string | null>(null)
 
   const [fullName, setFullName] = useState('')
   const [photoUrl, setPhotoUrl] = useState('')
@@ -51,12 +60,12 @@ function DriverHubInner() {
   const [profileSaving, setProfileSaving] = useState(false)
   const [profileSaved, setProfileSaved] = useState(false)
 
-  const load = async () => {
+  const load = async (range?: { from?: string; to?: string }) => {
     if (!accessToken) return
     setLoading(true)
     setError(null)
     try {
-      const data = await fetchDriverMe(accessToken)
+      const data = await fetchDriverMe(accessToken, range)
       setDriver(data.driver)
       setBookings(data.bookings)
       setUnavailable(data.unavailable)
@@ -73,9 +82,18 @@ function DriverHubInner() {
   }
 
   useEffect(() => {
-    load()
+    if (!accessToken) return
+    if (hubTab === 'calendar') {
+      const y = calCursor.getFullYear()
+      const m = calCursor.getMonth()
+      const from = `${y}-${String(m + 1).padStart(2, '0')}-01`
+      const to = `${y}-${String(m + 1).padStart(2, '0')}-${String(daysInMonth(y, m)).padStart(2, '0')}`
+      load({ from, to })
+    } else {
+      load({ from: todayYmd() })
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [accessToken])
+  }, [accessToken, hubTab, calCursor])
 
   const filtered = useMemo(() => {
     const today = todayYmd()
@@ -103,6 +121,46 @@ function DriverHubInner() {
       )
     })
   }, [bookings, filter])
+
+  const byDate = useMemo(() => {
+    const map = new Map<string, DriverScheduleBooking[]>()
+    for (const b of bookings) {
+      if (b.status === 'cancelled' || b.status === 'expired') continue
+      const list = map.get(b.booking_date) || []
+      list.push(b)
+      map.set(b.booking_date, list)
+    }
+    return map
+  }, [bookings])
+
+  const blockedByDate = useMemo(() => {
+    const set = new Set<string>()
+    for (const u of unavailable) set.add(u.unavailable_date)
+    return set
+  }, [unavailable])
+
+  const calYear = calCursor.getFullYear()
+  const calMonth = calCursor.getMonth()
+  const firstDow = new Date(calYear, calMonth, 1).getDay()
+  const totalDays = daysInMonth(calYear, calMonth)
+  const calCells: Array<{ date: string | null; day: number | null }> = []
+  for (let i = 0; i < firstDow; i++) calCells.push({ date: null, day: null })
+  for (let d = 1; d <= totalDays; d++) {
+    const date = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
+    calCells.push({ date, day: d })
+  }
+  const dayTrips = selectedDay ? byDate.get(selectedDay) || [] : []
+
+  const reloadCurrent = () => {
+    if (hubTab === 'calendar') {
+      const y = calCursor.getFullYear()
+      const m = calCursor.getMonth()
+      const from = `${y}-${String(m + 1).padStart(2, '0')}-01`
+      const to = `${y}-${String(m + 1).padStart(2, '0')}-${String(daysInMonth(y, m)).padStart(2, '0')}`
+      return load({ from, to })
+    }
+    return load({ from: todayYmd() })
+  }
 
   const onSaveProfile = async (e: FormEvent) => {
     e.preventDefault()
@@ -159,8 +217,8 @@ function DriverHubInner() {
             </button>
           </div>
 
-          <div className="flex gap-2">
-            {(['trips', 'profile'] as HubTab[]).map((tab) => (
+          <div className="flex gap-2 flex-wrap">
+            {(['trips', 'calendar', 'profile'] as HubTab[]).map((tab) => (
               <button
                 key={tab}
                 type="button"
@@ -248,6 +306,118 @@ function DriverHubInner() {
             </form>
           )}
 
+          {hubTab === 'calendar' && (
+            <div className="space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h2 className="text-lg font-bold text-brand-green">My calendar</h2>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    className="min-h-11 px-3 rounded-lg border border-brand-cream-dark text-brand-green"
+                    onClick={() =>
+                      setCalCursor(new Date(calYear, calMonth - 1, 1))
+                    }
+                  >
+                    Prev
+                  </button>
+                  <p className="min-w-36 text-center font-semibold text-brand-green">
+                    {calCursor.toLocaleString(undefined, {
+                      month: 'long',
+                      year: 'numeric',
+                    })}
+                  </p>
+                  <button
+                    type="button"
+                    className="min-h-11 px-3 rounded-lg border border-brand-cream-dark text-brand-green"
+                    onClick={() =>
+                      setCalCursor(new Date(calYear, calMonth + 1, 1))
+                    }
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+              {loading ? (
+                <p className="text-sm text-brand-green/70">Loading calendar…</p>
+              ) : (
+                <div className="bg-brand-cream border border-brand-cream-dark rounded-2xl p-4 shadow-sm">
+                  <div className="grid grid-cols-7 gap-1 text-center text-xs font-semibold text-brand-green/70 mb-2">
+                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
+                      <div key={d}>{d}</div>
+                    ))}
+                  </div>
+                  <div className="grid grid-cols-7 gap-1">
+                    {calCells.map((cell, idx) => {
+                      if (!cell.date) {
+                        return <div key={`e-${idx}`} className="min-h-16" />
+                      }
+                      const count = byDate.get(cell.date)?.length || 0
+                      const blocked = blockedByDate.has(cell.date)
+                      const active = selectedDay === cell.date
+                      return (
+                        <button
+                          key={cell.date}
+                          type="button"
+                          onClick={() => setSelectedDay(cell.date)}
+                          className={`min-h-16 rounded-lg border p-1 text-left ${
+                            active
+                              ? 'border-brand-green bg-brand-green/10'
+                              : 'border-brand-cream-dark bg-white/60'
+                          }`}
+                        >
+                          <span className="text-xs font-semibold text-brand-green">
+                            {cell.day}
+                          </span>
+                          {count > 0 && (
+                            <p className="text-[10px] text-brand-green mt-1">
+                              {count} trip{count === 1 ? '' : 's'}
+                            </p>
+                          )}
+                          {blocked && (
+                            <p className="text-[10px] text-amber-800 mt-0.5">Blocked</p>
+                          )}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+              {selectedDay && (
+                <div className="bg-brand-cream border border-brand-cream-dark rounded-2xl p-4 space-y-2">
+                  <h3 className="font-semibold text-brand-green">{selectedDay}</h3>
+                  {dayTrips.length === 0 ? (
+                    <p className="text-sm text-brand-green/70">No trips this day.</p>
+                  ) : (
+                    dayTrips.map((b) => (
+                      <div
+                        key={b.id}
+                        className="rounded-xl border border-brand-cream-dark px-3 py-2 text-sm"
+                      >
+                        <p className="font-semibold text-brand-green">
+                          {String(b.start_time).slice(0, 5)} · {b.tour?.name || 'Tour'}
+                        </p>
+                        <p className="text-brand-green/80">
+                          {b.client_name} · {b.status}
+                          {b.booking_reference ? ` · ${b.booking_reference}` : ''}
+                        </p>
+                      </div>
+                    ))
+                  )}
+                  <button
+                    type="button"
+                    className="text-sm underline text-brand-green"
+                    onClick={() => {
+                      setFilter('upcoming')
+                      setHubTab('trips')
+                    }}
+                  >
+                    Open trips list
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
           {hubTab === 'trips' && (
             <>
               <div className="flex flex-wrap gap-2">
@@ -272,7 +442,7 @@ function DriverHubInner() {
                   <h2 className="text-lg font-bold text-brand-green">Trips</h2>
                   <button
                     type="button"
-                    onClick={() => load()}
+                    onClick={() => reloadCurrent()}
                     className="text-sm underline text-brand-green min-h-11 px-2"
                   >
                     Refresh
@@ -358,7 +528,7 @@ function DriverHubInner() {
                                     booking_id: b.id,
                                     trip_status: 'in_progress',
                                   })
-                                  await load()
+                                  await reloadCurrent()
                                 }}
                               >
                                 Start trip
@@ -374,7 +544,7 @@ function DriverHubInner() {
                                     booking_id: b.id,
                                     trip_status: 'completed',
                                   })
-                                  await load()
+                                  await reloadCurrent()
                                 }}
                               >
                                 Complete trip
@@ -408,7 +578,7 @@ function DriverHubInner() {
                                       start_time: editTime,
                                     })
                                     setEditId(null)
-                                    await load()
+                                    await reloadCurrent()
                                   }}
                                 >
                                   Save
@@ -444,7 +614,7 @@ function DriverHubInner() {
                                         booking_id: b.id,
                                         status: 'paid',
                                       })
-                                      await load()
+                                      await reloadCurrent()
                                     }}
                                   >
                                     Mark paid
@@ -460,7 +630,7 @@ function DriverHubInner() {
                                         booking_id: b.id,
                                         status: 'cancelled',
                                       })
-                                      await load()
+                                      await reloadCurrent()
                                     }}
                                   >
                                     Cancel
@@ -518,7 +688,7 @@ function DriverHubInner() {
                         setBlockDate('')
                         setBlockTime('')
                         setBlockReason('')
-                        await load()
+                        await reloadCurrent()
                       } catch (e) {
                         setError(
                           e instanceof Error ? e.message : 'Could not block'
@@ -550,7 +720,7 @@ function DriverHubInner() {
                           onClick={async () => {
                             if (!accessToken) return
                             await driverUnblockAuth(accessToken, u.id)
-                            await load()
+                            await reloadCurrent()
                           }}
                         >
                           Remove
