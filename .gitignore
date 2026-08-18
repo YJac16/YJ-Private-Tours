@@ -3,8 +3,17 @@ node_modules
 .env.local
 .env*.local
 *.log
+*.pyc
+__pycache__/
 .DS_Store
 .vercel
+
+.vercel
+.env*.local
+
+.operator-passwords.local
+
+.operator-passwords.local
 
 .vercel
 .env*.local
