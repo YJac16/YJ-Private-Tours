@@ -1,0 +1,21 @@
+{
+  "name": "KhayrCape Experiences",
+  "short_name": "KhayrCape",
+  "description": "Private Cape Town tours with a registered local guide. Book online or WhatsApp.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#EDEAE2",
+  "theme_color": "#EDEAE2",
+  "icons": [
+    {
+      "src": "/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
