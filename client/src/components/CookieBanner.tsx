@@ -32,10 +32,10 @@ export default function CookieBanner() {
     <div
       role="dialog"
       aria-label="Cookie notice"
-      className={`fixed z-60 left-4 right-4 md:left-auto md:right-6 md:max-w-sm ${
+      className={`fixed z-60 left-3 right-3 md:left-auto md:right-6 md:max-w-sm ${
         hideFab
-          ? 'bottom-[max(1.25rem,env(safe-area-inset-bottom))]'
-          : 'bottom-[calc(5.25rem+env(safe-area-inset-bottom))]'
+          ? 'top-[4.75rem] md:top-auto md:bottom-[max(1.25rem,env(safe-area-inset-bottom))]'
+          : 'top-[4.75rem] md:top-auto md:bottom-[calc(5.25rem+env(safe-area-inset-bottom))]'
       }`}
     >
       <div className="rounded-2xl border border-brand-cream-dark bg-brand-cream shadow-lg p-4 flex flex-col gap-3">
