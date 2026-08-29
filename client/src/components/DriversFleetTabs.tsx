@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { HiOutlineUser, HiOutlineTruck, HiOutlineMap } from 'react-icons/hi'
 import { whatsappWithMessage } from '../lib/whatsappLinks'
@@ -154,7 +154,11 @@ export default function DriversFleetTabs() {
   const catalogVehicles = catalog?.vehicles ?? []
   const hashTab = tabFromHash(location.hash)
   const [pickedTab, setPickedTab] = useState<TabId | null>(null)
-  const activeTab = hashTab ?? pickedTab ?? 'tours'
+  const activeTab = pickedTab ?? hashTab ?? 'tours'
+
+  useEffect(() => {
+    if (hashTab) setPickedTab(hashTab)
+  }, [hashTab])
   const whaleSeasonOpen = useMemo(() => isDateInSeason(new Date(), WHALE_SEASON), [])
 
   const visibleTours = useMemo(

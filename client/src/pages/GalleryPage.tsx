@@ -21,19 +21,18 @@ export default function GalleryPage() {
           <p className="text-brand-green/90 text-center mb-10 max-w-2xl mx-auto">
             Scenes from Cape Town and the Western Cape.
           </p>
-          <div className="columns-2 md:columns-3 gap-3 md:gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
             {galleryImages.map((img, i) => (
-              <figure
-                key={i}
-                className="mb-3 md:mb-4 break-inside-avoid rounded-2xl overflow-hidden bg-brand-cream-dark/20"
-              >
-                <img
-                  src={img.src}
-                  alt={img.alt}
-                  className="w-full h-auto object-cover rounded-2xl"
-                  loading="lazy"
-                />
-                <figcaption className="mt-2 mb-1 px-0.5 text-xs sm:text-sm text-brand-green/75">
+              <figure key={i} className="min-w-0">
+                <div className="aspect-[4/3] rounded-2xl overflow-hidden bg-brand-cream-dark/30">
+                  <img
+                    src={img.src}
+                    alt={img.alt}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                </div>
+                <figcaption className="mt-2 text-xs sm:text-sm text-brand-green/75">
                   {img.alt}
                 </figcaption>
               </figure>
