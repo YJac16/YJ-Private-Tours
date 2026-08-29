@@ -31,6 +31,10 @@ import {
   vehiclesForGuestCount,
   type BookingSettings,
 } from '../lib/pricing'
+import { isValidEmail, isValidPhone } from '../lib/contactValidation'
+import { displayDurationLabel } from '../lib/displayDuration'
+import { isSunsetFriendlyTime } from '../lib/sunsetSlots'
+import { vehiclePhotoUrl } from '../lib/vehiclePhotos'
 
 const STEPS = [
   'Experience',
@@ -201,7 +205,13 @@ export default function BookPage() {
           const t = catalog.tours.find((x) => x.slug === tourSlug)
           if (t) setTourId(t.id)
         }
-        if (timeParam) setStartTime(timeParam)
+        if (timeParam) {
+          if (tourSlug === 'sunset' && !isSunsetFriendlyTime(timeParam)) {
+            setStartTime('')
+          } else {
+            setStartTime(timeParam)
+          }
+        }
         if (catalog.drivers.length === 1) {
           setDriverId(catalog.drivers[0].id)
         }
@@ -294,7 +304,22 @@ export default function BookPage() {
     }
   }, [date, driverId, drivers, vehicleId])
 
-  const timeOptions = slots
+  useEffect(() => {
+    if (
+      selectedTour?.slug === 'sunset' &&
+      startTime &&
+      !isSunsetFriendlyTime(startTime)
+    ) {
+      setStartTime('')
+    }
+  }, [selectedTour, startTime])
+
+  const timeOptions = useMemo(() => {
+    if (selectedTour?.slug === 'sunset') {
+      return slots.filter((s) => isSunsetFriendlyTime(s.start_time))
+    }
+    return slots
+  }, [slots, selectedTour])
 
   const canNext = () => {
     if (step === 0) return Boolean(tourId)
@@ -321,7 +346,12 @@ export default function BookPage() {
     }
     if (step === 4) return termsAccepted
     if (step === 5) {
-      return Boolean(name.trim() && email.trim() && phone.trim() && pickupAddress.trim())
+      return Boolean(
+        name.trim() &&
+          isValidEmail(email) &&
+          isValidPhone(phone) &&
+          pickupAddress.trim()
+      )
     }
     if (step === 6) {
       return Boolean(accessToken && consentSigned && termsAccepted)
@@ -334,6 +364,16 @@ export default function BookPage() {
     if (step === 1 && !startTime) {
       setError('Please select a start time.')
       return
+    }
+    if (step === 5) {
+      if (!isValidEmail(email)) {
+        setError('Please enter a valid email address.')
+        return
+      }
+      if (!isValidPhone(phone)) {
+        setError('Please enter a valid phone number.')
+        return
+      }
     }
     if (step < STEPS.length - 1) setStep((s) => s + 1)
   }
@@ -367,8 +407,13 @@ export default function BookPage() {
       setStep(3)
       return
     }
-    if (!name.trim() || !email.trim() || !phone.trim() || !pickupAddress.trim()) {
-      setError('Please complete your contact and pickup details.')
+    if (
+      !name.trim() ||
+      !isValidEmail(email) ||
+      !isValidPhone(phone) ||
+      !pickupAddress.trim()
+    ) {
+      setError('Please enter a valid email, phone number, and pickup address.')
       setStep(5)
       return
     }
@@ -568,6 +613,20 @@ export default function BookPage() {
                       <legend className="text-lg font-bold text-brand-green mb-1">
                         Select your experience
                       </legend>
+                      {!accessToken && (
+                        <p className="text-sm text-brand-green/85 bg-white border border-brand-cream-dark rounded-xl px-3 py-2">
+                          Payment requires a signed-in account so your informed
+                          consent stays on file. You can choose your experience
+                          first, then{' '}
+                          <Link
+                            to={`/login?next=${encodeURIComponent('/book')}`}
+                            className="font-semibold underline"
+                          >
+                            sign in
+                          </Link>{' '}
+                          before checkout.
+                        </p>
+                      )}
                       {tours.map((t) => {
                         const fromCents = startingFromCents(t, vehicles, 1)
                         return (
@@ -600,9 +659,9 @@ export default function BookPage() {
                                     From {formatZar(fromCents)}
                                   </span>
                                 </div>
-                                {t.duration_label && (
+                                {displayDurationLabel(t.slug, t.duration_label) && (
                                   <p className="text-xs text-brand-green/70">
-                                    {t.duration_label}
+                                    {displayDurationLabel(t.slug, t.duration_label)}
                                   </p>
                                 )}
                                 <p className="text-sm text-brand-green/85">
@@ -711,25 +770,29 @@ export default function BookPage() {
                         )}
                         {!slotsLoading && !timeOptions.length && !slotsReason && (
                           <p className="text-sm text-amber-900 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 mb-2">
-                            No available times for this date and driver.
+                            {date
+                              ? 'No available times for this date and driver.'
+                              : 'Pick a date first.'}
                           </p>
                         )}
-                        <div className="grid gap-2">
+                        <div className="flex flex-col gap-3 isolate">
                           {timeOptions.map((s) => (
                             <button
                               key={s.id}
                               type="button"
                               disabled={!s.available || slotsLoading}
                               onClick={() => setStartTime(s.start_time)}
-                              className={`w-full text-left px-4 py-3.5 min-h-13 rounded-xl border transition-colors disabled:opacity-40 ${
+                              className={`relative z-0 w-full text-left px-4 py-4 min-h-14 rounded-xl border transition-colors touch-manipulation disabled:opacity-40 ${
                                 startTime === s.start_time
                                   ? 'border-brand-green bg-brand-green text-brand-cream'
                                   : 'border-brand-cream-dark bg-white text-brand-green hover:border-brand-green/50'
                               }`}
                             >
-                              {s.label}
+                              <span className="pointer-events-none block font-semibold">
+                                {s.label}
+                              </span>
                               {!s.available && s.reason ? (
-                                <span className="block text-xs opacity-80 mt-0.5">
+                                <span className="pointer-events-none block text-xs opacity-80 mt-0.5">
                                   {s.reason}
                                 </span>
                               ) : null}
@@ -859,14 +922,12 @@ export default function BookPage() {
                               }`}
                             >
                               <div className="flex flex-col sm:flex-row">
-                                <div className="relative w-full sm:w-48 sm:shrink-0 aspect-video sm:aspect-auto sm:min-h-40 sm:self-stretch overflow-hidden bg-brand-cream-dark/30">
-                                  {v.image_url && (
-                                    <img
-                                      src={v.image_url}
-                                      alt={v.name}
-                                      className="absolute inset-0 w-full h-full object-cover"
-                                    />
-                                  )}
+                                <div className="relative w-full sm:w-48 sm:shrink-0 aspect-video sm:aspect-auto sm:min-h-40 sm:self-stretch overflow-hidden bg-brand-green-dark">
+                                  <img
+                                    src={vehiclePhotoUrl(v)}
+                                    alt={v.name}
+                                    className="absolute inset-0 w-full h-full object-cover object-center"
+                                  />
                                 </div>
                                 <div className="flex-1 min-w-0 p-4 sm:p-5 space-y-2">
                                   <div className="flex flex-col gap-1 sm:flex-row sm:flex-wrap sm:justify-between sm:gap-2">
@@ -1009,7 +1070,17 @@ export default function BookPage() {
                       )}
                       <Field label="Full name" required value={name} onChange={setName} autoComplete="name" />
                       <Field label="Email" type="email" required value={email} onChange={setEmail} autoComplete="email" />
+                      {email.trim() && !isValidEmail(email) && (
+                        <p className="text-xs text-amber-900 -mt-2">
+                          Enter a real email address (for example name@domain.com).
+                        </p>
+                      )}
                       <Field label="Phone number" type="tel" required value={phone} onChange={setPhone} autoComplete="tel" />
+                      {phone.trim() && !isValidPhone(phone) && (
+                        <p className="text-xs text-amber-900 -mt-2">
+                          Enter a plausible phone number with at least 9 digits.
+                        </p>
+                      )}
                       <Field label="Country" value={country} onChange={setCountry} autoComplete="country-name" />
                       <Field label="Hotel / pickup address" required value={pickupAddress} onChange={setPickupAddress} />
                       <label className="block">

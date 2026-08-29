@@ -33,6 +33,7 @@ export default {
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
+        serif: ['Fraunces', 'Georgia', 'Times New Roman', 'serif'],
       },
     },
   },

@@ -8,29 +8,34 @@ export default function GalleryPage() {
     <>
       <Navbar />
       <main className="min-h-screen bg-brand-cream">
-        <div className="max-w-6xl mx-auto px-4 py-8 md:py-12">
-          <Link to="/" className="inline-flex text-brand-green hover:underline text-sm mb-6">
+        <div className="max-w-6xl mx-auto px-4 py-10 md:py-14">
+          <Link
+            to="/"
+            className="inline-flex text-brand-green hover:underline text-sm mb-6"
+          >
             ← Back to home
           </Link>
-          <h1 className="text-3xl md:text-4xl font-bold text-brand-green mb-4 text-center">
+          <h1 className="font-serif text-3xl md:text-4xl font-semibold text-brand-green mb-4 text-center">
             Gallery
           </h1>
           <p className="text-brand-green/90 text-center mb-10 max-w-2xl mx-auto">
             Scenes from Cape Town and the Western Cape.
           </p>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 md:gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
             {galleryImages.map((img, i) => (
-              <div
-                key={i}
-                className="aspect-square rounded-lg overflow-hidden bg-brand-cream-dark/30 shadow-md"
-              >
-                <img
-                  src={img.src}
-                  alt={img.alt}
-                  className="w-full h-full object-cover"
-                  loading="lazy"
-                />
-              </div>
+              <figure key={i} className="min-w-0">
+                <div className="aspect-[4/3] rounded-2xl overflow-hidden bg-brand-cream-dark/30">
+                  <img
+                    src={img.src}
+                    alt={img.alt}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                </div>
+                <figcaption className="mt-2 text-xs sm:text-sm text-brand-green/75">
+                  {img.alt}
+                </figcaption>
+              </figure>
             ))}
           </div>
         </div>

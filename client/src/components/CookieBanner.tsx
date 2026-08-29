@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 
 const STORAGE_KEY = 'cookie_consent'
 
 export default function CookieBanner() {
   const [visible, setVisible] = useState(false)
+  const { pathname } = useLocation()
+  const hideFab = pathname === '/book' || pathname.startsWith('/book/')
 
   useEffect(() => {
     try {
@@ -30,10 +32,14 @@ export default function CookieBanner() {
     <div
       role="dialog"
       aria-label="Cookie notice"
-      className="fixed bottom-0 inset-x-0 z-60 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]"
+      className={`fixed z-60 left-3 right-3 md:left-auto md:right-6 md:max-w-sm ${
+        hideFab
+          ? 'top-[4.75rem] md:top-auto md:bottom-[max(1.25rem,env(safe-area-inset-bottom))]'
+          : 'top-[4.75rem] md:top-auto md:bottom-[calc(5.25rem+env(safe-area-inset-bottom))]'
+      }`}
     >
-      <div className="max-w-3xl mx-auto rounded-2xl border border-brand-cream-dark bg-brand-cream shadow-lg p-4 sm:p-5 flex flex-col sm:flex-row gap-4 sm:items-center">
-        <p className="text-sm text-brand-green/90 flex-1 leading-relaxed">
+      <div className="rounded-2xl border border-brand-cream-dark bg-brand-cream shadow-lg p-4 flex flex-col gap-3">
+        <p className="text-sm text-brand-green/90 leading-relaxed">
           We use essential cookies and similar storage to keep you signed in and run bookings. See our{' '}
           <Link to="/cookies" className="underline font-semibold text-brand-green">
             Cookie Policy
@@ -47,7 +53,7 @@ export default function CookieBanner() {
         <button
           type="button"
           onClick={accept}
-          className="shrink-0 min-h-12 px-5 rounded-lg bg-brand-green text-brand-cream font-semibold hover:opacity-95"
+          className="self-start min-h-11 px-5 rounded-xl bg-brand-green text-brand-cream font-semibold hover:opacity-95"
         >
           Accept
         </button>
