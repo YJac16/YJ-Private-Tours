@@ -3,7 +3,6 @@ import Hero from '../components/Hero'
 import About from '../components/About'
 import DriversFleetTabs from '../components/DriversFleetTabs'
 import Gallery from '../components/Gallery'
-import WhyChooseUs from '../components/WhyChooseUs'
 import Footer from '../components/Footer'
 
 export default function Home() {
@@ -14,7 +13,6 @@ export default function Home() {
       <About />
       <DriversFleetTabs />
       <Gallery />
-      <WhyChooseUs />
       <Footer />
     </>
   )

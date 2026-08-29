@@ -180,18 +180,18 @@ export default function DriversFleetTabs() {
   return (
     <section
       id="tours-drivers-fleet"
-      className="py-10 md:py-24 bg-brand-cream-light px-4 scroll-mt-28 md:scroll-mt-24"
+      className="py-20 md:py-28 bg-brand-cream-light px-4 scroll-mt-28 md:scroll-mt-24"
     >
       <div className="max-w-6xl mx-auto">
-        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-brand-green mb-3 text-center leading-tight">
-          Tours, Drivers & Fleet
+        <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl font-semibold text-brand-green mb-3 text-center leading-tight">
+          Tours, Drivers &amp; Fleet
         </h2>
         <p className="text-brand-green/90 text-center mb-8 md:mb-10 max-w-2xl mx-auto text-sm sm:text-base leading-snug">
           Meet your guide, see our vehicles, and explore tour options below.
         </p>
 
         <div
-          className="flex flex-wrap justify-center gap-2 mb-8 md:mb-10"
+          className="flex flex-wrap justify-center gap-2 mb-10 md:mb-12"
           role="tablist"
           aria-label="Tours, drivers, and fleet"
         >
@@ -202,7 +202,7 @@ export default function DriversFleetTabs() {
               role="tab"
               aria-selected={activeTab === tab.id}
               onClick={() => selectTab(tab.id)}
-              className={`inline-flex items-center gap-2 px-4 py-2.5 sm:px-5 sm:py-3 rounded-lg font-medium transition-colors min-h-11 ${
+              className={`inline-flex items-center gap-2 px-4 py-2.5 sm:px-5 sm:py-3 rounded-2xl font-medium transition-colors min-h-11 ${
                 activeTab === tab.id
                   ? 'bg-brand-green text-brand-cream shadow-md'
                   : 'bg-brand-cream text-brand-green hover:bg-brand-cream-dark/50 border border-brand-cream-dark'
@@ -215,9 +215,9 @@ export default function DriversFleetTabs() {
         </div>
 
         {activeTab === 'tours' && (
-          <div id="tours-panel" className="space-y-5 max-w-xl mx-auto md:max-w-none">
-            <div className="text-center md:max-w-2xl md:mx-auto mb-2">
-              <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-brand-green">
+          <div id="tours-panel" className="space-y-6">
+            <div className="text-center max-w-2xl mx-auto">
+              <h3 className="font-serif text-xl sm:text-2xl md:text-3xl font-semibold text-brand-green">
                 Choose Your Experience
               </h3>
               <p className="text-brand-green/90 text-sm sm:text-base mt-2 leading-snug">
@@ -225,53 +225,61 @@ export default function DriversFleetTabs() {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 gap-4 md:gap-6 md:max-w-4xl md:mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">
               {visibleTours.map((tour) => {
                 const catalogTour = tourBySlug(tour.tourSlug)
                 return (
                   <article
                     key={tour.title}
-                    className="bg-brand-cream rounded-xl shadow-md overflow-hidden border border-brand-cream-dark flex flex-col"
+                    className="group bg-brand-cream rounded-2xl shadow-md overflow-hidden border border-brand-cream-dark flex flex-col"
                   >
-                    <div className="aspect-16/10 sm:aspect-4/3 overflow-hidden bg-brand-cream-dark/30">
+                    <div className="relative aspect-[4/3] overflow-hidden bg-brand-green-dark">
                       <img
                         src={tour.image}
                         alt=""
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-[1.03]"
                       />
+                      <div className="absolute top-3 left-3 right-3 flex flex-wrap gap-2">
+                        {tour.timeBadge && (
+                          <p className="text-xs font-semibold text-brand-green bg-brand-gold px-2.5 py-1 rounded-full shadow-sm">
+                            {tour.timeBadge}
+                          </p>
+                        )}
+                        {tour.limitedTag && (
+                          <p className="text-xs font-semibold text-amber-950 bg-amber-100 px-2.5 py-1 rounded-full shadow-sm">
+                            {tour.limitedTag}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                    <div className="p-4 sm:p-5 flex-1 flex flex-col gap-2">
-                      {tour.promoTitle && (
-                        <p className="text-xs sm:text-sm font-bold tracking-wide uppercase text-brand-green">
-                          {tour.promoTitle}
-                        </p>
-                      )}
-                      {tour.timeBadge && (
-                        <p className="text-xs sm:text-sm font-bold text-brand-green bg-brand-gold/30 inline-block self-start px-2 py-1 rounded-md">
-                          {tour.timeBadge}
-                        </p>
-                      )}
-                      {tour.limitedTag && (
-                        <p className="text-xs sm:text-sm font-bold text-amber-900 bg-amber-100 inline-block self-start px-2 py-1 rounded-md">
-                          {tour.limitedTag}
-                        </p>
-                      )}
-                      <h3 className="text-lg sm:text-xl font-bold text-brand-green leading-snug">
-                        {tour.title}
-                      </h3>
-                      <p className="text-sm text-brand-green/85">{tour.duration}</p>
+                    <div className="flex flex-wrap items-start justify-between gap-3 px-5 py-3 bg-brand-green-dark">
+                      <p className="text-sm font-medium text-brand-cream pt-0.5">
+                        {tour.duration}
+                      </p>
                       {catalogTour ? (
                         <PriceWithInfo
                           tour={catalogTour}
                           vehicles={catalogVehicles}
                           compact
+                          showVehicleNote={false}
+                          tone="onDark"
                         />
                       ) : pricingLoading ? (
-                        <p className="text-sm font-semibold text-brand-green">
+                        <p className="text-sm font-semibold text-brand-cream">
                           Loading rates…
                         </p>
                       ) : null}
-                      <p className="text-sm text-brand-green/90 leading-snug">
+                    </div>
+                    <div className="p-5 flex-1 flex flex-col gap-2">
+                      {tour.promoTitle && (
+                        <p className="text-xs font-semibold tracking-wide uppercase text-brand-gold">
+                          {tour.promoTitle}
+                        </p>
+                      )}
+                      <h3 className="font-serif text-lg sm:text-xl font-semibold text-brand-green leading-snug">
+                        {tour.title}
+                      </h3>
+                      <p className="text-sm text-brand-green/85 leading-snug">
                         {tour.bullets.join(' · ')}
                       </p>
                       {tour.smallPrint && (
@@ -279,18 +287,18 @@ export default function DriversFleetTabs() {
                           {tour.smallPrint}
                         </p>
                       )}
-                      <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <div className="mt-auto pt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <Link
                           to={`/experience/${tour.tourSlug}`}
-                          className="w-full inline-flex items-center justify-center gap-2 min-h-12 px-4 py-3.5 border-2 border-brand-gold text-brand-green hover:bg-brand-gold/10 font-semibold rounded-lg transition-colors text-sm sm:text-base shadow-sm"
+                          className="w-full inline-flex items-center justify-center gap-2 min-h-12 px-4 py-3 border border-brand-gold text-brand-green hover:bg-brand-gold/10 font-semibold rounded-2xl transition-colors text-sm shadow-sm"
                         >
-                          Explore Experience
+                          Explore
                         </Link>
                         <Link
                           to={tour.bookPath}
-                          className="w-full inline-flex items-center justify-center gap-2 min-h-12 px-4 py-3.5 bg-brand-green hover:bg-brand-green-dark text-brand-cream font-semibold rounded-lg transition-colors text-sm sm:text-base shadow-sm"
+                          className="w-full inline-flex items-center justify-center gap-2 min-h-12 px-4 py-3 bg-brand-green hover:bg-brand-green-dark text-brand-cream font-semibold rounded-2xl transition-colors text-sm shadow-sm"
                         >
-                          Book Online
+                          Book
                         </Link>
                       </div>
                     </div>
@@ -302,18 +310,18 @@ export default function DriversFleetTabs() {
         )}
 
         {activeTab === 'drivers' && (
-          <div className="bg-brand-cream rounded-xl shadow-md border border-brand-cream-dark overflow-hidden max-w-xl mx-auto md:max-w-none">
+          <div className="bg-brand-cream rounded-2xl shadow-md border border-brand-cream-dark overflow-hidden">
             <div className="grid md:grid-cols-2 gap-0">
-              <div className="aspect-4/5 md:aspect-auto md:min-h-80 bg-brand-cream-dark/30">
+              <div className="aspect-[4/5] md:aspect-auto md:min-h-80 bg-brand-green-dark">
                 <img
                   src="/driver-yaseen.JPG"
                   alt="Yaseen — Your guide"
                   className="w-full h-full object-cover object-top"
                 />
               </div>
-              <div className="p-4 sm:p-6 md:p-8 flex flex-col justify-center gap-3">
+              <div className="p-5 sm:p-8 md:p-10 flex flex-col justify-center gap-4">
                 <div>
-                  <h3 className="text-xl sm:text-2xl font-bold text-brand-green leading-snug">
+                  <h3 className="font-serif text-xl sm:text-2xl font-semibold text-brand-green leading-snug">
                     Meet Your Private Cape Town Guide
                   </h3>
                   <p className="text-brand-gold font-semibold mt-1">Yaseen</p>
@@ -327,7 +335,7 @@ export default function DriversFleetTabs() {
                   href={DRIVER_CHAT_ME}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center min-h-12 px-5 py-3 bg-brand-green hover:bg-brand-green-dark text-brand-cream font-semibold rounded-lg transition-colors self-start"
+                  className="inline-flex items-center justify-center min-h-12 px-5 py-3 bg-brand-green hover:bg-brand-green-dark text-brand-cream font-semibold rounded-2xl transition-colors self-start"
                 >
                   Chat with Yaseen
                 </a>
@@ -337,22 +345,28 @@ export default function DriversFleetTabs() {
         )}
 
         {activeTab === 'fleet' && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6">
             {fleetVehicles.map((v) => (
               <article
                 key={v.vehicleKey}
-                className="bg-brand-cream rounded-xl shadow-md overflow-hidden border border-brand-cream-dark flex flex-col"
+                className="bg-brand-cream rounded-2xl shadow-md overflow-hidden border border-brand-cream-dark flex flex-col"
               >
-                <div className="aspect-16/10 overflow-hidden bg-brand-cream-dark/30">
-                  <img src={v.image} alt="" className="w-full h-full object-cover" />
+                <div className="aspect-[16/9] overflow-hidden bg-brand-green-dark">
+                  <img
+                    src={v.image}
+                    alt=""
+                    className="w-full h-full object-cover object-center"
+                  />
                 </div>
-                <div className="p-4 sm:p-5 flex-1 flex flex-col gap-2">
+                <div className="p-5 flex-1 flex flex-col gap-2">
                   {'premium' in v && v.premium ? (
-                    <p className="text-xs font-bold uppercase tracking-wide text-brand-gold">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-brand-gold">
                       Premium Experience
                     </p>
                   ) : null}
-                  <h3 className="text-lg font-bold text-brand-green">{v.name}</h3>
+                  <h3 className="font-serif text-lg font-semibold text-brand-green">
+                    {v.name}
+                  </h3>
                   <p className="text-sm font-semibold text-brand-green/80">
                     {v.subtitle}
                   </p>

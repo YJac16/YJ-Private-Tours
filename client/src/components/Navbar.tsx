@@ -200,7 +200,7 @@ export default function Navbar() {
           ))}
           <Link
             to="/book"
-            className="inline-flex items-center gap-1.5 px-3 py-2 ml-1 bg-brand-green hover:bg-brand-green-dark text-brand-cream rounded-lg text-sm font-semibold transition-colors"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 ml-1 bg-brand-green hover:bg-brand-green-dark text-brand-cream rounded-xl text-sm font-semibold transition-colors"
           >
             Book
           </Link>

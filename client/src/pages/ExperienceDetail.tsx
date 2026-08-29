@@ -170,7 +170,7 @@ function HermanusUnavailable({ title }: { title: string }) {
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
   return (
-    <h2 className="text-xl sm:text-2xl font-bold text-brand-green mb-4 md:mb-6">
+    <h2 className="font-serif text-xl sm:text-2xl font-semibold text-brand-green mb-4 md:mb-6">
       {children}
     </h2>
   )
@@ -333,7 +333,7 @@ export default function ExperienceDetail() {
                   ? 'WHALE SEASON'
                   : 'Private Experience'}
               </span>
-              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-brand-cream leading-tight mb-2 drop-shadow-sm">
+              <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl font-semibold text-brand-cream leading-tight mb-2 drop-shadow-sm">
                 {content.display_name}
               </h1>
               <p className="text-brand-cream/95 text-sm sm:text-base max-w-2xl leading-snug mb-4">

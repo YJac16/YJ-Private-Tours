@@ -1,7 +1,9 @@
 @import "tailwindcss";
 
-/* KhayrCape Experiences — theme matches full logo: cream #EDEAE2 + forest green #4D5B4A */
+/* KhayrCape Experiences — cream #EDEAE2 / forest green #46533D / gold #B08D57 */
 @theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Fraunces", ui-serif, Georgia, "Times New Roman", serif;
   /* Brand palette */
   --color-brand-cream: #EDEAE2;
   --color-brand-cream-light: #F5F3EF;
@@ -27,6 +29,7 @@
 @layer base {
   html {
     scroll-behavior: smooth;
+    font-family: var(--font-sans);
   }
   body {
     background-color: var(--color-brand-cream);

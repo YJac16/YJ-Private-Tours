@@ -2,32 +2,109 @@ import { Link } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 
+const recoverExperiences = [
+  {
+    slug: 'city',
+    title: 'Cape Town City & Culture',
+    image: '/bo-kaap.jpg',
+    duration: '3–4 hours',
+  },
+  {
+    slug: 'peninsula',
+    title: 'Cape Peninsula Highlights',
+    image: '/cape-point.jpg',
+    duration: '3.5–4.5 hours',
+  },
+  {
+    slug: 'sunset',
+    title: 'Ocean Sunset',
+    image: '/campsbay.JPG',
+    duration: '2–3 hours',
+  },
+]
+
 export default function NotFoundPage() {
   return (
     <>
       <Navbar />
-      <main className="min-h-[70vh] bg-brand-cream-light px-4 py-16 flex items-center">
-        <div className="max-w-lg mx-auto text-center space-y-4">
-          <p className="text-sm font-semibold uppercase tracking-wide text-brand-green/70">404</p>
-          <h1 className="text-3xl font-bold text-brand-green">Page not found</h1>
-          <p className="text-brand-green/80">
-            That link does not match a page on KhayrCape Experiences. Try one of these instead.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
-            <Link
-              to="/"
-              className="inline-flex justify-center min-h-12 items-center px-5 rounded-lg bg-brand-green text-brand-cream font-semibold"
-            >
-              Go home
-            </Link>
-            <Link
-              to="/book"
-              className="inline-flex justify-center min-h-12 items-center px-5 rounded-lg border border-brand-green text-brand-green font-semibold"
-            >
-              Book a tour
-            </Link>
+      <main>
+        <section className="relative min-h-[68vh] flex items-center justify-center px-4 py-20 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: 'url(/cape-town-banner.jpg)' }}
+        >
+          <div
+            className="absolute inset-0 bg-linear-to-b from-brand-green/50 via-brand-green/40 to-brand-green/70"
+            aria-hidden
+          />
+          <div
+            className="absolute inset-0 bg-linear-to-t from-black/50 via-transparent to-black/20"
+            aria-hidden
+          />
+          <div className="relative z-10 max-w-xl mx-auto text-center">
+            <p className="font-serif text-6xl sm:text-7xl font-semibold text-white [text-shadow:0_2px_16px_rgba(0,0,0,0.6)]">
+              404
+            </p>
+            <span className="mt-3 mb-5 mx-auto block h-0.5 w-12 bg-brand-gold" aria-hidden />
+            <h1 className="font-serif text-2xl sm:text-3xl font-semibold text-white mb-3 leading-tight [text-shadow:0_1px_10px_rgba(0,0,0,0.65)]">
+              This path is not on our map
+            </h1>
+            <p className="text-white/90 text-base sm:text-lg leading-relaxed mb-8 [text-shadow:0_1px_8px_rgba(0,0,0,0.55)]">
+              That link does not match a page. Head home, or book a private Cape
+              Town experience.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Link
+                to="/"
+                className="inline-flex justify-center min-h-12 items-center px-6 rounded-2xl bg-white text-brand-green font-semibold hover:bg-brand-cream transition-colors"
+              >
+                Go home
+              </Link>
+              <Link
+                to="/book"
+                className="inline-flex justify-center min-h-12 items-center px-6 rounded-2xl bg-brand-green text-brand-cream font-semibold border-2 border-white/20 hover:bg-brand-green-dark transition-colors"
+              >
+                Book a tour
+              </Link>
+            </div>
           </div>
-        </div>
+        </section>
+
+        <section className="bg-brand-cream-light px-4 py-16 md:py-20">
+          <div className="max-w-5xl mx-auto">
+            <h2 className="font-serif text-2xl md:text-3xl font-semibold text-brand-green text-center mb-8">
+              Explore an experience
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-5">
+              {recoverExperiences.map((exp) => (
+                <article
+                  key={exp.slug}
+                  className="bg-brand-cream rounded-2xl overflow-hidden border border-brand-cream-dark shadow-sm flex flex-col"
+                >
+                  <div className="aspect-[4/3] overflow-hidden bg-brand-cream-dark/30">
+                    <img
+                      src={exp.image}
+                      alt=""
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="p-4 flex-1 flex flex-col gap-3">
+                    <div>
+                      <h3 className="font-serif font-semibold text-brand-green leading-snug">
+                        {exp.title}
+                      </h3>
+                      <p className="text-sm text-brand-green/75 mt-1">{exp.duration}</p>
+                    </div>
+                    <Link
+                      to={`/experience/${exp.slug}`}
+                      className="mt-auto inline-flex justify-center min-h-11 items-center px-4 rounded-xl border border-brand-gold text-brand-green font-semibold text-sm hover:bg-brand-gold/10 transition-colors"
+                    >
+                      Explore
+                    </Link>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
       </main>
       <Footer />
     </>
