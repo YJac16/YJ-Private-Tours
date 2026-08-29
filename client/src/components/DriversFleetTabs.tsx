@@ -236,7 +236,7 @@ export default function DriversFleetTabs() {
                     <div className="relative aspect-[4/3] overflow-hidden bg-brand-green-dark">
                       <img
                         src={tour.image}
-                        alt=""
+                        alt={tour.title}
                         className="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-[1.03]"
                       />
                       <div className="absolute top-3 left-3 right-3 flex flex-wrap gap-2">
@@ -354,7 +354,7 @@ export default function DriversFleetTabs() {
                 <div className="aspect-[16/9] overflow-hidden bg-brand-green-dark">
                   <img
                     src={v.image}
-                    alt=""
+                    alt={v.name}
                     className="w-full h-full object-cover object-center"
                   />
                 </div>

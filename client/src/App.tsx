@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Navigate, Routes, Route } from 'react-router-dom'
 import Home from './pages/Home'
 import ThankYou from './pages/ThankYou'
 import TourDetail from './pages/TourDetail'
@@ -31,6 +31,9 @@ function App() {
       <ScrollToHash />
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/about" element={<Navigate to="/#about" replace />} />
+        <Route path="/tours" element={<Navigate to="/#tours" replace />} />
+        <Route path="/contact" element={<Navigate to="/book" replace />} />
         <Route path="/book" element={<BookPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />

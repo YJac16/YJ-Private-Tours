@@ -1,34 +1,53 @@
 import { Link } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
+import { useCatalog } from '../hooks/useCatalog'
+import { formatStartingFromPerGuest } from '../lib/pricing'
+import { displayDurationLabel } from '../lib/displayDuration'
+import { whatsappWithMessage } from '../lib/whatsappLinks'
+
+const MESSAGE_YASEEN = whatsappWithMessage(
+  "Hi Yaseen, I'd like to chat about a private Cape Town experience."
+)
 
 const recoverExperiences = [
   {
     slug: 'city',
     title: 'Cape Town City & Culture',
     image: '/bo-kaap.jpg',
-    duration: '3–4 hours',
   },
   {
     slug: 'peninsula',
     title: 'Cape Peninsula Highlights',
     image: '/cape-point.jpg',
-    duration: '3.5–4.5 hours',
   },
   {
     slug: 'sunset',
     title: 'Ocean Sunset',
     image: '/campsbay.JPG',
-    duration: '2–3 hours',
+  },
+  {
+    slug: 'winelands',
+    title: 'Halal-Friendly Winelands',
+    image: '/winelands.jpg',
+  },
+  {
+    slug: 'hermanus',
+    title: 'Hermanus Whale Experience',
+    image: '/chapmans-peak.jpg',
   },
 ]
 
 export default function NotFoundPage() {
+  const { catalog, tourBySlug, loading } = useCatalog()
+  const vehicles = catalog?.vehicles ?? []
+
   return (
     <>
       <Navbar />
       <main>
-        <section className="relative min-h-[68vh] flex items-center justify-center px-4 py-20 bg-cover bg-center bg-no-repeat"
+        <section
+          className="relative min-h-[68vh] flex items-center justify-center px-4 py-20 bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: 'url(/cape-town-banner.jpg)' }}
         >
           <div
@@ -48,8 +67,8 @@ export default function NotFoundPage() {
               This path is not on our map
             </h1>
             <p className="text-white/90 text-base sm:text-lg leading-relaxed mb-8 [text-shadow:0_1px_8px_rgba(0,0,0,0.55)]">
-              That link does not match a page. Head home, or book a private Cape
-              Town experience.
+              That link does not match a page. Head home, book a private Cape
+              Town experience, or message Yaseen.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link
@@ -65,43 +84,74 @@ export default function NotFoundPage() {
                 Book a tour
               </Link>
             </div>
+            <div className="mt-5 flex flex-col sm:flex-row gap-3 justify-center text-sm">
+              <a
+                href={MESSAGE_YASEEN}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-white/90 underline underline-offset-2 hover:text-brand-gold"
+              >
+                Message Yaseen
+              </a>
+              <Link
+                to="/gallery"
+                className="text-white/90 underline underline-offset-2 hover:text-brand-gold"
+              >
+                View the gallery
+              </Link>
+            </div>
           </div>
         </section>
 
         <section className="bg-brand-cream-light px-4 py-16 md:py-20">
-          <div className="max-w-5xl mx-auto">
+          <div className="max-w-6xl mx-auto">
             <h2 className="font-serif text-2xl md:text-3xl font-semibold text-brand-green text-center mb-8">
               Explore an experience
             </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-5">
-              {recoverExperiences.map((exp) => (
-                <article
-                  key={exp.slug}
-                  className="bg-brand-cream rounded-2xl overflow-hidden border border-brand-cream-dark shadow-sm flex flex-col"
-                >
-                  <div className="aspect-[4/3] overflow-hidden bg-brand-cream-dark/30">
-                    <img
-                      src={exp.image}
-                      alt=""
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div className="p-4 flex-1 flex flex-col gap-3">
-                    <div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
+              {recoverExperiences.map((exp) => {
+                const catalogTour = tourBySlug(exp.slug)
+                const duration = displayDurationLabel(
+                  exp.slug,
+                  catalogTour?.duration_label
+                )
+                const fromPrice = catalogTour
+                  ? formatStartingFromPerGuest(catalogTour, vehicles)
+                  : loading
+                    ? 'Loading rates…'
+                    : null
+                return (
+                  <article
+                    key={exp.slug}
+                    className="bg-brand-cream rounded-2xl overflow-hidden border border-brand-cream-dark shadow-sm flex flex-col"
+                  >
+                    <div className="aspect-[4/3] overflow-hidden bg-brand-green-dark">
+                      <img
+                        src={exp.image}
+                        alt={exp.title}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div className="p-4 flex-1 flex flex-col gap-2">
                       <h3 className="font-serif font-semibold text-brand-green leading-snug">
                         {exp.title}
                       </h3>
-                      <p className="text-sm text-brand-green/75 mt-1">{exp.duration}</p>
+                      <p className="text-sm text-brand-green/75">{duration}</p>
+                      {fromPrice && (
+                        <p className="text-sm font-semibold text-brand-green">
+                          {fromPrice}
+                        </p>
+                      )}
+                      <Link
+                        to={`/experience/${exp.slug}`}
+                        className="mt-auto inline-flex justify-center min-h-11 items-center px-4 rounded-xl border border-brand-gold text-brand-green font-semibold text-sm hover:bg-brand-gold/10 transition-colors"
+                      >
+                        Explore
+                      </Link>
                     </div>
-                    <Link
-                      to={`/experience/${exp.slug}`}
-                      className="mt-auto inline-flex justify-center min-h-11 items-center px-4 rounded-xl border border-brand-gold text-brand-green font-semibold text-sm hover:bg-brand-gold/10 transition-colors"
-                    >
-                      Explore
-                    </Link>
-                  </div>
-                </article>
-              ))}
+                  </article>
+                )
+              })}
             </div>
           </div>
         </section>

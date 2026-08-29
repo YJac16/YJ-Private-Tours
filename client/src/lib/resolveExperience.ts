@@ -35,8 +35,13 @@ export function resolveExperienceContent(tour: Tour): ExperienceContent | null {
     seo_description: ec?.seo_description || tour.seo_description || undefined,
     seo_image: ec?.seo_image || tour.seo_image || undefined,
     pricing_notes: ec?.pricing_notes || tour.pricing_notes || undefined,
-    duration_label:
-      ec?.duration_label || tour.duration_label || undefined,
+    duration_label: (() => {
+      const fromCatalog = ec?.duration_label || tour.duration_label
+      if (slug === 'hermanus' && fromCatalog && /5\s*[–-]\s*6/.test(fromCatalog)) {
+        return undefined
+      }
+      return fromCatalog || undefined
+    })(),
   }
 
   // Strip undefined so merge keeps defaults
