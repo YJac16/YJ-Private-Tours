@@ -44,8 +44,8 @@ export const EXPERIENCE_DEFAULTS: Record<string, ExperienceContent> = {
     hero_image: '/experiences/bo-kaap.jpg',
     gallery_images: [
       '/experiences/bo-kaap.jpg',
-      '/experiences/signal-hill.jpg',
-      '/experiences/va-waterfront.jpg',
+      '/experiences/unsplash-signal-hill-cape-town-dawn.jpg',
+      '/experiences/unsplash-va-waterfront-harbour.jpg',
     ],
     timeline: [
       {
@@ -69,7 +69,7 @@ export const EXPERIENCE_DEFAULTS: Record<string, ExperienceContent> = {
           'Panoramic views across the city bowl, harbour, and toward Robben Island and Table Mountain. Ideal photography opportunities.',
         duration: '20–30 min',
         icon: 'viewpoint',
-        image: '/experiences/signal-hill.jpg',
+        image: '/experiences/unsplash-signal-hill-cape-town-dawn.jpg',
       },
       {
         title: "Company's Garden",
@@ -85,7 +85,7 @@ export const EXPERIENCE_DEFAULTS: Record<string, ExperienceContent> = {
           'Guided commentary past City Hall, Grand Parade, District Six, and the Castle of Good Hope.',
         duration: '25–35 min',
         icon: 'city',
-        image: '/experiences/cape-town-city.jpg',
+        image: '/experiences/cape-town-city-hall.jpg',
       },
       {
         title: 'V&A Waterfront',
@@ -93,7 +93,7 @@ export const EXPERIENCE_DEFAULTS: Record<string, ExperienceContent> = {
           'Optional harbour stroll, shopping, coffee stop, and photography before returning.',
         duration: '30–45 min',
         icon: 'harbour',
-        image: '/experiences/va-waterfront.jpg',
+        image: '/experiences/unsplash-va-waterfront-harbour.jpg',
       },
       {
         title: 'Return',
@@ -267,11 +267,10 @@ export const EXPERIENCE_DEFAULTS: Record<string, ExperienceContent> = {
       'Watch the Atlantic turn gold — a private late-afternoon coastal experience.',
     detailed_description:
       'The Ocean Sunset Experience is a shorter, atmospheric private outing along Cape Town’s Atlantic Seaboard. Designed for couples, friends, and cruise guests with limited time, it focuses on viewpoints, Camps Bay ambience, and unhurried photography as the light softens.\n\nYour guide times the route for the best available sunset conditions, while keeping the experience flexible and comfortable. No large groups — just a private vehicle, registered guide, and a memorable end to the day.',
-    hero_image: '/experiences/camps-bay-sunset.jpg',
+    hero_image: '/experiences/camps-bay-cape-town.jpg',
     gallery_images: [
-      '/experiences/camps-bay-sunset.jpg',
+      '/experiences/camps-bay-cape-town.jpg',
       '/experiences/clifton-coast.jpg',
-      '/experiences/va-waterfront.jpg',
     ],
     timeline: [
       {
@@ -295,15 +294,15 @@ export const EXPERIENCE_DEFAULTS: Record<string, ExperienceContent> = {
           'Golden-hour light over Camps Bay and nearby viewpoints — timed for atmosphere and photography.',
         duration: '45–60 min',
         icon: 'sunset',
-        image: '/experiences/camps-bay-sunset.jpg',
+        image: '/experiences/camps-bay-cape-town.jpg',
       },
       {
         title: 'Optional Coffee Stop',
         description:
-          'Optional short pause for coffee or a harbour moment before returning.',
+          'Optional short pause for coffee or a coastal viewpoint before returning.',
         duration: '20–30 min',
         icon: 'cafe',
-        image: '/experiences/va-waterfront.jpg',
+        image: '/experiences/clifton-coast.jpg',
       },
       {
         title: 'Return',
@@ -352,7 +351,7 @@ export const EXPERIENCE_DEFAULTS: Record<string, ExperienceContent> = {
     seo_title: 'Ocean Sunset Experience | Khayr Cape Experiences',
     seo_description:
       'Private Atlantic Seaboard sunset experience in Cape Town with Camps Bay viewpoints and hotel pickup.',
-    seo_image: '/experiences/camps-bay-sunset.jpg',
+    seo_image: '/experiences/camps-bay-cape-town.jpg',
     pricing_notes:
       'Guest rate plus private vehicle fee selected during booking.',
     duration_label: '2–3 hours',
@@ -366,11 +365,11 @@ export const EXPERIENCE_DEFAULTS: Record<string, ExperienceContent> = {
       'Mountain valleys, vineyard scenery, and flexible halal-friendly stops — privately guided.',
     detailed_description:
       'This private winelands experience focuses on scenery, culture, and comfortable pacing rather than rushed tasting rooms. Ideal for Muslim-friendly travellers, families, and guests who want beautiful landscapes with thoughtful stop recommendations.\n\nYour registered guide shares local insight across Stellenbosch / Franschhoek vistas while adapting the day to your preferences. Every Khayr Cape Experience remains private and personalised — no shared groups, with hotel or Airbnb pickup and an air-conditioned vehicle throughout.',
-    hero_image: '/experiences/winelands-vineyards.jpg',
+    hero_image: '/experiences/unsplash-franschhoek-vineyard-mountains.jpg',
     gallery_images: [
-      '/experiences/winelands-vineyards.jpg',
-      '/experiences/winelands-mountains.jpg',
-      '/experiences/winelands-town.jpg',
+      '/experiences/unsplash-franschhoek-vineyard-mountains.jpg',
+      '/experiences/stellenbosch-vineyards.jpg',
+      '/experiences/unsplash-stellenbosch-vineyard-field.jpg',
     ],
     timeline: [
       {
@@ -386,7 +385,7 @@ export const EXPERIENCE_DEFAULTS: Record<string, ExperienceContent> = {
           'Enter the mountain valleys with scenic viewpoints and photography stops.',
         duration: '30–40 min',
         icon: 'viewpoint',
-        image: '/experiences/winelands-vineyards.jpg',
+        image: '/experiences/unsplash-franschhoek-vineyard-mountains.jpg',
       },
       {
         title: 'Stellenbosch / Franschhoek Highlights',
@@ -394,7 +393,7 @@ export const EXPERIENCE_DEFAULTS: Record<string, ExperienceContent> = {
           'Guided scenic exploration with flexible cultural and landscape stops suited to your group.',
         duration: '2–3 hours',
         icon: 'culture',
-        image: '/experiences/winelands-mountains.jpg',
+        image: '/experiences/stellenbosch-vineyards.jpg',
       },
       {
         title: 'Halal-Friendly Pause',
@@ -402,7 +401,7 @@ export const EXPERIENCE_DEFAULTS: Record<string, ExperienceContent> = {
           'Time for a halal-aware meal or refreshment stop based on availability and preference.',
         duration: '45–60 min',
         icon: 'cafe',
-        image: '/experiences/winelands-town.jpg',
+        image: '/experiences/halal-meal-pause.jpg',
       },
       {
         title: 'Scenic Return',
@@ -410,7 +409,7 @@ export const EXPERIENCE_DEFAULTS: Record<string, ExperienceContent> = {
           'Relaxed drive back toward Cape Town with optional final viewpoint stops.',
         duration: '45–60 min',
         icon: 'coast',
-        image: '/experiences/overberg-scenic.jpg',
+        image: '/experiences/unsplash-stellenbosch-vineyard-field.jpg',
       },
       {
         title: 'Return',
@@ -461,7 +460,7 @@ export const EXPERIENCE_DEFAULTS: Record<string, ExperienceContent> = {
     seo_title: 'Halal-Friendly Winelands Experience | Khayr Cape Experiences',
     seo_description:
       'Private Stellenbosch and Franschhoek winelands experience with halal-aware options, hotel pickup, and flexible pacing.',
-    seo_image: '/experiences/winelands-vineyards.jpg',
+    seo_image: '/experiences/unsplash-franschhoek-vineyard-mountains.jpg',
     pricing_notes:
       'Guest rate plus private vehicle fee selected during booking.',
     duration_label: '5–6 hours',
@@ -473,12 +472,12 @@ export const EXPERIENCE_DEFAULTS: Record<string, ExperienceContent> = {
       'Discover Hermanus during whale season with private transport, a qualified local guide and a relaxed day exploring the spectacular Whale Coast.',
     detailed_description:
       'This is a PRIVATE, LAND-BASED Hermanus experience from Cape Town during whale season.\n\nThe experience focuses on private transport, a qualified local guide, the scenic Overberg journey, Hermanus sightseeing, the Hermanus coastline, land-based whale viewing during whale season, a flexible private itinerary, and family-friendly Muslim-friendly service.\n\nIMPORTANT: This is NOT a whale-watching boat tour. KhayrCape does NOT operate a whale-watching boat. The boat is NOT included in the tour or checkout.',
-    hero_image: '/experiences/whale-coast.jpg',
+    hero_image: '/experiences/hermanus-cliff-path-coast.jpg',
     gallery_images: [
-      '/experiences/whale-coast.jpg',
-      '/experiences/hermanus-coast.jpg',
-      '/experiences/overberg-scenic.jpg',
-      '/experiences/chapmans-peak.jpg',
+      '/experiences/hermanus-cliff-path-coast.jpg',
+      '/experiences/hermanus-view-from-cliff.jpg',
+      '/experiences/southern-right-whale.jpg',
+      '/experiences/overberg-landscape.jpg',
     ],
     timeline: [
       {
@@ -494,7 +493,7 @@ export const EXPERIENCE_DEFAULTS: Record<string, ExperienceContent> = {
           'Travel from Cape Town toward Hermanus with a qualified local guide along the scenic Overberg route.',
         duration: '1.5–2 hrs',
         icon: 'scenic',
-        image: '/experiences/overberg-scenic.jpg',
+        image: '/experiences/overberg-landscape.jpg',
       },
       {
         title: 'Hermanus',
@@ -502,7 +501,7 @@ export const EXPERIENCE_DEFAULTS: Record<string, ExperienceContent> = {
           "Explore selected Hermanus locations depending on timing, weather and guest preferences — Cliff Path, Gearing's Point, Old Harbour, waterfront and scenic coastal viewpoints.",
         duration: 'Flexible',
         icon: 'coast',
-        image: '/experiences/hermanus-coast.jpg',
+        image: '/experiences/hermanus-view-from-cliff.jpg',
       },
       {
         title: 'Whale-Season Viewing',
@@ -510,7 +509,7 @@ export const EXPERIENCE_DEFAULTS: Record<string, ExperienceContent> = {
           'During whale season, look for Southern Right Whales and other marine wildlife from suitable land-based viewpoints. Sightings cannot be guaranteed.',
         duration: 'Flexible',
         icon: 'whale',
-        image: '/experiences/whale-coast.jpg',
+        image: '/experiences/southern-right-whale.jpg',
       },
       {
         title: 'Flexible Private Stops',
@@ -518,7 +517,7 @@ export const EXPERIENCE_DEFAULTS: Record<string, ExperienceContent> = {
           'Coffee, lunch stop (not included), shopping, photography and sightseeing as preferred. Halal-friendly options available on request.',
         duration: 'Flexible',
         icon: 'relax',
-        image: '/experiences/winelands-town.jpg',
+        image: '/experiences/hermanus-cliff-path-2.jpg',
       },
       {
         title: 'Return to Cape Town',
@@ -608,7 +607,7 @@ export const EXPERIENCE_DEFAULTS: Record<string, ExperienceContent> = {
       'Hermanus Whale Experience from Cape Town | KhayrCape Experiences',
     seo_description:
       'Experience Hermanus during whale season with a private day experience from Cape Town, including private transport, a qualified local guide, scenic coastal sightseeing and land-based whale-viewing opportunities.',
-    seo_image: '/experiences/whale-coast.jpg',
+    seo_image: '/experiences/hermanus-cliff-path-coast.jpg',
     pricing_notes:
       'From R5,900 per private group (1 guest + cheapest private vehicle). Boat tour not included.',
     duration_label: 'Full Day · 8–10 hours',
