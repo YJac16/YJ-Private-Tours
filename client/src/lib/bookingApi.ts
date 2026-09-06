@@ -4,7 +4,33 @@
 
 import type { BookingSettings, PriceBreakdown } from './pricing'
 
-const API = import.meta.env.VITE_BOOKING_API_URL || '/api'
+function bookingApiBase(): string {
+  const raw = (import.meta.env.VITE_BOOKING_API_URL || '/api').trim()
+  if (!raw) return '/api'
+  if (/^https?:\/\//i.test(raw)) return raw.replace(/\/$/, '')
+  return raw.startsWith('/') ? raw : `/${raw}`
+}
+
+const API = bookingApiBase()
+
+async function fetchWithTimeout(
+  input: RequestInfo | URL,
+  init?: RequestInit,
+  timeoutMs = 20_000
+): Promise<Response> {
+  const controller = new AbortController()
+  const timer = window.setTimeout(() => controller.abort(), timeoutMs)
+  try {
+    return await fetch(input, { ...init, signal: controller.signal })
+  } catch (e) {
+    if (e instanceof DOMException && e.name === 'AbortError') {
+      throw new Error('Booking API timed out. Please refresh and try again.')
+    }
+    throw e
+  } finally {
+    window.clearTimeout(timer)
+  }
+}
 
 async function json<T>(res: Response): Promise<T> {
   const text = await res.text()
@@ -145,7 +171,7 @@ export type Catalog = {
 }
 
 export async function fetchCatalog() {
-  return json<Catalog>(await fetch(`${API}/catalog`))
+  return json<Catalog>(await fetchWithTimeout(`${API}/catalog`))
 }
 
 export async function fetchSlots(

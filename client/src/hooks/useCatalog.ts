@@ -25,25 +25,31 @@ export function useCatalog() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (cached) return
+    if (cached) {
+      setCatalog(cached)
+      setLoading(false)
+      return
+    }
 
-    let cancelled = false
+    let active = true
+    setLoading(true)
+
     loadCatalog()
       .then((data) => {
-        if (!cancelled) {
-          setCatalog(data)
-          setLoading(false)
-        }
+        if (!active) return
+        setCatalog(data)
+        setError(null)
       })
       .catch((e) => {
-        if (!cancelled) {
-          setError(e instanceof Error ? e.message : 'Could not load pricing')
-          setLoading(false)
-        }
+        if (!active) return
+        setError(e instanceof Error ? e.message : 'Could not load pricing')
+      })
+      .finally(() => {
+        if (active) setLoading(false)
       })
 
     return () => {
-      cancelled = true
+      active = false
     }
   }, [])
 
