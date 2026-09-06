@@ -4,6 +4,7 @@ import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import PriceSummary from '../components/PriceSummary'
 import InformedConsentForm from '../components/InformedConsentForm'
+import CatalogLoadError from '../components/CatalogLoadError'
 import {
   createBooking,
   fetchSlots,
@@ -44,6 +45,7 @@ export default function BookPage() {
     catalog,
     loading,
     error: catalogError,
+    retry: retryCatalog,
   } = useCatalog()
   const drivers = catalog?.drivers ?? []
   const vehicles = catalog?.vehicles ?? []
@@ -536,9 +538,11 @@ export default function BookPage() {
                   Loading experiences…
                 </p>
               ) : catalogError ? (
-                <p className="text-center text-red-800 bg-red-50 border border-red-200 rounded-xl px-4 py-8 max-w-lg mx-auto">
-                  {catalogError}
-                </p>
+                <CatalogLoadError
+                  message={catalogError}
+                  onRetry={retryCatalog}
+                  className="max-w-lg mx-auto"
+                />
               ) : (
                 <div key={step} className="animate-[fadeIn_0.35s_ease-out] space-y-5">
                   {/* 0 — Experience */}
