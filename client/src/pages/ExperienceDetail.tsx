@@ -466,7 +466,7 @@ export default function ExperienceDetail() {
           {/* Timeline */}
           {content.timeline.length > 0 && (
             <section>
-              <SectionHeading>Journey Timeline</SectionHeading>
+              <SectionHeading>What to Expect</SectionHeading>
               <ol className="relative space-y-0 border-l-2 border-brand-gold/60 ml-3 sm:ml-4">
                 {content.timeline.map((stop, i) => (
                   <li
@@ -495,6 +495,8 @@ export default function ExperienceDetail() {
                             alt=""
                             className="w-full h-full object-cover"
                             loading="lazy"
+                            decoding="async"
+                            sizes="(max-width: 640px) 100vw, 672px"
                           />
                         </div>
                       )}

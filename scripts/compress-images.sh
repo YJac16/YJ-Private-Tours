@@ -38,5 +38,12 @@ for f in blouberg.JPG blouberg-1.JPG bo-kaap-table-mountain.JPG campsbay.JPG \
   fi
 done
 
+# Experience route / timeline images (curated + on-brand copies)
+if [[ -d "$PUB/experiences" ]]; then
+  for f in "$PUB/experiences"/*.jpg; do
+    [[ -f "$f" ]] && compress_jpeg "$f" "$f" 1400 5
+  done
+fi
+
 echo "Done. Sizes:"
 ls -lh "$PUB/cape-town-og.jpg" "$PUB/cape-town-banner.jpg" 2>/dev/null || true
