@@ -142,6 +142,7 @@ export type Catalog = {
   settings: BookingSettings
   blocked_dates: string[]
   yoco_public_key?: string | null
+  guide_registration_number?: string | null
 }
 
 export async function fetchCatalog() {
@@ -177,6 +178,7 @@ export type BookPayload = {
   flight_number?: string
   special_requests?: string
   notes?: string
+  guest_consent_acknowledged?: boolean
 }
 
 export async function createBooking(
@@ -437,6 +439,7 @@ export type BusinessSettings = {
   currency?: string
   vat_percent?: number
   business_hours?: string
+  guide_registration_number?: string
   discounts?: Array<{
     id: string
     code: string

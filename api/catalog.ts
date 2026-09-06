@@ -61,6 +61,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       { data: vehicles, error: vErr },
       toursResult,
       { data: settingsRow },
+      { data: businessRow },
       { data: blocked },
     ] = await Promise.all([
       sb
@@ -78,6 +79,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         .order('name'),
       sb.from('tours').select(TOUR_SELECT_FULL).order('name'),
       sb.from('app_settings').select('value').eq('key', 'booking').maybeSingle(),
+      sb.from('app_settings').select('value').eq('key', 'business').maybeSingle(),
       sb
         .from('blocked_dates')
         .select('blocked_date')
@@ -123,6 +125,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       rating_count: d.rating_count ?? 0,
     }))
 
+    const businessValue =
+      businessRow?.value && typeof businessRow.value === 'object'
+        ? (businessRow.value as Record<string, unknown>)
+        : {}
+    const guide_registration_number =
+      typeof businessValue.guide_registration_number === 'string'
+        ? businessValue.guide_registration_number.trim()
+        : ''
+
     return res.status(200).json({
       drivers: normalizedDrivers,
       vehicles: normalizedVehicles,
@@ -130,6 +141,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       settings,
       blocked_dates: (blocked ?? []).map((b) => b.blocked_date),
       yoco_public_key: process.env.NEXT_PUBLIC_YOCO_PUBLIC_KEY || null,
+      guide_registration_number: guide_registration_number || null,
     })
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Catalog failed'

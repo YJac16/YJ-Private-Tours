@@ -317,6 +317,11 @@ export default function DriversFleetTabs() {
                     Meet Your Private Cape Town Guide
                   </h3>
                   <p className="text-brand-gold font-semibold mt-1">Yaseen</p>
+                  {catalog?.guide_registration_number && (
+                    <p className="mt-2 inline-flex text-xs font-semibold text-brand-green bg-brand-gold/25 border border-brand-gold/40 rounded-md px-2 py-1">
+                      Registered guide · {catalog.guide_registration_number}
+                    </p>
+                  )}
                 </div>
                 <p className="text-sm sm:text-base text-brand-green/90 leading-relaxed">
                   Registered professional tourist guide offering private, flexible

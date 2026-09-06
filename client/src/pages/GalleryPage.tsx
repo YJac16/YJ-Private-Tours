@@ -2,10 +2,16 @@ import { Link } from 'react-router-dom'
 import { galleryImages } from '../data/gallery'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
+import PageMeta from '../components/PageMeta'
 
 export default function GalleryPage() {
   return (
     <>
+      <PageMeta
+        title="Gallery — KhayrCape Experiences"
+        description="Photos from Cape Town and the Western Cape — scenes from private tours with KhayrCape Experiences."
+        path="/gallery"
+      />
       <Navbar />
       <main className="min-h-screen bg-brand-cream">
         <div className="max-w-6xl mx-auto px-4 py-8 md:py-12">
@@ -29,6 +35,8 @@ export default function GalleryPage() {
                   alt={img.alt}
                   className="w-full h-full object-cover"
                   loading="lazy"
+                  decoding="async"
+                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                 />
               </div>
             ))}

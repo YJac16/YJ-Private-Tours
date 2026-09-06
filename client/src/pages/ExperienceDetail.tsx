@@ -19,6 +19,7 @@ import {
 import { FaWhatsapp } from 'react-icons/fa'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
+import PageMeta, { SITE } from '../components/PageMeta'
 import PriceWithInfo from '../components/PriceWithInfo'
 import { useCatalog } from '../hooks/useCatalog'
 import { resolveExperienceContent } from '../lib/resolveExperience'
@@ -206,30 +207,6 @@ export default function ExperienceDetail() {
   }
 
   useEffect(() => {
-    if (!content || hermanusOutOfSeason) return
-    const prevTitle = document.title
-    document.title = content.seo_title || content.display_name
-
-    let meta = document.querySelector('meta[name="description"]')
-    const prevDesc = meta?.getAttribute('content') ?? null
-    if (content.seo_description) {
-      if (!meta) {
-        meta = document.createElement('meta')
-        meta.setAttribute('name', 'description')
-        document.head.appendChild(meta)
-      }
-      meta.setAttribute('content', content.seo_description)
-    }
-
-    return () => {
-      document.title = prevTitle
-      if (meta && prevDesc !== null) {
-        meta.setAttribute('content', prevDesc)
-      }
-    }
-  }, [content, hermanusOutOfSeason])
-
-  useEffect(() => {
     if (lightboxIndex === null) return
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setLightboxIndex(null)
@@ -314,8 +291,30 @@ export default function ExperienceDetail() {
     return true
   })
 
+  const seoTitle =
+    content.seo_title || `${content.display_name} — KhayrCape Experiences`
+  const seoDescription =
+    content.seo_description ||
+    content.short_description ||
+    content.hero_tagline ||
+    `Book ${content.display_name} — private Cape Town tour with KhayrCape Experiences.`
+  const seoImage = content.seo_image
+    ? content.seo_image.startsWith('http')
+      ? content.seo_image
+      : `${SITE}${content.seo_image}`
+    : content.hero_image?.startsWith('http')
+      ? content.hero_image
+      : `${SITE}${content.hero_image || '/cape-town-og.jpg'}`
+
   return (
     <>
+      <PageMeta
+        title={seoTitle}
+        description={seoDescription}
+        path={`/experience/${slug}`}
+        ogImage={seoImage}
+        ogType="article"
+      />
       <Navbar />
       <main className="min-h-screen bg-brand-cream">
         {/* Hero */}
