@@ -40,7 +40,33 @@ function normalizeTour(t: Record<string, unknown>) {
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'GET') return methodNotAllowed(res, ['GET'])
 
+  const consentOnly =
+    String(req.url || '').includes('consent-form') ||
+    req.query.consent_form === '1'
+
   try {
+    if (consentOnly) {
+      if (useMockStore()) {
+        return res.status(200).json({
+          form: {
+            id: 'mock-consent',
+            version: '1.0',
+            title: 'Informed Consent',
+            body_html:
+              '<p>Mock consent form for local development. Guests acknowledge POPIA and tour risks at checkout.</p>',
+          },
+        })
+      }
+      const sb = supabaseAdmin()
+      const { data: form, error } = await sb
+        .from('consent_form_versions')
+        .select('id, version, title, body_html, effective_at, is_current')
+        .eq('is_current', true)
+        .maybeSingle()
+      if (error) return res.status(500).json({ error: error.message })
+      return res.status(200).json({ form })
+    }
+
     if (useMockStore()) {
       const catalog = mockDb.catalog()
       return res.status(200).json({

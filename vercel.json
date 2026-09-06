@@ -5,6 +5,10 @@
   "framework": null,
   "rewrites": [
     {
+      "source": "/api/consent-form",
+      "destination": "/api/catalog?consent_form=1"
+    },
+    {
       "source": "/api/email-outbox",
       "destination": "/api/cron?job=email-outbox"
     },
