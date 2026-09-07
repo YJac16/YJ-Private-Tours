@@ -131,6 +131,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const notes = body.notes
       ? String(body.notes)
       : special_requests
+    const guest_consent_acknowledged = Boolean(body.guest_consent_acknowledged)
     const idempotencyKey = (
       headerValue(req, 'idempotency-key') ||
       String(body.idempotency_key || '')
@@ -189,6 +190,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         catalog.settings
       )
       if (guestError) return res.status(400).json({ error: guestError })
+
+      if (!client_user_id && !guest_consent_acknowledged) {
+        return res.status(400).json({
+          error:
+            'Please acknowledge the informed consent and POPIA terms before payment.',
+          code: 'GUEST_CONSENT_REQUIRED',
+        })
+      }
 
       const breakdown = calculatePrice(tour, vehicle, adult_count, child_count)
 
@@ -394,6 +403,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           })
         }
       }
+    } else if (!guest_consent_acknowledged) {
+      return res.status(400).json({
+        error:
+          'Please acknowledge the informed consent and POPIA terms before payment.',
+        code: 'GUEST_CONSENT_REQUIRED',
+      })
     }
 
     const guestError = validateBookingGuests(

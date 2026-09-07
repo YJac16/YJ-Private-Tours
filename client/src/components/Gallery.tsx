@@ -26,6 +26,8 @@ export default function Gallery() {
                 alt={img.alt}
                 className="w-full h-full object-cover"
                 loading="lazy"
+                decoding="async"
+                sizes="(max-width: 640px) 100vw, 33vw"
               />
             </div>
           ))}

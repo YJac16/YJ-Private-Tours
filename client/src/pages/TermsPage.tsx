@@ -1,10 +1,16 @@
 import { Link } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
+import PageMeta from '../components/PageMeta'
 
 export default function TermsPage() {
   return (
     <>
+      <PageMeta
+        title="Terms & Conditions — KhayrCape Experiences"
+        description="Booking terms, cancellation policy, and conditions for private Cape Town tours with KhayrCape Experiences."
+        path="/terms"
+      />
       <Navbar />
       <main className="min-h-screen bg-brand-cream">
         <article className="max-w-3xl mx-auto px-4 py-8 md:py-12">

@@ -1,10 +1,16 @@
 import { Link } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
+import PageMeta from '../components/PageMeta'
 
 export default function PrivacyPage() {
   return (
     <>
+      <PageMeta
+        title="Privacy Policy — KhayrCape Experiences"
+        description="How KhayrCape Experiences collects, uses, and protects your personal information under POPIA (South Africa)."
+        path="/privacy"
+      />
       <Navbar />
       <main className="min-h-screen bg-brand-cream">
         <article className="max-w-3xl mx-auto px-4 py-8 md:py-12">

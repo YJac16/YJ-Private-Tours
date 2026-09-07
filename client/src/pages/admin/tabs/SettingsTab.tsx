@@ -158,6 +158,20 @@ export default function SettingsTab({ pin }: Props) {
             }
           />
         </label>
+        <label className={labelClass}>
+          Registered guide number
+          <input
+            className={inputClass}
+            value={settings.guide_registration_number ?? ''}
+            onChange={(e) =>
+              setSettings((s) => ({
+                ...s,
+                guide_registration_number: e.target.value,
+              }))
+            }
+            placeholder="e.g. WC1234 — shown on site when set"
+          />
+        </label>
         <div className="grid sm:grid-cols-2 gap-3">
           <label className={labelClass}>
             Currency
