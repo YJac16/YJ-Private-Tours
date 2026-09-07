@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { HiOutlineCheckCircle, HiOutlineXCircle } from 'react-icons/hi'
 import Footer from '../components/Footer'
 import Navbar from '../components/Navbar'
+import PublicContactLinks from '../components/PublicContactLinks'
 import { useAuth } from '../lib/auth'
 import { fetchPaymentStatus, retryGuestPayment } from '../lib/bookingApi'
 
@@ -223,6 +224,7 @@ export default function ThankYou() {
             >
               Back to Home
             </Link>
+            <PublicContactLinks className="pt-2" compact />
           </div>
         </div>
       </section>

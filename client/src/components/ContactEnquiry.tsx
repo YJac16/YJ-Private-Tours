@@ -66,9 +66,9 @@ export default function ContactEnquiry() {
           Contact / Enquiry
         </h2>
         <p className="text-brand-green/90 text-center mb-4">
-          Prefer WhatsApp? Fill in a few details and we&apos;ll open a pre-filled message for you.
-          Or email us at{' '}
-          <a href={BUSINESS_MAILTO} className="underline font-semibold text-brand-green">
+          Message us on WhatsApp — fill in a few details and we&apos;ll open a pre-filled
+          message for you. Business email:{' '}
+          <a href={BUSINESS_MAILTO} className="underline font-medium text-brand-green">
             {BUSINESS_EMAIL}
           </a>
           .
@@ -153,20 +153,18 @@ export default function ContactEnquiry() {
             </Link>
             . Your message opens in WhatsApp — no form data is stored on this website.
           </p>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <a
-              href={BUSINESS_MAILTO}
-              className="flex-1 inline-flex justify-center min-h-12 items-center rounded-lg border border-brand-green text-brand-green font-semibold hover:bg-brand-cream-dark/40"
-            >
-              Email us
+          <button
+            type="submit"
+            className="w-full min-h-12 rounded-lg bg-brand-green text-brand-cream font-semibold hover:opacity-95"
+          >
+            Continue on WhatsApp
+          </button>
+          <p className="text-center text-sm text-brand-green/70">
+            Business email:{' '}
+            <a href={BUSINESS_MAILTO} className="underline font-medium text-brand-green">
+              {BUSINESS_EMAIL}
             </a>
-            <button
-              type="submit"
-              className="flex-1 min-h-12 rounded-lg bg-brand-green text-brand-cream font-semibold hover:opacity-95"
-            >
-              Continue on WhatsApp
-            </button>
-          </div>
+          </p>
         </form>
       </div>
     </section>

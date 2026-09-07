@@ -40,7 +40,7 @@ export default function PrivacyPage() {
               <ul className="list-disc pl-5 space-y-1.5">
                 <li>Name: Yaseen (Information Officer)</li>
                 <li>
-                  Email:{' '}
+                  Business email:{' '}
                   <a href={BUSINESS_MAILTO} className="underline font-medium">
                     {BUSINESS_EMAIL}
                   </a>
@@ -196,11 +196,7 @@ export default function PrivacyPage() {
                 <li>Withdraw consent where processing is based on consent</li>
               </ul>
               <p className="mt-3">
-                To exercise these rights, contact the Information Officer by email at{' '}
-                <a href={BUSINESS_MAILTO} className="underline font-medium">
-                  {BUSINESS_EMAIL}
-                </a>{' '}
-                or WhatsApp at{' '}
+                To exercise these rights, contact the Information Officer on WhatsApp at{' '}
                 <a
                   href="https://wa.me/27823277446?text=Privacy%20request"
                   className="underline font-medium"
@@ -208,6 +204,10 @@ export default function PrivacyPage() {
                   rel="noopener noreferrer"
                 >
                   +27 82 327 7446
+                </a>{' '}
+                or business email{' '}
+                <a href={BUSINESS_MAILTO} className="underline font-medium">
+                  {BUSINESS_EMAIL}
                 </a>
                 . We may need to verify your identity before responding.
               </p>
