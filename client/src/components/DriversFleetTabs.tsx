@@ -4,6 +4,7 @@ import { HiOutlineUser, HiOutlineTruck, HiOutlineMap } from 'react-icons/hi'
 import { whatsappWithMessage } from '../lib/whatsappLinks'
 import { useCatalog } from '../hooks/useCatalog'
 import PriceWithInfo from './PriceWithInfo'
+import CatalogLoadError from './CatalogLoadError'
 import { isDateInSeason, WHALE_SEASON } from '../lib/seasonalVisibility'
 
 const DRIVER_CHAT_ME = whatsappWithMessage(
@@ -150,7 +151,13 @@ function tabFromHash(hash: string): TabId | null {
 
 export default function DriversFleetTabs() {
   const location = useLocation()
-  const { catalog, tourBySlug, loading: pricingLoading } = useCatalog()
+  const {
+    catalog,
+    tourBySlug,
+    loading: pricingLoading,
+    error: pricingError,
+    retry: retryPricing,
+  } = useCatalog()
   const catalogVehicles = catalog?.vehicles ?? []
   const hashTab = tabFromHash(location.hash)
   const [pickedTab, setPickedTab] = useState<TabId | null>(null)
@@ -224,6 +231,14 @@ export default function DriversFleetTabs() {
                 View details online, then book your private experience.
               </p>
             </div>
+
+            {pricingError && !pricingLoading && (
+              <CatalogLoadError
+                message={pricingError}
+                onRetry={retryPricing}
+                className="max-w-xl mx-auto"
+              />
+            )}
 
             <div className="grid grid-cols-1 gap-4 md:gap-6 md:max-w-4xl md:mx-auto">
               {visibleTours.map((tour) => {

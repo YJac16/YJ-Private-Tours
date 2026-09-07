@@ -5,19 +5,16 @@ import Footer from '../components/Footer'
 import PriceSummary from '../components/PriceSummary'
 import PageMeta from '../components/PageMeta'
 import InformedConsentForm from '../components/InformedConsentForm'
+import CatalogLoadError from '../components/CatalogLoadError'
 import {
   createBooking,
-  fetchCatalog,
   fetchSlots,
   isBookableDate,
   minBookableDate,
-  type Catalog,
-  type Driver,
   type Slot,
-  type Tour,
-  type Vehicle,
 } from '../lib/bookingApi'
 import { useAuth } from '../lib/auth'
+import { useCatalog } from '../hooks/useCatalog'
 import {
   calculatePrice,
   defaultVehicleForGuests,
@@ -30,7 +27,6 @@ import {
   validateBookingGuests,
   vehicleFitsGuests,
   vehiclesForGuestCount,
-  type BookingSettings,
 } from '../lib/pricing'
 
 const STEPS = [
@@ -53,20 +49,25 @@ function GuideBadge({ number }: { number: string }) {
 export default function BookPage() {
   const [searchParams] = useSearchParams()
   const { profile, accessToken } = useAuth()
-  const [step, setStep] = useState(0)
-  const [drivers, setDrivers] = useState<Driver[]>([])
-  const [vehicles, setVehicles] = useState<Vehicle[]>([])
-  const [tours, setTours] = useState<Tour[]>([])
-  const [blockedDates, setBlockedDates] = useState<string[]>([])
-  const [settings, setSettings] = useState<BookingSettings>({
+  const {
+    catalog,
+    loading,
+    error: catalogError,
+    retry: retryCatalog,
+  } = useCatalog()
+  const drivers = catalog?.drivers ?? []
+  const vehicles = catalog?.vehicles ?? []
+  const tours = catalog?.tours ?? []
+  const blockedDates = catalog?.blocked_dates ?? []
+  const settings = catalog?.settings ?? {
     max_guests_default: 5,
     allow_larger_groups: false,
-  })
+  }
+  const [step, setStep] = useState(0)
   const [slots, setSlots] = useState<Slot[]>([])
   const [slotsReason, setSlotsReason] = useState<string | null>(null)
   const [slotsLoading, setSlotsLoading] = useState(false)
   const [slotsReady, setSlotsReady] = useState(false)
-  const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [successId, setSuccessId] = useState<string | null>(null)
@@ -202,49 +203,26 @@ export default function BookPage() {
   )
 
   useEffect(() => {
-    let cancelledFetch = false
-    ;(async () => {
-      try {
-        const catalog: Catalog = await fetchCatalog()
-        if (cancelledFetch) return
-        setDrivers(catalog.drivers)
-        setVehicles(catalog.vehicles)
-        setTours(catalog.tours)
-        setSettings(catalog.settings)
-        setBlockedDates(catalog.blocked_dates || [])
-        setGuideRegistrationNumber(catalog.guide_registration_number || null)
+    if (!catalog) return
 
-        if (tourSlug) {
-          const t = catalog.tours.find((x) => x.slug === tourSlug)
-          if (t) setTourId(t.id)
-        }
-        if (timeParam) setStartTime(timeParam)
-        if (catalog.drivers.length === 1) {
-          setDriverId(catalog.drivers[0].id)
-        }
-        if (vehicleSlug) {
-          const v = catalog.vehicles.find((x) => x.slug === vehicleSlug)
-          if (v) {
-            setVehicleId(v.id)
-            setVehicleManual(true)
-          }
-        }
-      } catch (e) {
-        if (!cancelledFetch) {
-          setError(
-            e instanceof Error
-              ? e.message
-              : 'Could not load booking options. Is the booking API running?'
-          )
-        }
-      } finally {
-        if (!cancelledFetch) setLoading(false)
-      }
-    })()
-    return () => {
-      cancelledFetch = true
+    setGuideRegistrationNumber(catalog.guide_registration_number || null)
+
+    if (tourSlug) {
+      const t = catalog.tours.find((x) => x.slug === tourSlug)
+      if (t) setTourId(t.id)
     }
-  }, [tourSlug, timeParam, vehicleSlug])
+    if (timeParam) setStartTime(timeParam)
+    if (catalog.drivers.length === 1) {
+      setDriverId(catalog.drivers[0].id)
+    }
+    if (vehicleSlug) {
+      const v = catalog.vehicles.find((x) => x.slug === vehicleSlug)
+      if (v) {
+        setVehicleId(v.id)
+        setVehicleManual(true)
+      }
+    }
+  }, [catalog, tourSlug, timeParam, vehicleSlug])
 
   useEffect(() => {
     if (!vehicles.length) return
@@ -588,6 +566,12 @@ export default function BookPage() {
                 <p className="text-center text-brand-green/80 py-16">
                   Loading experiences…
                 </p>
+              ) : catalogError ? (
+                <CatalogLoadError
+                  message={catalogError}
+                  onRetry={retryCatalog}
+                  className="max-w-lg mx-auto"
+                />
               ) : (
                 <div key={step} className="animate-[fadeIn_0.35s_ease-out] space-y-5">
                   {/* 0 — Experience */}

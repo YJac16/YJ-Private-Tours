@@ -22,6 +22,7 @@ import Footer from '../components/Footer'
 import PageMeta, { SITE } from '../components/PageMeta'
 import PriceWithInfo from '../components/PriceWithInfo'
 import { useCatalog } from '../hooks/useCatalog'
+import CatalogLoadError from '../components/CatalogLoadError'
 import { resolveExperienceContent } from '../lib/resolveExperience'
 import {
   EXPERIENCE_DEFAULTS,
@@ -180,7 +181,13 @@ function SectionHeading({ children }: { children: React.ReactNode }) {
 export default function ExperienceDetail() {
   const { slug = '' } = useParams<{ slug: string }>()
   const [searchParams] = useSearchParams()
-  const { catalog, tourBySlug, loading: catalogLoading } = useCatalog()
+  const {
+    catalog,
+    tourBySlug,
+    loading: catalogLoading,
+    error: catalogError,
+    retry: retryCatalog,
+  } = useCatalog()
   const catalogVehicles = catalog?.vehicles ?? []
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
   const [openFaq, setOpenFaq] = useState<number | null>(0)
@@ -353,6 +360,12 @@ export default function ExperienceDetail() {
                   </div>
                 ) : catalogLoading ? (
                   <p className="text-sm text-brand-cream/90">Loading rates…</p>
+                ) : catalogError ? (
+                  <CatalogLoadError
+                    message={catalogError}
+                    onRetry={retryCatalog}
+                    className="text-left max-w-sm"
+                  />
                 ) : null}
               </div>
               <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 max-w-lg">
