@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
-import { HiOutlineLocationMarker, HiOutlinePhone } from 'react-icons/hi'
+import { HiOutlineLocationMarker, HiOutlineMail, HiOutlinePhone } from 'react-icons/hi'
+import { BUSINESS_EMAIL, BUSINESS_MAILTO } from '../lib/contactLinks'
 import { WA_PHONE_E164 } from '../lib/whatsappLinks'
 
 const WA_DISPLAY = '+27 82 327 7446'
@@ -20,6 +21,13 @@ export default function Footer() {
             </span>
             Cape Town, South Africa
           </span>
+          <a
+            href={BUSINESS_MAILTO}
+            className="inline-flex items-center gap-2 text-brand-cream underline underline-offset-2 hover:text-white font-medium"
+          >
+            <HiOutlineMail className="text-lg shrink-0" aria-hidden />
+            {BUSINESS_EMAIL}
+          </a>
           <a
             href={WA_HREF}
             target="_blank"
