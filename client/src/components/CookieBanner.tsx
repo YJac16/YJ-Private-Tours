@@ -1,10 +1,13 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 const STORAGE_KEY = 'cookie_consent'
 
 function syncCookieDockHeight(height: number) {
-  document.documentElement.style.setProperty('--cookie-dock-height', `${height}px`)
+  document.documentElement.style.setProperty(
+    '--cookie-dock-height',
+    `${Math.max(0, Math.ceil(height))}px`
+  )
 }
 
 export default function CookieBanner() {
@@ -20,7 +23,7 @@ export default function CookieBanner() {
     }
   }, [])
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!visible) {
       syncCookieDockHeight(0)
       return
@@ -29,13 +32,23 @@ export default function CookieBanner() {
     const el = dockRef.current
     if (!el) return
 
-    const update = () => syncCookieDockHeight(el.offsetHeight)
-    update()
+    const measure = () => {
+      const rect = el.getBoundingClientRect()
+      // offsetHeight + rect check: include padding, border, and safe-area inset
+      syncCookieDockHeight(Math.max(el.offsetHeight, rect.height))
+    }
 
-    const observer = new ResizeObserver(update)
+    measure()
+    const raf = requestAnimationFrame(measure)
+
+    const observer = new ResizeObserver(measure)
     observer.observe(el)
+    window.addEventListener('resize', measure)
+
     return () => {
+      cancelAnimationFrame(raf)
       observer.disconnect()
+      window.removeEventListener('resize', measure)
       syncCookieDockHeight(0)
     }
   }, [visible])
