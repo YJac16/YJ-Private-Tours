@@ -1,10 +1,15 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 const STORAGE_KEY = 'cookie_consent'
 
+function syncCookieDockHeight(height: number) {
+  document.documentElement.style.setProperty('--cookie-dock-height', `${height}px`)
+}
+
 export default function CookieBanner() {
   const [visible, setVisible] = useState(false)
+  const dockRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     try {
@@ -14,6 +19,26 @@ export default function CookieBanner() {
       setVisible(true)
     }
   }, [])
+
+  useEffect(() => {
+    if (!visible) {
+      syncCookieDockHeight(0)
+      return
+    }
+
+    const el = dockRef.current
+    if (!el) return
+
+    const update = () => syncCookieDockHeight(el.offsetHeight)
+    update()
+
+    const observer = new ResizeObserver(update)
+    observer.observe(el)
+    return () => {
+      observer.disconnect()
+      syncCookieDockHeight(0)
+    }
+  }, [visible])
 
   const accept = () => {
     try {
@@ -28,6 +53,7 @@ export default function CookieBanner() {
 
   return (
     <div
+      ref={dockRef}
       role="dialog"
       aria-label="Cookie notice"
       className="fixed bottom-0 inset-x-0 z-60 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]"

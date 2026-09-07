@@ -27,11 +27,22 @@
 @layer base {
   html {
     scroll-behavior: smooth;
+    --cookie-dock-height: 0px;
+    --fab-dock-offset: 5.5rem;
   }
   body {
     background-color: var(--color-brand-cream);
     color: var(--color-brand-green);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+@layer utilities {
+  /* Clears fixed cookie banner (when visible) or WhatsApp FAB, whichever is taller */
+  .pb-site-dock {
+    padding-bottom: calc(
+      max(var(--cookie-dock-height, 0px), var(--fab-dock-offset)) + 0.75rem
+    );
   }
 }

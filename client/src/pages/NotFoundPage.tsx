@@ -18,11 +18,11 @@ export default function NotFoundPage() {
         path="/404"
       />
       <Navbar />
-      <main className="min-h-[75vh] bg-brand-cream-light px-4 py-16 sm:py-24 flex items-center">
+      <main className="bg-brand-cream-light px-4 pt-8 sm:pt-14 lg:pt-16 pb-site-dock">
         <div className="max-w-md mx-auto w-full text-center">
-          <div className="relative mb-8 sm:mb-10">
+          <div className="relative mb-6 sm:mb-10">
             <p
-              className="pointer-events-none select-none text-[7rem] sm:text-[9rem] font-bold leading-none text-brand-green/[0.07]"
+              className="pointer-events-none select-none text-[5.5rem] sm:text-[9rem] font-bold leading-none text-brand-green/[0.07]"
               aria-hidden
             >
               404
@@ -30,23 +30,23 @@ export default function NotFoundPage() {
             <img
               src="/logo-vector-no-background.png"
               alt=""
-              className="absolute inset-0 m-auto h-14 sm:h-16 w-auto object-contain"
+              className="absolute inset-0 m-auto h-12 sm:h-16 w-auto object-contain"
               aria-hidden
             />
           </div>
 
-          <h1 className="text-2xl sm:text-3xl font-bold text-brand-green mb-3">
+          <h1 className="text-xl sm:text-3xl font-bold text-brand-green mb-2 sm:mb-3">
             Page not found
           </h1>
-          <p className="text-brand-green/80 text-base sm:text-lg leading-relaxed mb-8 sm:mb-10 max-w-sm mx-auto">
+          <p className="text-brand-green/80 text-sm sm:text-lg leading-relaxed mb-6 sm:mb-10 max-w-sm mx-auto">
             That link doesn&apos;t match a page on KhayrCape Experiences. Head
             home, book a tour, or message us — we&apos;re happy to help.
           </p>
 
-          <div className="flex flex-col gap-3 max-w-xs mx-auto">
+          <div className="flex flex-col gap-2.5 sm:gap-3 max-w-xs mx-auto">
             <Link
               to="/book"
-              className="inline-flex items-center justify-center min-h-12 px-6 py-3 bg-brand-green hover:bg-brand-green-dark text-brand-cream font-semibold rounded-xl transition-colors shadow-sm"
+              className="inline-flex items-center justify-center min-h-11 sm:min-h-12 px-6 py-3 bg-brand-green hover:bg-brand-green-dark text-brand-cream font-semibold rounded-xl transition-colors shadow-sm"
             >
               Book a tour
             </Link>
@@ -54,20 +54,20 @@ export default function NotFoundPage() {
               href={WA_HREF}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-2 min-h-12 px-6 py-3 bg-[#25D366] hover:bg-[#20BD5A] text-white font-semibold rounded-xl transition-colors shadow-sm"
+              className="inline-flex items-center justify-center gap-2 min-h-11 sm:min-h-12 px-6 py-3 bg-[#25D366] hover:bg-[#20BD5A] text-white font-semibold rounded-xl transition-colors shadow-sm"
             >
               <FaWhatsapp className="text-xl shrink-0" aria-hidden />
               Chat on WhatsApp
             </a>
             <Link
               to="/"
-              className="inline-flex items-center justify-center min-h-12 px-6 py-3 border-2 border-brand-green/30 text-brand-green hover:bg-brand-green/5 font-semibold rounded-xl transition-colors"
+              className="inline-flex items-center justify-center min-h-11 sm:min-h-12 px-6 py-3 border-2 border-brand-green/30 text-brand-green hover:bg-brand-green/5 font-semibold rounded-xl transition-colors"
             >
               Back to home
             </Link>
           </div>
 
-          <p className="mt-8 text-sm text-brand-green/60">
+          <p className="mt-6 sm:mt-8 text-sm text-brand-green/60">
             Or email{' '}
             <a
               href="mailto:hello@khayrcapeexperiences.com"
