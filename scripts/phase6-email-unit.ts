@@ -18,7 +18,7 @@ import {
 } from '../booking-app/lib/notify'
 
 process.env.BOOKING_MOCK = '1'
-delete process.env.RESEND_API_KEY
+delete process.env.BREVO_API_KEY
 
 let passed = 0
 let failed = 0

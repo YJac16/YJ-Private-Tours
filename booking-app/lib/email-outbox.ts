@@ -135,52 +135,71 @@ export async function enqueueNotification(
   return { inserted: Boolean(data?.id), id: data?.id || '' }
 }
 
-async function sendResendEmail(row: {
+const DEFAULT_BREVO_FROM_EMAIL = 'hello@khayrcapeexperiences.com'
+const DEFAULT_BREVO_FROM_NAME = 'KhayrCape Bookings'
+
+function brevoSender() {
+  return {
+    email: (
+      process.env.BREVO_FROM_EMAIL || DEFAULT_BREVO_FROM_EMAIL
+    ).trim(),
+    name: (process.env.BREVO_FROM_NAME || DEFAULT_BREVO_FROM_NAME).trim(),
+  }
+}
+
+async function sendBrevoEmail(row: {
   to_email: string
   subject: string
   body_text: string
   body_html: string | null
 }): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
-  const key = process.env.RESEND_API_KEY
+  const key = process.env.BREVO_API_KEY
   if (!key) {
-    return { ok: false, error: 'RESEND_API_KEY not set' }
+    console.error(
+      `[outbox] BREVO_API_KEY not set — cannot send to ${row.to_email}`
+    )
+    return { ok: false, error: 'BREVO_API_KEY not set' }
   }
-  const from =
-    process.env.EMAIL_FROM || 'KhayrCape Bookings <onboarding@resend.dev>'
   try {
-    const res = await fetch('https://api.resend.com/emails', {
+    const res = await fetch('https://api.brevo.com/v3/smtp/email', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${key}`,
+        'api-key': key,
         'Content-Type': 'application/json',
+        Accept: 'application/json',
       },
       body: JSON.stringify({
-        from,
-        to: [row.to_email],
+        sender: brevoSender(),
+        to: [{ email: row.to_email }],
         subject: row.subject,
-        html: row.body_html || undefined,
-        text: row.body_text,
+        htmlContent: row.body_html || undefined,
+        textContent: row.body_text,
       }),
     })
     const text = await res.text()
-    let parsed: { id?: string; message?: string } = {}
+    let parsed: { messageId?: string; message?: string; code?: string } = {}
     try {
       parsed = text ? JSON.parse(text) : {}
     } catch {
       /* ignore */
     }
     if (!res.ok) {
-      return {
-        ok: false,
-        error: parsed.message || text || `Resend HTTP ${res.status}`,
-      }
+      const detail =
+        parsed.message ||
+        (typeof parsed.code === 'string' ? parsed.code : '') ||
+        text ||
+        `Brevo HTTP ${res.status}`
+      console.error(`[outbox] Brevo send failed (${res.status}): ${detail}`)
+      return { ok: false, error: detail }
     }
-    if (!parsed.id) {
-      return { ok: false, error: 'Resend response missing id' }
+    if (!parsed.messageId) {
+      return { ok: false, error: 'Brevo response missing messageId' }
     }
-    return { ok: true, id: parsed.id }
+    return { ok: true, id: parsed.messageId }
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : 'Resend error' }
+    const message = e instanceof Error ? e.message : 'Brevo error'
+    console.error('[outbox] Brevo send error:', message)
+    return { ok: false, error: message }
   }
 }
 
@@ -275,8 +294,8 @@ export type DrainResult = {
 }
 
 /**
- * Drain due outbox rows via Resend.
- * Mock mode without RESEND_API_KEY: log and mark sent.
+ * Drain due outbox rows via Brevo transactional API.
+ * Mock mode without BREVO_API_KEY: log and mark sent.
  */
 export async function drainEmailOutbox(
   sb?: SupabaseClient | null
@@ -287,7 +306,7 @@ export async function drainEmailOutbox(
   let failed = 0
 
   for (const row of due) {
-    if (!process.env.RESEND_API_KEY && useMockStore()) {
+    if (!process.env.BREVO_API_KEY && useMockStore()) {
       console.warn(
         `[outbox] mock send ${row.audience}/${row.kind} → ${row.to_email}: ${row.subject}`
       )
@@ -296,7 +315,7 @@ export async function drainEmailOutbox(
       continue
     }
 
-    const result = await sendResendEmail(row)
+    const result = await sendBrevoEmail(row)
     if (result.ok) {
       await markSent(client, row.id, result.id, row.attempts)
       sent += 1

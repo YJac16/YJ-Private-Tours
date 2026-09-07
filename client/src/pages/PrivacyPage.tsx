@@ -129,7 +129,7 @@ export default function PrivacyPage() {
                   <strong className="text-brand-green">Yoco</strong> — secure payment processing
                 </li>
                 <li>
-                  <strong className="text-brand-green">Resend / email SMTP</strong> — transactional booking
+                  <strong className="text-brand-green">Brevo</strong> — transactional booking
                   notifications
                 </li>
                 <li>

@@ -1,4 +1,4 @@
--- 020 — Phase 6: Resend notification outbox (templates via payload, retry, dedupe)
+-- 020 — Phase 6: notification outbox (Brevo transport, templates via payload, retry, dedupe)
 
 CREATE TABLE IF NOT EXISTS public.notification_outbox (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
