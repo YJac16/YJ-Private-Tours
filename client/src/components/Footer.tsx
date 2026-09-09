@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
-import { HiOutlineLocationMarker, HiOutlinePhone } from 'react-icons/hi'
+import { HiOutlineLocationMarker, HiOutlineMail, HiOutlinePhone } from 'react-icons/hi'
+import { BUSINESS_EMAIL, BUSINESS_MAILTO } from '../lib/contactLinks'
 import { WA_PHONE_E164 } from '../lib/whatsappLinks'
 
 const WA_DISPLAY = '+27 82 327 7446'
@@ -28,6 +29,13 @@ export default function Footer() {
           >
             <HiOutlinePhone className="text-lg shrink-0" aria-hidden />
             WhatsApp {WA_DISPLAY}
+          </a>
+          <a
+            href={BUSINESS_MAILTO}
+            className="inline-flex items-center gap-2 text-brand-cream/90 underline underline-offset-2 hover:text-white"
+          >
+            <HiOutlineMail className="text-lg shrink-0" aria-hidden />
+            {BUSINESS_EMAIL}
           </a>
         </div>
         <div className="flex flex-wrap justify-center items-center gap-x-5 gap-y-2 text-brand-cream/80 text-sm sm:text-base">

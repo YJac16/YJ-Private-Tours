@@ -1,5 +1,6 @@
 import { type FormEvent, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { BUSINESS_EMAIL, BUSINESS_MAILTO } from '../lib/contactLinks'
 import { whatsappWithMessage } from '../lib/whatsappLinks'
 
 const TOUR_OPTIONS = [
@@ -65,7 +66,12 @@ export default function ContactEnquiry() {
           Contact / Enquiry
         </h2>
         <p className="text-brand-green/90 text-center mb-4">
-          Prefer WhatsApp? Fill in a few details and we&apos;ll open a pre-filled message for you.
+          Message us on WhatsApp — fill in a few details and we&apos;ll open a pre-filled
+          message for you. Business email:{' '}
+          <a href={BUSINESS_MAILTO} className="underline font-medium text-brand-green">
+            {BUSINESS_EMAIL}
+          </a>
+          .
         </p>
         <p className="text-brand-green/80 text-center text-sm mb-10">
           Or{' '}
@@ -153,6 +159,12 @@ export default function ContactEnquiry() {
           >
             Continue on WhatsApp
           </button>
+          <p className="text-center text-sm text-brand-green/70">
+            Business email:{' '}
+            <a href={BUSINESS_MAILTO} className="underline font-medium text-brand-green">
+              {BUSINESS_EMAIL}
+            </a>
+          </p>
         </form>
       </div>
     </section>

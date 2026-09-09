@@ -35,6 +35,21 @@ Guest flow creates a **pending** booking, then redirects to Yoco hosted checkout
 
 After payment, Yoco redirects to `/thank-you?payment=success&booking_id=…`, which calls `POST /api/payment-confirm`. Also configure `POST /api/payment-webhook` in the Yoco dashboard for production.
 
+## Transactional email (Brevo)
+
+Guest and driver booking notifications are queued in `notification_outbox` and sent via the Brevo Transactional API (`POST https://api.brevo.com/v3/smtp/email`).
+
+| Env | Purpose |
+|-----|---------|
+| `BREVO_API_KEY` | **Required in production** — set in Vercel Project → Environment Variables |
+| `BREVO_FROM_EMAIL` | Optional sender address (default `hello@khayrcapeexperiences.com`; domain must be authenticated in Brevo) |
+| `BREVO_FROM_NAME` | Optional sender display name (default `KhayrCape Bookings`) |
+| `DRIVER_NOTIFY_EMAIL` | Driver inbox for pending/paid/assign/cancel/reschedule/reminder emails |
+
+Cron: `GET /api/email-outbox` (rewrites to `/api/cron?job=email-outbox`) drains the outbox every 10 minutes on Vercel.
+
+Remove any legacy `RESEND_API_KEY` / `EMAIL_FROM` vars from this Vercel project after deploy.
+
 ## API
 
 | Method | Route | Description |

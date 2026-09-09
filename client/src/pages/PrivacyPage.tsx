@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import PageMeta from '../components/PageMeta'
+import { BUSINESS_EMAIL, BUSINESS_MAILTO } from '../lib/contactLinks'
 
 export default function PrivacyPage() {
   return (
@@ -38,6 +39,12 @@ export default function PrivacyPage() {
               <p className="mb-2 font-medium text-brand-green">Information Officer</p>
               <ul className="list-disc pl-5 space-y-1.5">
                 <li>Name: Yaseen (Information Officer)</li>
+                <li>
+                  Business email:{' '}
+                  <a href={BUSINESS_MAILTO} className="underline font-medium">
+                    {BUSINESS_EMAIL}
+                  </a>
+                </li>
                 <li>
                   WhatsApp:{' '}
                   <a
@@ -129,7 +136,7 @@ export default function PrivacyPage() {
                   <strong className="text-brand-green">Yoco</strong> — secure payment processing
                 </li>
                 <li>
-                  <strong className="text-brand-green">Resend / email SMTP</strong> — transactional booking
+                  <strong className="text-brand-green">Brevo</strong> — transactional booking
                   notifications
                 </li>
                 <li>
@@ -189,7 +196,7 @@ export default function PrivacyPage() {
                 <li>Withdraw consent where processing is based on consent</li>
               </ul>
               <p className="mt-3">
-                To exercise these rights, contact the Information Officer via WhatsApp at{' '}
+                To exercise these rights, contact the Information Officer on WhatsApp at{' '}
                 <a
                   href="https://wa.me/27823277446?text=Privacy%20request"
                   className="underline font-medium"
@@ -197,6 +204,10 @@ export default function PrivacyPage() {
                   rel="noopener noreferrer"
                 >
                   +27 82 327 7446
+                </a>{' '}
+                or business email{' '}
+                <a href={BUSINESS_MAILTO} className="underline font-medium">
+                  {BUSINESS_EMAIL}
                 </a>
                 . We may need to verify your identity before responding.
               </p>

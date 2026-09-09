@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
+import PublicContactLinks from '../components/PublicContactLinks'
 import PriceSummary from '../components/PriceSummary'
 import PageMeta from '../components/PageMeta'
 import InformedConsentForm from '../components/InformedConsentForm'
@@ -448,12 +449,13 @@ export default function BookPage() {
             <h1 className="text-2xl sm:text-3xl font-bold text-brand-green mb-3">
               Booking request received
             </h1>
-            <p className="text-brand-green/90 mb-6 leading-relaxed">
+            <p className="text-brand-green/90 mb-4 leading-relaxed">
               Reference:{' '}
               <span className="font-mono text-sm font-semibold">
                 {successRef || successId}
               </span>
             </p>
+            <PublicContactLinks className="mb-6" />
             <Link
               to="/"
               className="inline-flex min-h-12 items-center justify-center px-6 py-3 bg-brand-green text-brand-cream font-semibold rounded-xl"
@@ -1044,6 +1046,7 @@ export default function BookPage() {
                       </label>
                       <Field label="Dietary requirements" value={dietary} onChange={setDietary} />
                       <Field label="Flight number (optional)" value={flightNumber} onChange={setFlightNumber} />
+                      <PublicContactLinks className="pt-2" />
                     </div>
                   )}
 
@@ -1057,6 +1060,7 @@ export default function BookPage() {
                         Confirm to create your booking (Pending Payment) and
                         continue to Yoco — no account required.
                       </p>
+                      <PublicContactLinks />
                       {!accessToken && (
                         <p className="text-sm text-brand-green/80 bg-white border border-brand-cream-dark rounded-xl px-3 py-2">
                           Paying as a guest.{' '}

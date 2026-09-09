@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import PageMeta from '../components/PageMeta'
+import { BUSINESS_EMAIL, BUSINESS_MAILTO } from '../lib/contactLinks'
 
 export default function TermsPage() {
   return (
@@ -165,7 +166,7 @@ export default function TermsPage() {
             <section>
               <h2 className="text-lg sm:text-xl font-bold text-brand-green mb-3">11. Contact</h2>
               <p>
-                For bookings and enquiries, use the online booking page or WhatsApp at{' '}
+                For bookings and enquiries, use the online booking page, WhatsApp at{' '}
                 <a
                   href="https://wa.me/27823277446"
                   className="underline font-medium"
@@ -173,6 +174,10 @@ export default function TermsPage() {
                   rel="noopener noreferrer"
                 >
                   +27 82 327 7446
+                </a>
+                , or business email{' '}
+                <a href={BUSINESS_MAILTO} className="underline font-medium">
+                  {BUSINESS_EMAIL}
                 </a>
                 .
               </p>

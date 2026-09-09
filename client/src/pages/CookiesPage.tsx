@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
+import { BUSINESS_EMAIL, BUSINESS_MAILTO } from '../lib/contactLinks'
 
 export default function CookiesPage() {
   return (
@@ -99,7 +100,7 @@ export default function CookiesPage() {
             <section>
               <h2 className="text-lg sm:text-xl font-bold text-brand-green mb-3">5. Contact</h2>
               <p>
-                Questions about cookies or privacy? Message us on WhatsApp at{' '}
+                Questions about cookies or privacy? WhatsApp{' '}
                 <a
                   href="https://wa.me/27823277446"
                   className="underline font-medium"
@@ -107,6 +108,10 @@ export default function CookiesPage() {
                   rel="noopener noreferrer"
                 >
                   +27 82 327 7446
+                </a>{' '}
+                or business email{' '}
+                <a href={BUSINESS_MAILTO} className="underline font-medium">
+                  {BUSINESS_EMAIL}
                 </a>
                 .
               </p>
