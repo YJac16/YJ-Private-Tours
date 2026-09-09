@@ -3,6 +3,7 @@ import { FaWhatsapp } from 'react-icons/fa'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import PageMeta from '../components/PageMeta'
+import { BUSINESS_EMAIL, BUSINESS_MAILTO } from '../lib/contactLinks'
 import { whatsappWithMessage } from '../lib/whatsappLinks'
 
 const WA_HREF = whatsappWithMessage(
@@ -70,10 +71,10 @@ export default function NotFoundPage() {
           <p className="mt-6 lg:mt-4 text-sm lg:text-xs text-brand-green/60">
             Or email{' '}
             <a
-              href="mailto:hello@khayrcapeexperiences.com"
+              href={BUSINESS_MAILTO}
               className="text-brand-green underline underline-offset-2 hover:text-brand-green-dark"
             >
-              hello@khayrcapeexperiences.com
+              {BUSINESS_EMAIL}
             </a>
           </p>
         </div>
