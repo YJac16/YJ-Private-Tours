@@ -19,9 +19,17 @@ import {
 import { FaWhatsapp } from 'react-icons/fa'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
-import PageMeta, { SITE } from '../components/PageMeta'
+import PageMeta from '../components/PageMeta'
+import JsonLd from '../components/JsonLd'
 import PriceWithInfo from '../components/PriceWithInfo'
+import { FLOOR_VEHICLES, resolveTourPricing } from '../data/catalogFloors'
 import { useCatalog } from '../hooks/useCatalog'
+import {
+  buildFaqJsonLd,
+  buildTouristTripJsonLd,
+} from '../seo/routes'
+import { SITE } from '../seo/siteConfig'
+import { startingFromCents } from '../lib/pricing'
 import CatalogLoadError from '../components/CatalogLoadError'
 import { resolveExperienceContent } from '../lib/resolveExperience'
 import {
@@ -189,6 +197,8 @@ export default function ExperienceDetail() {
     retry: retryCatalog,
   } = useCatalog()
   const catalogVehicles = catalog?.vehicles ?? []
+  const pricingVehicles =
+    catalog?.vehicles?.length ? catalog.vehicles : FLOOR_VEHICLES
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
   const [openFaq, setOpenFaq] = useState<number | null>(0)
   const [showStickyBook, setShowStickyBook] = useState(false)
@@ -196,18 +206,19 @@ export default function ExperienceDetail() {
 
   const isHermanus = slug === 'hermanus'
   const inWhaleSeason = isDateInSeason(new Date(), WHALE_SEASON)
-  const catalogTour = slug ? tourBySlug(slug) : undefined
+  const apiTour = slug ? tourBySlug(slug) : undefined
+  const pricingTour = slug ? resolveTourPricing(slug, apiTour) : undefined
   const defaults = slug ? getDefaultExperience(slug) : null
 
   const hermanusOutOfSeason =
     isHermanus &&
     (!inWhaleSeason ||
-      (!catalogLoading && !catalogTour && !!defaults && !inWhaleSeason))
+      (!catalogLoading && !apiTour && !!defaults && !inWhaleSeason))
 
   let content: ExperienceContent | null = null
   if (slug) {
-    if (catalogTour) {
-      content = resolveExperienceContent(catalogTour)
+    if (apiTour) {
+      content = resolveExperienceContent(apiTour)
     } else if (defaults) {
       content = mergeExperienceContent(slug) ?? defaults
     }
@@ -267,6 +278,12 @@ export default function ExperienceDetail() {
   }
 
   const bookPath = `/book?tour=${slug}`
+  const experienceWaUrl = whatsappWithMessage(
+    `Hi, I'd like to enquire about the ${content.display_name}.`
+  )
+  const fromCents = pricingTour
+    ? startingFromCents(pricingTour, pricingVehicles, 1)
+    : undefined
   const aboutParagraphs = content.detailed_description
     .split(/\n\n+/)
     .map((p) => p.trim())
@@ -313,6 +330,11 @@ export default function ExperienceDetail() {
       ? content.hero_image
       : `${SITE}${content.hero_image || '/cape-town-og.jpg'}`
 
+  const jsonLdBlocks = [
+    buildTouristTripJsonLd(slug, content, fromCents),
+    ...(content.faqs.length > 0 ? [buildFaqJsonLd(content.faqs)] : []),
+  ]
+
   return (
     <>
       <PageMeta
@@ -322,6 +344,7 @@ export default function ExperienceDetail() {
         ogImage={seoImage}
         ogType="article"
       />
+      <JsonLd data={jsonLdBlocks} />
       <Navbar />
       <main className="min-h-screen bg-brand-cream">
         {/* Hero */}
@@ -350,23 +373,22 @@ export default function ExperienceDetail() {
                   <HiOutlineClock className="text-lg shrink-0 text-brand-gold" />
                   {content.duration_label}
                 </p>
-                {catalogTour ? (
+                {pricingTour && (
                   <div className="bg-brand-cream/95 rounded-lg px-3 py-2 shadow-sm">
                     <PriceWithInfo
-                      tour={catalogTour}
-                      vehicles={catalogVehicles}
+                      tour={pricingTour}
+                      vehicles={pricingVehicles}
                       compact
                     />
                   </div>
-                ) : catalogLoading ? (
-                  <p className="text-sm text-brand-cream/90">Loading rates…</p>
-                ) : catalogError ? (
+                )}
+                {catalogError && !pricingTour && (
                   <CatalogLoadError
                     message={catalogError}
                     onRetry={retryCatalog}
                     className="text-left max-w-sm"
                   />
-                ) : null}
+                )}
               </div>
               <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 max-w-lg">
                 <Link
@@ -376,6 +398,15 @@ export default function ExperienceDetail() {
                   <HiOutlineCreditCard className="text-xl shrink-0" />
                   Book Online
                 </Link>
+                <a
+                  href={experienceWaUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-2 min-h-12 px-5 py-3.5 bg-[#25D366] hover:bg-[#20BD5A] text-white font-semibold rounded-lg transition-colors shadow-md text-sm sm:text-base"
+                >
+                  <FaWhatsapp className="text-xl shrink-0" />
+                  WhatsApp
+                </a>
               </div>
             </div>
           </div>
@@ -388,6 +419,47 @@ export default function ExperienceDetail() {
           >
             ← Back to experiences
           </Link>
+
+          {/* SEO summary */}
+          <section className="bg-brand-cream-light rounded-2xl border border-brand-cream-dark p-5 sm:p-6 shadow-sm">
+            <h2 className="text-lg sm:text-xl font-bold text-brand-green mb-3">
+              Private {content.display_name.replace(/ Experience$/i, '')} — at a glance
+            </h2>
+            <p className="text-sm sm:text-base text-brand-green/90 leading-relaxed mb-4">
+              {content.short_description} Your group travels privately with a registered
+              professional tourist guide in an air-conditioned vehicle with hotel or Airbnb
+              pickup across Cape Town.
+            </p>
+            <div className="grid sm:grid-cols-2 gap-4 text-sm text-brand-green/90">
+              <div>
+                <p className="font-semibold text-brand-green mb-1.5">Included</p>
+                <ul className="space-y-1">
+                  {content.included.slice(0, 4).map((item) => (
+                    <li key={item} className="flex gap-2">
+                      <span className="text-brand-gold">✓</span>
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <p className="font-semibold text-brand-green mb-1.5">Not included</p>
+                <ul className="space-y-1">
+                  {content.excluded.slice(0, 4).map((item) => (
+                    <li key={item} className="flex gap-2">
+                      <span className="text-brand-green/50">×</span>
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+            <p className="mt-4 text-sm text-brand-green/85 leading-relaxed border-t border-brand-cream-dark pt-4">
+              Muslim-friendly service with halal-aware meal recommendations where available.
+              We can pause for Salah at suitable stops when requested — please mention when
+              booking on WhatsApp or at checkout.
+            </p>
+          </section>
 
           {/* About */}
           <section>
@@ -808,15 +880,15 @@ export default function ExperienceDetail() {
               <HiOutlineClock className="text-brand-gold" />
               {content.duration_label}
             </p>
-            {catalogTour ? (
+            {pricingTour && (
               <div className="mb-5 bg-brand-cream rounded-lg px-3 py-2 inline-block">
                 <PriceWithInfo
-                  tour={catalogTour}
-                  vehicles={catalogVehicles}
+                  tour={pricingTour}
+                  vehicles={pricingVehicles}
                   compact
                 />
               </div>
-            ) : null}
+            )}
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 max-w-md">
               <Link
                 to={bookPath}
@@ -825,6 +897,15 @@ export default function ExperienceDetail() {
                 <HiOutlineCreditCard className="text-xl shrink-0" />
                 Book Online
               </Link>
+              <a
+                href={experienceWaUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 min-h-12 px-5 py-3.5 bg-[#25D366] hover:bg-[#20BD5A] text-white font-semibold rounded-lg transition-colors text-sm sm:text-base"
+              >
+                <FaWhatsapp className="text-xl shrink-0" />
+                WhatsApp
+              </a>
             </div>
           </section>
 
@@ -838,7 +919,8 @@ export default function ExperienceDetail() {
                     getDefaultExperience(relSlug) ??
                     EXPERIENCE_DEFAULTS[relSlug]
                   if (!rel) return null
-                  const relCatalog = tourBySlug(relSlug)
+                  const relApiTour = tourBySlug(relSlug)
+                  const relPricingTour = resolveTourPricing(relSlug, relApiTour)
                   return (
                     <article
                       key={relSlug}
@@ -859,10 +941,10 @@ export default function ExperienceDetail() {
                         <p className="text-sm text-brand-green/85">
                           {rel.duration_label}
                         </p>
-                        {relCatalog ? (
+                        {relPricingTour ? (
                           <PriceWithInfo
-                            tour={relCatalog}
-                            vehicles={catalogVehicles}
+                            tour={relPricingTour}
+                            vehicles={pricingVehicles}
                             compact
                           />
                         ) : null}
