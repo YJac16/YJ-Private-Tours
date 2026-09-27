@@ -7,6 +7,7 @@ import {
   calculatePrice,
   defaultVehicleForGuests,
   DEFAULT_STANDARD_VEHICLE_SLUG,
+  formatZar,
   startingFromCents,
   type PricingTour,
   type PricingVehicle,
@@ -76,5 +77,13 @@ assert.equal(calculatePrice(city, corolla, 2, 0).grand_total_cents, 330_000)
 assert.equal(startingFromCents(winelands, vehicles, 1), 330_000)
 assert.equal(startingFromCents(hermanus, vehicles, 1), 590_000)
 assert.equal(calculatePrice(hermanus, corolla, 2, 0).grand_total_cents, 930_000)
+
+assert.equal(formatZar(290_000), 'R2,900')
+assert.equal(formatZar(1_000_000), 'R10,000')
+assert.equal(
+  calculatePrice(city, corolla, 1, 0).grand_total_cents,
+  290_000,
+  'calculatePrice cents unchanged after formatZar update'
+)
 
 console.log('pricing-corolla-from-unit: ok')

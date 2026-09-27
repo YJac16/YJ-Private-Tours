@@ -212,13 +212,16 @@ export function validateBookingGuests(
   return null
 }
 
+/** ZAR display with comma thousands (e.g. R2,900) — shared by booking flow and public pages. */
 export function formatZar(cents: number): string {
-  return `R${(cents / 100).toLocaleString('en-ZA', { maximumFractionDigits: 0 })}`
+  const rands = Math.round(Number(cents) / 100)
+  if (!Number.isFinite(rands)) return 'R0'
+  return `R${rands.toLocaleString('en-US', { maximumFractionDigits: 0 })}`
 }
 
-/** Comma thousands (e.g. R2,900) for public “from” price lines. */
+/** @deprecated alias — use formatZar */
 export function formatZarComma(cents: number): string {
-  return `R${(cents / 100).toLocaleString('en-US', { maximumFractionDigits: 0 })}`
+  return formatZar(cents)
 }
 
 export function formatFromOneGuest(cents: number): string {

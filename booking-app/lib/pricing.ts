@@ -197,8 +197,11 @@ export function validateBookingGuests(
   return null
 }
 
+/** ZAR display with comma thousands (e.g. R2,900) — keep in sync with client/src/lib/pricing.ts */
 export function formatZar(cents: number): string {
-  return `R${(cents / 100).toLocaleString('en-ZA', { maximumFractionDigits: 0 })}`
+  const rands = Math.round(Number(cents) / 100)
+  if (!Number.isFinite(rands)) return 'R0'
+  return `R${rands.toLocaleString('en-US', { maximumFractionDigits: 0 })}`
 }
 
 /** Cheapest vehicle that fits `passengerCount` (prefer non-luxury). */
