@@ -9,7 +9,7 @@ export default function GalleryPage() {
     <>
       <PageMeta
         title="Gallery — KhayrCape Experiences"
-        description="Photos from Cape Town and the Western Cape — scenes from private tours with KhayrCape Experiences."
+        description="Photos of Cape Town and the Western Cape — places we visit on our tours."
         path="/gallery"
       />
       <Navbar />
@@ -22,7 +22,7 @@ export default function GalleryPage() {
             Gallery
           </h1>
           <p className="text-brand-green/90 text-center mb-10 max-w-2xl mx-auto">
-            Scenes from Cape Town and the Western Cape.
+            Places we visit on our tours.
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 md:gap-4">
             {galleryImages.map((img, i) => (

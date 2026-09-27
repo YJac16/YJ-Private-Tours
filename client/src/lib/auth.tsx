@@ -1,5 +1,6 @@
 import {
   createContext,
+  createElement,
   useCallback,
   useContext,
   useEffect,
@@ -418,4 +419,31 @@ export function useAuth() {
   const ctx = useContext(AuthContext)
   if (!ctx) throw new Error('useAuth must be used within AuthProvider')
   return ctx
+}
+
+/** Static auth shell for build-time HTML prerender (no Supabase / storage). */
+export function SsrAuthProvider({ children }: { children: ReactNode }) {
+  const value = useMemo<AuthState>(
+    () => ({
+      loading: false,
+      session: null,
+      user: null,
+      profile: null,
+      accessToken: null,
+      role: null,
+      emailConfirmed: false,
+      supabaseConfigured: false,
+      signIn: async () => 'client',
+      signUp: async () => ({ sessionCreated: false }),
+      signOut: async () => {},
+      refreshProfile: async () => {},
+      resendEmailConfirmation: async () => {},
+      requestPasswordReset: async () => {},
+      updatePassword: async () => {},
+      updateProfile: async () => ({}),
+      mockSignIn: async () => 'client',
+    }),
+    []
+  )
+  return createElement(AuthContext.Provider, { value }, children)
 }

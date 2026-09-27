@@ -144,7 +144,7 @@ export default function InvoicesTab({ pin }: Props) {
                 className={`${cardClass} print:shadow-none`}
               >
                 <p className="text-xs uppercase tracking-wide text-brand-gold font-semibold">
-                  Khayr Cape Experiences
+                  KhayrCape Experiences
                 </p>
                 <h3 className="text-xl font-bold">{selected.invoice_number}</h3>
                 <p className="text-sm">Guest: {customerName(selected)}</p>

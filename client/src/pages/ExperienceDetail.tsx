@@ -48,6 +48,7 @@ import {
   isTourPubliclyVisible,
   WHALE_SEASON,
 } from '../lib/seasonalVisibility'
+import { HERMANUS_DURATION_LABEL } from '../data/hermanusDuration'
 import { whatsappWithMessage } from '../lib/whatsappLinks'
 import type { Vehicle } from '../lib/bookingApi'
 
@@ -426,8 +427,8 @@ export default function ExperienceDetail() {
               Private {content.display_name.replace(/ Experience$/i, '')} — at a glance
             </h2>
             <p className="text-sm sm:text-base text-brand-green/90 leading-relaxed mb-4">
-              {content.short_description} Your group travels privately with a registered
-              professional tourist guide in an air-conditioned vehicle with hotel or Airbnb
+              {content.short_description} Your group travels privately with a local
+              Cape Town guide in an air-conditioned vehicle with hotel or Airbnb
               pickup across Cape Town.
             </p>
             <div className="grid sm:grid-cols-2 gap-4 text-sm text-brand-green/90">
@@ -456,8 +457,8 @@ export default function ExperienceDetail() {
             </div>
             <p className="mt-4 text-sm text-brand-green/85 leading-relaxed border-t border-brand-cream-dark pt-4">
               Muslim-friendly service with halal-aware meal recommendations where available.
-              We can pause for Salah at suitable stops when requested — please mention when
-              booking on WhatsApp or at checkout.
+              Tell us when you book and we&apos;ll build Salah breaks into the day where
+              practical.
             </p>
           </section>
 
@@ -603,7 +604,7 @@ export default function ExperienceDetail() {
                     value: formatSeasonLabel(WHALE_SEASON),
                   },
                   { label: 'Experience', value: 'Full Day' },
-                  { label: 'Duration', value: 'Approximately 8–10 hours' },
+                  { label: 'Duration', value: HERMANUS_DURATION_LABEL },
                   { label: 'Start', value: 'Cape Town' },
                   { label: 'Destination', value: 'Hermanus' },
                   {
@@ -801,7 +802,7 @@ export default function ExperienceDetail() {
                   { label: 'Experience', value: 'Full Day' },
                   {
                     label: 'Duration',
-                    value: 'Approximately 8–10 hours',
+                    value: HERMANUS_DURATION_LABEL,
                   },
                   { label: 'Start', value: 'Cape Town' },
                   { label: 'Destination', value: 'Hermanus' },

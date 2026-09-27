@@ -41,7 +41,7 @@ const STEPS = [
 function GuideBadge({ number }: { number: string }) {
   return (
     <span className="inline-flex items-center gap-1 text-xs font-semibold text-brand-green bg-brand-gold/25 border border-brand-gold/40 rounded-md px-2 py-1">
-      Registered guide · {number}
+      Guide · {number}
     </span>
   )
 }

@@ -13,7 +13,7 @@ export default function Gallery() {
           Gallery
         </h2>
         <p className="text-brand-green/90 text-center mb-12 max-w-2xl mx-auto">
-          Scenes from Cape Town and the Western Cape.
+          Places we visit on our tours.
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 mb-8">
           {previewImages.map((img, i) => (

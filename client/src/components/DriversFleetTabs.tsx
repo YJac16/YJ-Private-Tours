@@ -7,6 +7,7 @@ import { useCatalog } from '../hooks/useCatalog'
 import PriceWithInfo from './PriceWithInfo'
 import CatalogLoadError from './CatalogLoadError'
 import { isDateInSeason, WHALE_SEASON } from '../lib/seasonalVisibility'
+import { HERMANUS_DURATION_LABEL } from '../data/hermanusDuration'
 
 const DRIVER_CHAT_ME = whatsappWithMessage(
   "Hi Yaseen, I'd like to chat with you about booking a tour."
@@ -40,11 +41,11 @@ const timeSlotTours: TimeSlotTour[] = [
     title: 'Hermanus Whale Experience',
     tourSlug: 'hermanus',
     timeBadge: '🐋 WHALE SEASON',
-    duration: 'Full Day · 8–10 hours',
+    duration: HERMANUS_DURATION_LABEL,
     bullets: [
       'Private journey from Cape Town',
       'Land-based whale-season viewing',
-      'Qualified local guide',
+      'Local Cape Town guide',
     ],
     bookPath: '/book?tour=hermanus',
     seasonal: true,
@@ -335,12 +336,12 @@ export default function DriversFleetTabs() {
                   <p className="text-brand-gold font-semibold mt-1">Yaseen</p>
                   {catalog?.guide_registration_number && (
                     <p className="mt-2 inline-flex text-xs font-semibold text-brand-green bg-brand-gold/25 border border-brand-gold/40 rounded-md px-2 py-1">
-                      Registered guide · {catalog.guide_registration_number}
+                      Guide · {catalog.guide_registration_number}
                     </p>
                   )}
                 </div>
                 <p className="text-sm sm:text-base text-brand-green/90 leading-relaxed">
-                  Registered professional tourist guide offering private, flexible
+                  Local Cape Town guide offering private, flexible
                   experiences across Cape Town and the Western Cape — with
                   family-friendly and Muslim-friendly service.
                 </p>

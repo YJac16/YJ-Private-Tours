@@ -74,7 +74,7 @@ function AdminBusinessInner() {
                 Pricing & Business Management
               </h1>
               <p className="text-sm text-brand-green/80">
-                Khayr Cape Experiences · cream / olive / gold
+                KhayrCape Experiences · cream / olive / gold
               </p>
             </div>
             <button

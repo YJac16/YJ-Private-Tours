@@ -52,7 +52,7 @@ export default function Hero() {
           Relaxed, cultural, and scenic experiences with a qualified local guide
         </p>
         <p className="text-sm sm:text-base text-brand-gold font-semibold mb-8 sm:mb-10 [text-shadow:0_1px_8px_rgba(0,0,0,0.65)]">
-          {fromPrice} per guest · private vehicle included
+          {fromPrice}
         </p>
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-stretch sm:justify-center items-stretch sm:items-center max-w-md sm:max-w-none mx-auto">
           <a

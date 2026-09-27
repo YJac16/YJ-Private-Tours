@@ -17,6 +17,13 @@
         { "key": "Content-Type", "value": "text/plain; charset=utf-8" },
         { "key": "Cache-Control", "value": "public, max-age=86400" }
       ]
+    },
+    {
+      "source": "/llms.txt",
+      "headers": [
+        { "key": "Content-Type", "value": "text/plain; charset=utf-8" },
+        { "key": "Cache-Control", "value": "public, max-age=86400" }
+      ]
     }
   ],
   "rewrites": [
@@ -44,10 +51,25 @@
       "source": "/api/admin-drivers",
       "destination": "/api/admin-trips?resource=drivers"
     },
+    { "source": "/login", "destination": "/index.html" },
+    { "source": "/signup", "destination": "/index.html" },
+    { "source": "/auth/callback", "destination": "/index.html" },
+    { "source": "/forgot-password", "destination": "/index.html" },
+    { "source": "/reset-password", "destination": "/index.html" },
+    { "source": "/account", "destination": "/index.html" },
     {
-      "source": "/((?!api/|robots\\.txt|sitemap\\.xml).*)",
+      "source": "/account/bookings/:bookingId/receipt",
       "destination": "/index.html"
-    }
+    },
+    {
+      "source": "/account/bookings/:bookingId",
+      "destination": "/index.html"
+    },
+    { "source": "/driver", "destination": "/index.html" },
+    { "source": "/admin/pricing", "destination": "/index.html" },
+    { "source": "/thank-you", "destination": "/index.html" },
+    { "source": "/tour/:tourId", "destination": "/index.html" },
+    { "source": "/checkout/:tourId", "destination": "/index.html" }
   ],
   "crons": [
     {

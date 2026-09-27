@@ -5,7 +5,16 @@ import App from './App'
 import { AuthProvider } from './lib/auth'
 import { ErrorBoundary } from './components/ErrorBoundary'
 
-createRoot(document.getElementById('root')!).render(
+const container = document.getElementById('root')
+if (!container) {
+  throw new Error('Root element #root not found')
+}
+
+if (container.querySelector('[data-prerender]')) {
+  container.innerHTML = ''
+}
+
+createRoot(container).render(
   <StrictMode>
     <ErrorBoundary>
       <AuthProvider>

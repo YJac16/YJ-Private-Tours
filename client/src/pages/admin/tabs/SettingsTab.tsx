@@ -9,7 +9,7 @@ import { cardClass, inputClass, labelClass } from '../adminShared'
 type Props = { pin: string }
 
 const defaultSettings = (): BusinessSettings => ({
-  company_name: 'Khayr Cape Experiences',
+  company_name: 'KhayrCape Experiences',
   logo_url: '',
   email: '',
   whatsapp: '',
@@ -159,7 +159,7 @@ export default function SettingsTab({ pin }: Props) {
           />
         </label>
         <label className={labelClass}>
-          Registered guide number
+          Western Cape guide number (optional)
           <input
             className={inputClass}
             value={settings.guide_registration_number ?? ''}

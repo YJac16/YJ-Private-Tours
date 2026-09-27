@@ -112,8 +112,18 @@ function injectRouteMeta(html, route) {
   return out
 }
 
-function writeRouteHtml(route, templateHtml) {
-  const html = injectRouteMeta(templateHtml, route)
+function injectRouteBody(html, bodyHtml) {
+  if (!bodyHtml) return html
+  const wrapped = `<div id="root" data-prerender="1">${bodyHtml}</div>`
+  if (/<div id="root"[^>]*>[\s\S]*?<\/div>/.test(html)) {
+    return html.replace(/<div id="root"[^>]*>[\s\S]*?<\/div>/, wrapped)
+  }
+  return html.replace('<div id="root"></div>', wrapped)
+}
+
+function writeRouteHtml(route, templateHtml, bodyHtml) {
+  let html = injectRouteMeta(templateHtml, route)
+  html = injectRouteBody(html, bodyHtml)
   if (route.path === '/') {
     fs.writeFileSync(path.join(DIST, 'index.html'), html, 'utf8')
     return
@@ -135,11 +145,18 @@ function main() {
     process.exit(1)
   }
 
+  const bodiesPath = path.join(ROOT, 'client', 'prerender-bodies.json')
+  if (!fs.existsSync(bodiesPath)) {
+    console.error('prerender-routes: client/prerender-bodies.json not found — run render-prerender-bodies first')
+    process.exit(1)
+  }
+
   const routes = JSON.parse(fs.readFileSync(SEO_MANIFEST, 'utf8'))
+  const bodies = JSON.parse(fs.readFileSync(bodiesPath, 'utf8'))
   const templateHtml = fs.readFileSync(indexPath, 'utf8')
 
   for (const route of routes) {
-    writeRouteHtml(route, templateHtml)
+    writeRouteHtml(route, templateHtml, bodies[route.path] || '')
     console.log(`prerender: ${route.path}`)
   }
 

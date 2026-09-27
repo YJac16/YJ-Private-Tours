@@ -3,7 +3,7 @@
  * Mirrors booking-app/lib/mock-store.ts defaults — update when admin pricing changes materially.
  */
 import type { PricingTour, PricingVehicle } from '../lib/pricing'
-import { formatZar, startingFromCents } from '../lib/pricing'
+import { formatFromOneGuest, startingFromCents } from '../lib/pricing'
 
 export const FLOOR_VEHICLES: PricingVehicle[] = [
   {
@@ -89,5 +89,5 @@ export function siteLowestFromCents(): number {
 }
 
 export function siteLowestFromLabel(): string {
-  return `From ${formatZar(siteLowestFromCents())}`
+  return formatFromOneGuest(siteLowestFromCents())
 }

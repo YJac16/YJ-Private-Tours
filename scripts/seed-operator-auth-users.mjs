@@ -124,7 +124,7 @@ async function ensureUser(u) {
     })
     if (error) {
       // Race / soft-deleted / list pagination miss — recover by re-lookup
-      if (error.code === 'email_exists' || /already been registered/i.test(error.message)) {
+      if (error.code === 'email_exists' || /already exists|duplicate email/i.test(error.message ?? '')) {
         userId = await findUserIdByEmail(u.email)
         if (!userId) throw error
         console.log(`found existing after create conflict: ${u.email}`)

@@ -269,14 +269,14 @@ export default function QuotesTab({ pin, tours, vehicles }: Props) {
         : '\n\nPlease find your personalised quotation details in this message (ask us for a PDF if needed).\n'
       const msg = encodeURIComponent(
         `Hi ${name},\n\n` +
-          `Thank you for your enquiry with Khayr Cape Experiences.\n` +
+          `Thank you for your enquiry with KhayrCape Experiences.\n` +
           pdfNote +
           `\nShould you wish to proceed simply reply to this message and we will send your secure payment link.\n\n` +
           `We look forward to welcoming you to Cape Town.\n\n` +
           `Kind regards,\n` +
           `Yaseen Jacobs\n` +
           `Founder\n` +
-          `Khayr Cape Experiences\n\n` +
+          `KhayrCape Experiences\n\n` +
           `Quote: ${quote.quote_number}\n` +
           `Total: ${total}`
       )
@@ -781,7 +781,7 @@ export default function QuotesTab({ pin, tours, vehicles }: Props) {
                     className="rounded-xl border border-brand-cream-dark bg-brand-cream p-6 space-y-3 text-brand-green print:border-0"
                   >
                     <p className="text-xs uppercase tracking-wide text-brand-gold font-semibold">
-                      Khayr Cape Experiences
+                      KhayrCape Experiences
                     </p>
                     <h3 className="text-xl font-bold">
                       Quotation{' '}

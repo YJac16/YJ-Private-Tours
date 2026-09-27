@@ -290,7 +290,7 @@ const tours: MockTour[] = [
     included_items: [
       'Private Cape Town pickup and return',
       'Private vehicle of your choice',
-      'Qualified local guide/driver',
+      'Local Cape Town guide/driver',
       'Land-based whale-season viewing opportunities',
     ],
     excluded_items: [

@@ -8,7 +8,7 @@ export default function PrivacyPage() {
     <>
       <PageMeta
         title="Privacy Policy — KhayrCape Experiences"
-        description="How KhayrCape Experiences collects, uses, and protects your personal information under POPIA (South Africa)."
+        description="How KhayrCape Experiences collects and uses your personal information: Our POPIA privacy notice."
         path="/privacy"
       />
       <Navbar />
@@ -244,7 +244,7 @@ export default function PrivacyPage() {
 
             <p className="text-sm text-brand-green/70 pt-2">
               This page is a practical privacy notice for website and booking use. It is not a substitute for
-              formal legal advice. Have a qualified adviser review it before relying on it as final POPIA
+              formal legal advice. Have an independent adviser review it before relying on it as final POPIA
               compliance documentation.
             </p>
           </div>
