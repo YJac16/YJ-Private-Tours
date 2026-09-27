@@ -20,6 +20,7 @@ import {
   BUSINESS_PHONE,
   GUIDE_REGISTRATION_LABEL,
   SITE,
+  TOUR_CONFIRMATION_NOTICE,
 } from '../siteConfig'
 import { EXPERIENCE_SLUGS } from '../routes'
 
@@ -77,6 +78,7 @@ function ExperiencePrerender({ slug }: { slug: string }) {
             </>
           ) : null}
         </p>
+        <p>{TOUR_CONFIRMATION_NOTICE}</p>
       </header>
 
       <section>
@@ -235,6 +237,7 @@ function BookPrerender() {
         pay securely online. Muslim-friendly, halal-aware pacing available on
         request for relevant tours.
       </p>
+      <p>{TOUR_CONFIRMATION_NOTICE}</p>
       <section>
         <h2>Experiences available to book</h2>
         <ul>

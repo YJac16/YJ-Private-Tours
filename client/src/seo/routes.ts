@@ -8,6 +8,7 @@ import {
   DEFAULT_OG,
   GUIDE_REGISTRATION_LABEL,
   SITE,
+  TOUR_CONFIRMATION_NOTICE,
   guideRegistrationCredentialJsonLd,
 } from './siteConfig'
 
@@ -180,11 +181,15 @@ export function buildTouristTripJsonLd(
     ? content.hero_image
     : `${SITE}${content.hero_image || '/cape-town-og.jpg'}`
 
+  const baseDescription = content.short_description || content.hero_tagline
+
   const trip: Record<string, unknown> = {
     '@context': 'https://schema.org',
     '@type': 'TouristTrip',
     name: content.display_name,
-    description: content.short_description || content.hero_tagline,
+    description: baseDescription
+      ? `${baseDescription} ${TOUR_CONFIRMATION_NOTICE}`
+      : TOUR_CONFIRMATION_NOTICE,
     url,
     image,
     touristType: 'Private tour',
@@ -202,6 +207,7 @@ export function buildTouristTripJsonLd(
       priceCurrency: 'ZAR',
       price: (fromCents / 100).toFixed(0),
       url: `${SITE}/book?tour=${slug}`,
+      description: TOUR_CONFIRMATION_NOTICE,
       availability: 'https://schema.org/InStock',
     }
   }

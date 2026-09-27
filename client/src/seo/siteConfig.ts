@@ -15,3 +15,7 @@ export function guideRegistrationCredentialJsonLd(): Record<string, unknown> {
     credentialID: GUIDE_REGISTRATION_NUMBER,
   }
 }
+
+/** Shown on experience and book flows — confirmation timing only (not payment/refund terms). */
+export const TOUR_CONFIRMATION_NOTICE =
+  "Private tours are confirmed on request. We'll confirm your date and time after you book."

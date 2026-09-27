@@ -8,6 +8,7 @@ import {
   BUSINESS_PHONE,
   GUIDE_REGISTRATION_NUMBER,
   SITE,
+  TOUR_CONFIRMATION_NOTICE,
 } from '../client/src/seo/siteConfig.ts'
 import { siteLowestFromLabel } from '../client/src/data/catalogFloors.ts'
 
@@ -25,6 +26,8 @@ const lines = [
   `Email: ${BUSINESS_EMAIL}`,
   '',
   `Pricing floor: ${siteLowestFromLabel()}`,
+  '',
+  TOUR_CONFIRMATION_NOTICE,
   '',
   '## Key pages',
   `- Home: ${SITE}/`,
