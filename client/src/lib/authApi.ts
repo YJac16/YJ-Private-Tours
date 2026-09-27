@@ -2,7 +2,9 @@
  * Auth-aware API helpers (Bearer JWT / mock tokens).
  */
 
-const API = import.meta.env.VITE_BOOKING_API_URL || '/api'
+import { bookingApiBase } from './apiBase'
+
+const API = bookingApiBase()
 
 async function json<T>(res: Response): Promise<T> {
   const text = await res.text()

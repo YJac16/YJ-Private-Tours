@@ -1,6 +1,11 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
+import {
+  cancelBooking,
+  expireStalePendingBookings,
+} from '../booking-app/lib/booking-lifecycle'
 import { mockDb, useMockStore } from '../booking-app/lib/mock-store'
+import { bookingRowToEmailDetails, notifyDriverBooking } from '../booking-app/lib/notify'
 import { isAuthError, requireAuth } from './_lib/authUser'
 import { methodNotAllowed, readJson } from './_lib/http'
 import { handleAdminDrivers } from './_lib/adminDriversHandler'
@@ -107,9 +112,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
 
       const sb = supabaseAdmin()
-      await (
-        await import('../booking-app/lib/booking-lifecycle')
-      ).expireStalePendingBookings(sb)
+      await expireStalePendingBookings(sb)
 
       if (resource === 'customers') {
         const { data, error } = await sb
@@ -253,9 +256,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
 
       const sb = supabaseAdmin()
-      const { expireStalePendingBookings, cancelBooking } = await import(
-        '../booking-app/lib/booking-lifecycle'
-      )
       await expireStalePendingBookings(sb)
 
       if (action === 'cancel') {
@@ -412,9 +412,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           },
         })
 
-        const { bookingRowToEmailDetails, notifyDriverBooking } = await import(
-          '../booking-app/lib/notify'
-        )
         const kind =
           nextDriver !== existing.driver_id ? 'assigned' : 'rescheduled'
         void notifyDriverBooking(

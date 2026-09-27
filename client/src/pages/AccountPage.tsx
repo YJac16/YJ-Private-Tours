@@ -128,6 +128,7 @@ function AccountInner() {
   const [saving, setSaving] = useState(false)
   const [resending, setResending] = useState(false)
   const [loadingBookings, setLoadingBookings] = useState(true)
+  const [bookingsError, setBookingsError] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
   const [info, setInfo] = useState<string | null>(null)
@@ -143,6 +144,7 @@ function AccountInner() {
     let cancelled = false
     ;(async () => {
       setLoadingBookings(true)
+      setBookingsError(null)
       try {
         const data = await fetchAccountBookings(
           accessToken,
@@ -151,7 +153,10 @@ function AccountInner() {
         if (!cancelled) setBookings(data.bookings)
       } catch (e) {
         if (!cancelled) {
-          setError(e instanceof Error ? e.message : 'Could not load bookings')
+          setBookingsError(
+            e instanceof Error ? e.message : 'Could not load bookings'
+          )
+          setBookings([])
         }
       } finally {
         if (!cancelled) setLoadingBookings(false)
@@ -365,6 +370,10 @@ function AccountInner() {
             </div>
             {loadingBookings ? (
               <p className="text-sm text-brand-green/70">Loading…</p>
+            ) : bookingsError ? (
+              <p className="text-sm text-red-800 bg-red-50 border border-red-200 rounded-xl px-3 py-2">
+                {bookingsError}
+              </p>
             ) : bookings.length === 0 ? (
               <p className="text-sm text-brand-green/70">
                 No bookings yet.{' '}

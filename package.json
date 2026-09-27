@@ -4,6 +4,8 @@
   "description": "KhayrCape Experiences — YJ Private Tours",
   "scripts": {
     "build": "cd client && npm ci && npm run build",
+    "test:pricing": "npx tsx scripts/pricing-corolla-from-unit.ts && npx tsx scripts/phase7-hermanus-unit.ts",
+    "test:account-bookings": "npx tsx scripts/account-bookings-auth-unit.ts && npx tsx scripts/account-bookings-ui-unit.ts",
     "deploy": "npx vercel --prod",
     "deploy:preview": "npx vercel"
   },

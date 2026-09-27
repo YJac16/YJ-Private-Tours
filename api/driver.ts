@@ -1,6 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
+import { cancelBooking } from '../booking-app/lib/booking-lifecycle'
 import { mockDb, useMockStore } from '../booking-app/lib/mock-store'
+import { bookingRowToEmailDetails, notifyDriverBooking } from '../booking-app/lib/notify'
 import {
   isAuthError,
   requireAuth,
@@ -286,7 +288,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (!owned) {
           return res.status(404).json({ error: 'Booking not found for this driver' })
         }
-        const { cancelBooking } = await import('../booking-app/lib/booking-lifecycle')
         const result = await cancelBooking(sb, {
           bookingId: booking_id,
           actor: 'driver',
@@ -346,9 +347,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         (body.start_time &&
           String(body.start_time).slice(0, 5) !== String(before.start_time).slice(0, 5))
       if (slotChanged) {
-        const { bookingRowToEmailDetails, notifyDriverBooking } = await import(
-          '../booking-app/lib/notify'
-        )
         void notifyDriverBooking(
           bookingRowToEmailDetails({
             ...data,

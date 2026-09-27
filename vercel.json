@@ -3,6 +3,11 @@
   "outputDirectory": "client/dist",
   "installCommand": "npm ci && cd client && npm ci",
   "framework": null,
+  "functions": {
+    "api/**/*.ts": {
+      "includeFiles": "booking-app/lib/**"
+    }
+  },
   "headers": [
     {
       "source": "/sitemap.xml",

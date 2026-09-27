@@ -4,6 +4,11 @@ import { useMockStore } from '../../booking-app/lib/mock-store'
 
 export type UserRole = 'client' | 'driver' | 'admin'
 
+export function normalizeUserRole(raw: unknown): UserRole {
+  if (raw === 'admin' || raw === 'driver' || raw === 'client') return raw
+  return 'client'
+}
+
 export type AuthContext = {
   user: { id: string; email?: string | null }
   role: UserRole
@@ -76,7 +81,7 @@ export async function getAuthContext(
       .eq('id', user.id)
       .maybeSingle()
 
-    const role = (profile?.role as UserRole) || 'client'
+    const role = normalizeUserRole(profile?.role)
     return {
       user: { id: user.id, email: user.email },
       role,
@@ -100,7 +105,7 @@ export async function requireAuth(
 ): Promise<AuthContext | { error: string; status: number }> {
   const ctx = await getAuthContext(req)
   if (!ctx) return { error: 'Unauthorized', status: 401 }
-  if (roles && !roles.includes(ctx.role)) {
+  if (roles && !roles.includes(normalizeUserRole(ctx.role))) {
     return { error: 'Forbidden', status: 403 }
   }
   return ctx

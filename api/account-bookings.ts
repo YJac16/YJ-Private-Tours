@@ -7,7 +7,7 @@ import {
 } from '../booking-app/lib/booking-lifecycle'
 import { mockDb, useMockStore } from '../booking-app/lib/mock-store'
 import { createYocoCheckout } from '../booking-app/lib/yoco'
-import { getAuthContext, isAuthError, requireAuth } from './_lib/authUser'
+import { getAuthContext, isAuthError, normalizeUserRole, requireAuth, type AuthContext } from './_lib/authUser'
 import { methodNotAllowed, readJson } from './_lib/http'
 
 function supabaseAdmin() {
@@ -15,6 +15,27 @@ function supabaseAdmin() {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY
   if (!url || !key) throw new Error('Supabase is not configured')
   return createClient(url, key, { auth: { persistSession: false } })
+}
+
+function escapePostgrestString(value: string): string {
+  return `"${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`
+}
+
+async function requireAccountBookingsAuth(
+  req: VercelRequest
+): Promise<AuthContext | { error: string; status: number }> {
+  const auth = await getAuthContext(req)
+  if (!auth) return { error: 'Unauthorized', status: 401 }
+  const role = normalizeUserRole(auth.profile.role)
+  auth.role = role
+  auth.profile.role = role
+  if (role === 'driver') {
+    return {
+      error: 'Use the driver portal for your schedule',
+      status: 403,
+    }
+  }
+  return auth
 }
 
 function headerValue(req: VercelRequest, name: string): string {
@@ -286,7 +307,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return handleConsent(req, res)
     }
 
-    const auth = await requireAuth(req, ['client', 'admin'])
+    const auth = await requireAccountBookingsAuth(req)
     if (isAuthError(auth)) {
       return res.status(auth.status).json({ error: auth.error })
     }
@@ -369,8 +390,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         .order('start_time', { ascending: false })
 
       if (email) {
+        const emailNorm = email.trim().toLowerCase()
         query = query.or(
-          `client_user_id.eq.${auth.user.id},client_email.eq.${email}`
+          `client_user_id.eq.${auth.user.id},client_email.eq.${escapePostgrestString(emailNorm)}`
         )
       } else {
         query = query.eq('client_user_id', auth.user.id)

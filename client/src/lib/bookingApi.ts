@@ -3,13 +3,7 @@
  */
 
 import type { BookingSettings, PriceBreakdown } from './pricing'
-
-function bookingApiBase(): string {
-  const raw = (import.meta.env.VITE_BOOKING_API_URL || '/api').trim()
-  if (!raw) return '/api'
-  if (/^https?:\/\//i.test(raw)) return raw.replace(/\/$/, '')
-  return raw.startsWith('/') ? raw : `/${raw}`
-}
+import { bookingApiBase } from './apiBase'
 
 const API = bookingApiBase()
 
