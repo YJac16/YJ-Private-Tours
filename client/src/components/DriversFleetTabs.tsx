@@ -45,7 +45,7 @@ const timeSlotTours: TimeSlotTour[] = [
     bullets: [
       'Private journey from Cape Town',
       'Land-based whale-season viewing',
-      'Qualified local guide',
+      'Local Cape Town guide',
     ],
     bookPath: '/book?tour=hermanus',
     seasonal: true,
@@ -336,12 +336,12 @@ export default function DriversFleetTabs() {
                   <p className="text-brand-gold font-semibold mt-1">Yaseen</p>
                   {catalog?.guide_registration_number && (
                     <p className="mt-2 inline-flex text-xs font-semibold text-brand-green bg-brand-gold/25 border border-brand-gold/40 rounded-md px-2 py-1">
-                      Registered guide · {catalog.guide_registration_number}
+                      Guide · {catalog.guide_registration_number}
                     </p>
                   )}
                 </div>
                 <p className="text-sm sm:text-base text-brand-green/90 leading-relaxed">
-                  Registered professional tourist guide offering private, flexible
+                  Local Cape Town guide offering private, flexible
                   experiences across Cape Town and the Western Cape — with
                   family-friendly and Muslim-friendly service.
                 </p>

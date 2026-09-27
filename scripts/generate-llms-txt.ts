@@ -23,7 +23,7 @@ const lines = [
   `WhatsApp / phone: ${BUSINESS_PHONE}`,
   `Email: ${BUSINESS_EMAIL}`,
   '',
-  `Pricing floor (per guest, vehicle at booking): ${siteLowestFromLabel()}`,
+  `Pricing floor: ${siteLowestFromLabel()}`,
   '',
   '## Key pages',
   `- Home: ${SITE}/`,

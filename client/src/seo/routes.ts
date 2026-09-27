@@ -1,6 +1,6 @@
 import { EXPERIENCE_DEFAULTS } from '../data/experienceDefaults'
 import { FLOOR_TOURS, FLOOR_VEHICLES, getFloorTour } from '../data/catalogFloors'
-import { formatZar, startingFromCents } from '../lib/pricing'
+import { formatFromOneGuest, startingFromCents } from '../lib/pricing'
 import {
   BUSINESS_EMAIL,
   BUSINESS_NAME,
@@ -22,7 +22,7 @@ export const HOME_META: RouteMeta = {
   path: '/',
   title: 'KhayrCape Experiences — Private Muslim-Friendly Cape Town Tours',
   description:
-    'Private Cape Town tours with a registered local guide — City & Culture, Cape Peninsula, Halal-friendly Winelands, and Ocean Sunset experiences. Book online or WhatsApp.',
+    'Private Cape Town tours with a local Cape Town guide — City & Culture, Cape Peninsula, Halal-friendly Winelands, and Ocean Sunset experiences. Book online or WhatsApp.',
   ogType: 'website',
 }
 
@@ -38,7 +38,7 @@ export const STATIC_PAGE_META: RouteMeta[] = [
     path: '/gallery',
     title: 'Gallery — KhayrCape Experiences',
     description:
-      'Photos from Cape Town and the Western Cape — scenes from private tours with KhayrCape Experiences.',
+      'Photos of Cape Town and the Western Cape — places we visit on our tours.',
   },
   {
     path: '/terms',
@@ -50,7 +50,7 @@ export const STATIC_PAGE_META: RouteMeta[] = [
     path: '/privacy',
     title: 'Privacy Policy — KhayrCape Experiences',
     description:
-      'How KhayrCape Experiences collects, uses, and protects your personal information under POPIA (South Africa).',
+      'How KhayrCape Experiences collects and uses your personal information: Our POPIA privacy notice.',
   },
   {
     path: '/cookies',
@@ -144,7 +144,8 @@ export function buildLocalBusinessJsonLd(): Record<string, unknown> {
         name: 'Western Cape',
       },
     },
-    priceRange: lowest < Number.POSITIVE_INFINITY ? formatZar(lowest) : '$$',
+    priceRange:
+      lowest < Number.POSITIVE_INFINITY ? formatFromOneGuest(lowest) : '$$',
     sameAs: [`https://wa.me/${BUSINESS_PHONE.replace('+', '')}`],
   }
 }

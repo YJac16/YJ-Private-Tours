@@ -40,7 +40,7 @@ export default function Hero() {
           />
         </div>
         <p className="inline-flex items-center justify-center gap-2 mb-3 text-xs sm:text-sm font-semibold tracking-wide uppercase text-white/95 bg-black/35 border border-white/20 rounded-full px-3 py-1.5 [text-shadow:0_1px_6px_rgba(0,0,0,0.5)]">
-          Registered professional tourist guide · Muslim-friendly private tours
+          Local Cape Town guide · Muslim-friendly private tours
         </p>
         <h1 className="text-[1.65rem] sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-3 sm:mb-4 leading-tight [text-shadow:0_2px_16px_rgba(0,0,0,0.65),0_1px_3px_rgba(0,0,0,0.9)]">
           Private & Muslim-Friendly Tours of Cape Town
@@ -49,10 +49,10 @@ export default function Hero() {
           Private Journeys, Thoughtfully Guided.
         </p>
         <p className="text-base sm:text-lg md:text-xl text-white mb-2 max-w-2xl mx-auto leading-snug [text-shadow:0_1px_8px_rgba(0,0,0,0.65)]">
-          Relaxed, cultural, and scenic experiences with a qualified local guide
+          Relaxed, cultural, and scenic experiences with a local Cape Town guide
         </p>
         <p className="text-sm sm:text-base text-brand-gold font-semibold mb-8 sm:mb-10 [text-shadow:0_1px_8px_rgba(0,0,0,0.65)]">
-          {fromPrice} per guest · private vehicle included
+          {fromPrice}
         </p>
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-stretch sm:justify-center items-stretch sm:items-center max-w-md sm:max-w-none mx-auto">
           <a

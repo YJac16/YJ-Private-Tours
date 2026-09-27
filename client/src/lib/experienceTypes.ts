@@ -36,7 +36,7 @@ export type ExperienceContent = {
 
 export const DEFAULT_HIGHLIGHTS = [
   'Private Guided Experience',
-  'Registered Professional Tourist Guide',
+  'Local Cape Town guide',
   'Comfortable Air-Conditioned Vehicle',
   'Hotel / Airbnb Pickup & Drop-off',
   'Flexible Itinerary',
@@ -49,7 +49,7 @@ export const HERMANUS_HIGHLIGHTS = [
   'Whale Season',
   'Hermanus Coastline',
   'Private Transport',
-  'Qualified Local Guide',
+  'Local Cape Town guide',
   'Scenic Overberg Journey',
   'Family Friendly',
   'Muslim Friendly',
@@ -60,4 +60,4 @@ export const PRICE_INFO_TEXT =
   'Starting from shows the minimum for 1 guest with the cheapest private vehicle included. Your final price depends on guest count and the vehicle you choose at booking.'
 
 export const HERMANUS_PRICE_INFO_TEXT =
-  'From price is per private group for 1 guest with the cheapest private vehicle included. Final price depends on guest count and vehicle. The whale-watching boat is not included.'
+  'From R5,900 for 1 guest with the cheapest private vehicle included. Final price depends on guest count and vehicle. The whale-watching boat is not included.'

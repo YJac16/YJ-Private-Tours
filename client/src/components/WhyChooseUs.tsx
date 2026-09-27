@@ -4,7 +4,7 @@ const points = [
   'Private & flexible tours — your group, your pace',
   'Muslim-friendly & family-aware — halal options and cultural sensitivity',
   'Relaxed pacing — no rushing; time to enjoy each stop',
-  'Local expertise — qualified guide who knows Cape Town and the region',
+  'Local expertise — local Cape Town guide who knows Cape Town and the region',
 ]
 
 export default function WhyChooseUs() {

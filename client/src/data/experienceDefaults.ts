@@ -39,9 +39,9 @@ export const EXPERIENCE_DEFAULTS: Record<string, ExperienceContent> = {
     short_description:
       'A private introduction to Cape Town’s colourful heritage, viewpoints, and historic city centre.',
     hero_tagline:
-      'Discover Bo-Kaap, Signal Hill, and the city’s cultural heart with a registered local guide.',
+      'Discover Bo-Kaap, Signal Hill, and the city’s cultural heart with a local Cape Town guide.',
     detailed_description:
-      'This private city experience is designed for travellers who want to understand Cape Town beyond the postcard views. With a registered professional tourist guide, you explore Bo-Kaap’s Cape Malay heritage, panoramic Signal Hill viewpoints, historic gardens, and iconic civic landmarks at a comfortable pace.\n\nUnlike large coach tours, every stop is flexible. Families, elderly travellers, and first-time visitors can linger for photos, ask questions, and skip what does not interest them. The experience is fully private — just your group, your guide, and a comfortable air-conditioned vehicle with hotel or Airbnb pickup and drop-off.',
+      'This private city experience is designed for travellers who want to understand Cape Town beyond the postcard views. With a local Cape Town guide, you explore Bo-Kaap’s Cape Malay heritage, panoramic Signal Hill viewpoints, historic gardens, and iconic civic landmarks at a comfortable pace.\n\nUnlike large coach tours, every stop is flexible. Families, elderly travellers, and first-time visitors can linger for photos, ask questions, and skip what does not interest them. The experience is fully private — just your group, your guide, and a comfortable air-conditioned vehicle with hotel or Airbnb pickup and drop-off.',
     hero_image: '/experiences/bo-kaap.jpg',
     gallery_images: [
       '/experiences/bo-kaap.jpg',
@@ -106,7 +106,7 @@ export const EXPERIENCE_DEFAULTS: Record<string, ExperienceContent> = {
     ],
     included: [
       'Private Transport',
-      'Registered Professional Tourist Guide',
+      'Local Cape Town guide',
       'Air-Conditioned Vehicle',
       'Hotel / Airbnb Pickup & Drop-off',
       'Complimentary Bottled Water',
@@ -157,7 +157,7 @@ export const EXPERIENCE_DEFAULTS: Record<string, ExperienceContent> = {
     hero_tagline:
       'Chapman’s Peak, Cape Point, and ocean vistas — privately guided at your pace.',
     detailed_description:
-      'The Cape Peninsula Experience is for guests who want the coastline’s signature drama without the rush of a crowded coach. Travel privately along Chapman’s Peak, stand at Cape Point, and enjoy flexible photo stops where the Atlantic meets dramatic cliffs.\n\nYour registered guide shapes the day around your energy — ideal for couples, families, and visitors wanting a scenic, unhurried introduction to the peninsula. Pickup and drop-off are included, with a comfortable air-conditioned vehicle throughout.',
+      'The Cape Peninsula Experience is for guests who want the coastline’s signature drama without the rush of a crowded coach. Travel privately along Chapman’s Peak, stand at Cape Point, and enjoy flexible photo stops where the Atlantic meets dramatic cliffs.\n\nYour local Cape Town guide shapes the day around your energy — ideal for couples, families, and visitors wanting a scenic, unhurried introduction to the peninsula. Pickup and drop-off are included, with a comfortable air-conditioned vehicle throughout.',
     hero_image: '/experiences/chapmans-peak.jpg',
     gallery_images: [
       '/experiences/chapmans-peak.jpg',
@@ -215,7 +215,7 @@ export const EXPERIENCE_DEFAULTS: Record<string, ExperienceContent> = {
     ],
     included: [
       'Private Transport',
-      'Registered Professional Tourist Guide',
+      'Local Cape Town guide',
       'Air-Conditioned Vehicle',
       'Hotel / Airbnb Pickup & Drop-off',
       'Complimentary Bottled Water',
@@ -267,7 +267,7 @@ export const EXPERIENCE_DEFAULTS: Record<string, ExperienceContent> = {
     hero_tagline:
       'Watch the Atlantic turn gold — a private late-afternoon coastal experience.',
     detailed_description:
-      'The Ocean Sunset Experience is a shorter, atmospheric private outing along Cape Town’s Atlantic Seaboard. Designed for couples, friends, and cruise guests with limited time, it focuses on viewpoints, Camps Bay ambience, and unhurried photography as the light softens.\n\nYour guide times the route for the best available sunset conditions, while keeping the experience flexible and comfortable. No large groups — just a private vehicle, registered guide, and a memorable end to the day.',
+      'The Ocean Sunset Experience is a shorter, atmospheric private outing along Cape Town’s Atlantic Seaboard. Designed for couples, friends, and cruise guests with limited time, it focuses on viewpoints, Camps Bay ambience, and unhurried photography as the light softens.\n\nYour guide times the route for the best available sunset conditions, while keeping the experience flexible and comfortable. No large groups — just a private vehicle, local Cape Town guide, and a memorable end to the day.',
     hero_image: '/experiences/camps-bay-cape-town.jpg',
     gallery_images: [
       '/experiences/camps-bay-cape-town.jpg',
@@ -315,7 +315,7 @@ export const EXPERIENCE_DEFAULTS: Record<string, ExperienceContent> = {
     ],
     included: [
       'Private Transport',
-      'Registered Professional Tourist Guide',
+      'Local Cape Town guide',
       'Air-Conditioned Vehicle',
       'Hotel / Airbnb Pickup & Drop-off',
       'Complimentary Bottled Water',
@@ -365,7 +365,7 @@ export const EXPERIENCE_DEFAULTS: Record<string, ExperienceContent> = {
     hero_tagline:
       'Mountain valleys, vineyard scenery, and flexible halal-friendly stops — privately guided.',
     detailed_description:
-      'This private winelands experience focuses on scenery, culture, and comfortable pacing rather than rushed tasting rooms. Ideal for Muslim-friendly travellers, families, and guests who want beautiful landscapes with thoughtful stop recommendations.\n\nYour registered guide shares local insight across Stellenbosch / Franschhoek vistas while adapting the day to your preferences. Every KhayrCape Experience remains private and personalised — no shared groups, with hotel or Airbnb pickup and an air-conditioned vehicle throughout.',
+      'This private winelands experience focuses on scenery, culture, and comfortable pacing rather than rushed tasting rooms. Ideal for Muslim-friendly travellers, families, and guests who want beautiful landscapes with thoughtful stop recommendations.\n\nYour local Cape Town guide shares local insight across Stellenbosch / Franschhoek vistas while adapting the day to your preferences. Every KhayrCape Experience remains private and personalised — no shared groups, with hotel or Airbnb pickup and an air-conditioned vehicle throughout.',
     hero_image: '/experiences/unsplash-franschhoek-vineyard-mountains.jpg',
     gallery_images: [
       '/experiences/unsplash-franschhoek-vineyard-mountains.jpg',
@@ -422,7 +422,7 @@ export const EXPERIENCE_DEFAULTS: Record<string, ExperienceContent> = {
     ],
     included: [
       'Private Transport',
-      'Registered Professional Tourist Guide',
+      'Local Cape Town guide',
       'Air-Conditioned Vehicle',
       'Hotel / Airbnb Pickup & Drop-off',
       'Complimentary Bottled Water',
@@ -470,9 +470,9 @@ export const EXPERIENCE_DEFAULTS: Record<string, ExperienceContent> = {
     display_name: 'Hermanus Whale Experience',
     short_description: 'A Private Whale-Season Journey from Cape Town',
     hero_tagline:
-      'Discover Hermanus during whale season with private transport, a qualified local guide and a relaxed day exploring the spectacular Whale Coast.',
+      'Discover Hermanus during whale season with private transport, a local Cape Town guide and a relaxed day exploring the spectacular Whale Coast.',
     detailed_description:
-      'This is a PRIVATE, LAND-BASED Hermanus experience from Cape Town during whale season.\n\nThe experience focuses on private transport, a qualified local guide, the scenic Overberg journey, Hermanus sightseeing, the Hermanus coastline, land-based whale viewing during whale season, a flexible private itinerary, and family-friendly Muslim-friendly service.\n\nIMPORTANT: This is NOT a whale-watching boat tour. KhayrCape does NOT operate a whale-watching boat. The boat is NOT included in the tour or checkout.',
+      'This is a PRIVATE, LAND-BASED Hermanus experience from Cape Town during whale season.\n\nThe experience focuses on private transport, a local Cape Town guide, the scenic Overberg journey, Hermanus sightseeing, the Hermanus coastline, land-based whale viewing during whale season, a flexible private itinerary, and family-friendly Muslim-friendly service.\n\nIMPORTANT: This is NOT a whale-watching boat tour. KhayrCape does NOT operate a whale-watching boat. The boat is NOT included in the tour or checkout.',
     hero_image: '/experiences/hermanus-cliff-path-coast.jpg',
     gallery_images: [
       '/experiences/hermanus-cliff-path-coast.jpg',
@@ -491,7 +491,7 @@ export const EXPERIENCE_DEFAULTS: Record<string, ExperienceContent> = {
       {
         title: 'Scenic Overberg Journey',
         description:
-          'Travel from Cape Town toward Hermanus with a qualified local guide along the scenic Overberg route.',
+          'Travel from Cape Town toward Hermanus with a local Cape Town guide along the scenic Overberg route.',
         duration: '1.5–2 hrs',
         icon: 'scenic',
         image: '/experiences/overberg-landscape.jpg',
@@ -531,7 +531,7 @@ export const EXPERIENCE_DEFAULTS: Record<string, ExperienceContent> = {
     included: [
       'Private Cape Town pickup and return',
       'Private vehicle of your choice',
-      'Qualified local guide/driver',
+      'Local Cape Town guide/driver',
       'Scenic Overberg journey',
       'Hermanus sightseeing',
       'Land-based whale-season viewing opportunities',
@@ -561,7 +561,7 @@ export const EXPERIENCE_DEFAULTS: Record<string, ExperienceContent> = {
       'Whale season is typically June through October.',
       'Wildlife sightings cannot be guaranteed.',
       'The whale-watching boat experience is not included.',
-      'Your Hermanus Whale Experience includes private transport, qualified guiding and the land-based Hermanus experience.',
+      'Your Hermanus Whale Experience includes private transport, your local Cape Town guide, and the land-based Hermanus experience.',
       'If you would like to enquire about a boat tour, KhayrCape can assist with an enquiry to an external operator, subject to availability, weather and sea conditions.',
       'Lunch is not included unless specifically arranged. Halal-friendly options can be recommended on request.',
     ],
@@ -607,10 +607,10 @@ export const EXPERIENCE_DEFAULTS: Record<string, ExperienceContent> = {
     seo_title:
       'Hermanus Whale Experience from Cape Town | KhayrCape Experiences',
     seo_description:
-      'Experience Hermanus during whale season with a private day experience from Cape Town, including private transport, a qualified local guide, scenic coastal sightseeing and land-based whale-viewing opportunities.',
+      'Experience Hermanus during whale season with a private day experience from Cape Town, including private transport, a local Cape Town guide, scenic coastal sightseeing and land-based whale-viewing opportunities.',
     seo_image: '/experiences/hermanus-cliff-path-coast.jpg',
     pricing_notes:
-      'From R5,900 per private group (1 guest + cheapest private vehicle). Boat tour not included.',
+      'From R5,900 (1 guest, private vehicle included). Boat tour not included.',
     duration_label: HERMANUS_DURATION_LABEL,
   },
 }

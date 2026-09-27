@@ -188,6 +188,15 @@ export function formatZar(cents: number): string {
   return `R${(cents / 100).toLocaleString('en-ZA', { maximumFractionDigits: 0 })}`
 }
 
+/** Comma thousands (e.g. R2,900) for public “from” price lines. */
+export function formatZarComma(cents: number): string {
+  return `R${(cents / 100).toLocaleString('en-US', { maximumFractionDigits: 0 })}`
+}
+
+export function formatFromOneGuest(cents: number): string {
+  return `From ${formatZarComma(cents)} (1 guest, private vehicle included)`
+}
+
 /** Cheapest vehicle that fits `passengerCount` (prefer non-luxury). */
 export function cheapestVehicleForGuests(
   vehicles: PricingVehicle[],
@@ -245,9 +254,9 @@ export function formatStartingFromPerGuest(
 ): string {
   const cents = startingFromCents(tour, vehicles, 1)
   if (tour.slug === 'hermanus') {
-    return `From ${formatZar(cents)} per private group`
+    return `From ${formatZarComma(cents)}`
   }
-  return `Starting from ${formatZar(cents)} per guest`
+  return formatFromOneGuest(cents)
 }
 
 export function formatStartingFromNote(tour: PricingTour): string {

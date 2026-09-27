@@ -128,7 +128,7 @@ function isHermanusTour(details: BookingEmailDetails) {
 
 function hermanusGuestNotes(): string[] {
   return [
-    'Your Hermanus Whale Experience includes private transport, qualified guiding and the land-based Hermanus experience.',
+    'Your Hermanus Whale Experience includes private transport, your local Cape Town guide, and the land-based Hermanus experience.',
     'Please note: the whale-watching boat experience is not included. If you would like to enquire about a boat tour, KhayrCape can assist with an enquiry to an external operator, subject to availability, weather and sea conditions.',
   ]
 }
@@ -155,7 +155,7 @@ function sharedHtml(details: BookingEmailDetails) {
     ? `<p><strong>Change:</strong> ${escapeHtml(details.changeNote)}</p>`
     : ''
   const hermanusHtml = isHermanusTour(details)
-    ? `<p><strong>Important:</strong> Whale-watching boat experience is not included. Your booking covers private transport, qualified guiding and the land-based Hermanus experience only.</p>`
+    ? `<p><strong>Important:</strong> Whale-watching boat experience is not included. Your booking covers private transport, your local Cape Town guide, and the land-based Hermanus experience only.</p>`
     : ''
   return `
     <p><strong>Ref:</strong> ${escapeHtml(details.bookingId)}</p>

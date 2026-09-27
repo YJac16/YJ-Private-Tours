@@ -1,7 +1,7 @@
 {
   "name": "KhayrCape Experiences",
   "short_name": "KhayrCape",
-  "description": "Private Cape Town tours with a registered local guide. Book online or WhatsApp.",
+  "description": "Private Cape Town tours with a local Cape Town guide. Book online or WhatsApp.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#EDEAE2",

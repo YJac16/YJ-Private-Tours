@@ -13,7 +13,7 @@ import {
 } from '../../data/catalogFloors'
 import { HERMANUS_DURATION_LABEL } from '../../data/hermanusDuration'
 import { galleryImages } from '../../data/gallery'
-import { formatZar, startingFromCents } from '../../lib/pricing'
+import { formatFromOneGuest, formatZarComma, startingFromCents } from '../../lib/pricing'
 import {
   BUSINESS_EMAIL,
   BUSINESS_NAME,
@@ -35,7 +35,7 @@ function fromPriceForSlug(slug: string): string {
   const tour = getFloorTour(slug)
   if (!tour) return ''
   const cents = startingFromCents(tour, FLOOR_VEHICLES, 1)
-  return `From ${formatZar(cents)}`
+  return formatFromOneGuest(cents)
 }
 
 function Paragraphs({ text }: { text: string }) {
@@ -69,7 +69,7 @@ function ExperiencePrerender({ slug }: { slug: string }) {
           {fromPrice ? (
             <>
               {' '}
-              · <strong>{fromPrice}</strong> per guest (vehicle fee at booking)
+              · <strong>{fromPrice}</strong>
             </>
           ) : null}
         </p>
@@ -137,6 +137,11 @@ function ExperiencePrerender({ slug }: { slug: string }) {
       )}
 
       <p>
+        Tell us when you book and we&apos;ll build Salah breaks into the day where
+        practical.
+      </p>
+
+      <p>
         <a href={`${SITE}/book?tour=${slug}`}>Book {content.display_name}</a>
       </p>
     </article>
@@ -153,9 +158,7 @@ function HomePrerender() {
         <h1>Private &amp; Muslim-Friendly Tours of Cape Town</h1>
         <p>Private Journeys, Thoughtfully Guided.</p>
         <p>Relaxed, cultural, and scenic private experiences</p>
-        <p>
-          {fromPrice} per guest · private vehicle included
-        </p>
+        <p>{fromPrice}</p>
       </header>
 
       <section>
@@ -250,7 +253,7 @@ function GalleryPrerender() {
   return (
     <article data-prerender="body">
       <h1>Gallery</h1>
-      <p>Scenes from Cape Town and the Western Cape.</p>
+      <p>Places we visit on our tours.</p>
       <ul>
         {galleryImages.map((img, i) => (
           <li key={i}>
@@ -319,6 +322,10 @@ export function tourSummaryLines(): string[] {
       slug === 'hermanus'
         ? HERMANUS_DURATION_LABEL
         : content?.duration_label || ''
-    return `- ${content?.display_name}: ${SITE}/experience/${slug} (${formatZar(cents)} from, ${duration})`
+    const priceLabel =
+      slug === 'hermanus'
+        ? `From ${formatZarComma(cents)}`
+        : formatFromOneGuest(cents)
+    return `- ${content?.display_name}: ${SITE}/experience/${slug} (${priceLabel}, ${duration})`
   })
 }
