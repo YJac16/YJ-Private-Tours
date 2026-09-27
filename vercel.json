@@ -3,6 +3,11 @@
   "outputDirectory": "client/dist",
   "installCommand": "npm ci && cd client && npm ci",
   "framework": null,
+  "functions": {
+    "api/**/*.ts": {
+      "includeFiles": "booking-app/lib/**"
+    }
+  },
   "headers": [
     {
       "source": "/sitemap.xml",
@@ -38,6 +43,10 @@
     {
       "source": "/api/driver-reminders",
       "destination": "/api/cron?job=driver-reminders"
+    },
+    {
+      "source": "/api/expire-pending",
+      "destination": "/api/cron?job=expire-pending"
     },
     {
       "source": "/api/account-consent",

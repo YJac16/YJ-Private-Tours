@@ -4,7 +4,7 @@
  */
 
 import { calculatePrice } from './pricing'
-import { isRefundEligible } from './booking-lifecycle'
+import { bookingOccupiesSlot, isRefundEligible, pendingHoldExpiredForSweep, PENDING_HOLD_MINUTES } from './booking-lifecycle'
 
 export type MockDriver = {
   id: string
@@ -466,13 +466,40 @@ let businessSettings: Record<string, unknown> = {
   },
 }
 
-export function useMockStore() {
+export const BOOKING_BACKEND_NOT_CONFIGURED =
+  'Booking backend not configured (Supabase env missing in production)'
+
+export function isVercelProduction(): boolean {
+  return process.env.VERCEL_ENV === 'production'
+}
+
+function supabaseEnvMissing(): boolean {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || ''
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+  return !url || !key || url.includes('your-project')
+}
+
+/** Throws in Vercel production when Supabase server env is missing or placeholder. */
+export function assertBookingBackendConfigured(): void {
+  if (!isVercelProduction()) return
+  if (supabaseEnvMissing()) {
+    throw new Error(BOOKING_BACKEND_NOT_CONFIGURED)
+  }
+}
+
+export function isBookingBackendConfigError(e: unknown): boolean {
+  return e instanceof Error && e.message === BOOKING_BACKEND_NOT_CONFIGURED
+}
+
+export function useMockStore(): boolean {
+  if (isVercelProduction()) {
+    assertBookingBackendConfigured()
+    return false
+  }
   if (process.env.BOOKING_MOCK === '1' || process.env.BOOKING_MOCK === 'true') {
     return true
   }
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || ''
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-  if (!url || !key || url.includes('your-project')) {
+  if (supabaseEnvMissing()) {
     return true
   }
   return false
@@ -490,6 +517,26 @@ function minBookableDate(): string {
   const m = String(d.getMonth() + 1).padStart(2, '0')
   const day = String(d.getDate()).padStart(2, '0')
   return `${y}-${m}-${day}`
+}
+
+function slotBlockedByBooking(b: { status: string; created_at: string }) {
+  return bookingOccupiesSlot(b)
+}
+
+function expireStalePendingMockBookings(nowMs: number = Date.now()): number {
+  let count = 0
+  for (const b of bookings) {
+    if (
+      b.status === 'pending' &&
+      pendingHoldExpiredForSweep(b.created_at, nowMs)
+    ) {
+      b.status = 'expired'
+      b.payment_status = 'cancelled'
+      b.trip_status = 'cancelled'
+      count += 1
+    }
+  }
+  return count
 }
 
 function uuid() {
@@ -663,18 +710,8 @@ export const mockDb = {
         reason: string | null
       }>, reason: dayBlocked ? 'Driver unavailable' : 'Date unavailable' }
     }
-    // expire stale pending in mock
-    const cutoff = Date.now() - 30 * 60 * 1000
-    for (const b of bookings) {
-      if (
-        b.status === 'pending' &&
-        new Date(b.created_at).getTime() < cutoff
-      ) {
-        b.status = 'expired'
-        b.payment_status = 'cancelled'
-        b.trip_status = 'cancelled'
-      }
-    }
+    // expire stale pending in mock (status); availability also ignores stale pending via slotBlockedByBooking
+    expireStalePendingMockBookings()
     return {
       slots: timeSlots
         .filter((s) => s.is_active)
@@ -694,7 +731,7 @@ export const mockDb = {
               b.driver_id === driverId &&
               b.booking_date === date &&
               normalizeTime(b.start_time) === time &&
-              (b.status === 'paid' || b.status === 'pending')
+              slotBlockedByBooking(b)
           )
         const vehicleBusy = vehicleId
           ? bookings.some(
@@ -702,7 +739,7 @@ export const mockDb = {
                 b.vehicle_id === vehicleId &&
                 b.booking_date === date &&
                 normalizeTime(b.start_time) === time &&
-                (b.status === 'paid' || b.status === 'pending')
+                slotBlockedByBooking(b)
             )
           : false
         const available = !driverBusy && !vehicleBusy
@@ -764,7 +801,7 @@ export const mockDb = {
         b.driver_id === input.driver_id &&
         b.booking_date === input.booking_date &&
         normalizeTime(b.start_time) === time &&
-        (b.status === 'paid' || b.status === 'pending')
+        slotBlockedByBooking(b)
     )
     if (clash) throw new Error('This driver time slot is already reserved.')
 
@@ -773,7 +810,7 @@ export const mockDb = {
         b.vehicle_id === input.vehicle_id &&
         b.booking_date === input.booking_date &&
         normalizeTime(b.start_time) === time &&
-        (b.status === 'paid' || b.status === 'pending')
+        slotBlockedByBooking(b)
     )
     if (vehicleClash) {
       throw new Error('This vehicle is already reserved for the selected slot.')
@@ -1848,5 +1885,16 @@ export const mockDb = {
         .sort((a, b) => b.count - a.count)
         .slice(0, 10),
     }
+  },
+
+  expireStalePendingBookings(nowMs?: number) {
+    return expireStalePendingMockBookings(nowMs)
+  },
+
+  /** Test helper: simulate pending hold elapsed without waiting. */
+  setBookingCreatedAtForTest(bookingId: string, createdAtIso: string) {
+    const row = bookings.find((b) => b.id === bookingId)
+    if (!row) throw new Error(`Booking not found: ${bookingId}`)
+    row.created_at = createdAtIso
   },
 }

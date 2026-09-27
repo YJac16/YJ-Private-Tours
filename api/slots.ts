@@ -1,7 +1,10 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { mockDb, useMockStore } from '../booking-app/lib/mock-store'
+import { isBookingBackendConfigError, mockDb, useMockStore } from '../booking-app/lib/mock-store'
 import { createClient } from '@supabase/supabase-js'
-import { expireStalePendingBookings } from '../booking-app/lib/booking-lifecycle'
+import {
+  bookingOccupiesSlot,
+  expireStalePendingBookings,
+} from '../booking-app/lib/booking-lifecycle'
 import { methodNotAllowed } from './_lib/http'
 
 function normalizeTime(t: string) {
@@ -94,7 +97,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const { data: driverBooked } = await sb
       .from('bookings')
-      .select('start_time')
+      .select('start_time, status, created_at')
       .eq('driver_id', driverId)
       .eq('booking_date', date)
       .in('status', ['paid', 'pending'])
@@ -103,12 +106,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (vehicleId) {
       const { data: vehicleBooked } = await sb
         .from('bookings')
-        .select('start_time')
+        .select('start_time, status, created_at')
         .eq('vehicle_id', vehicleId)
         .eq('booking_date', date)
         .in('status', ['paid', 'pending'])
       vehicleBookedTimes = new Set(
-        (vehicleBooked ?? []).map((s) => normalizeTime(String(s.start_time)))
+        (vehicleBooked ?? [])
+          .filter((b) => bookingOccupiesSlot(b))
+          .map((s) => normalizeTime(String(s.start_time)))
       )
     }
 
@@ -116,7 +121,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       (unavailableSlots ?? []).map((s) => normalizeTime(String(s.start_time)))
     )
     const booked = new Set(
-      (driverBooked ?? []).map((s) => normalizeTime(String(s.start_time)))
+      (driverBooked ?? [])
+        .filter((b) => bookingOccupiesSlot(b))
+        .map((s) => normalizeTime(String(s.start_time)))
     )
 
     const slots = timeSlots.map((slot) => {
@@ -141,6 +148,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     return res.status(200).json({ slots })
   } catch (e: unknown) {
+    if (isBookingBackendConfigError(e)) {
+      return res.status(500).json({ error: (e as Error).message })
+    }
     return res.status(500).json({
       error: e instanceof Error ? e.message : 'Slots failed',
     })
