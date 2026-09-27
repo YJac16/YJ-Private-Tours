@@ -38,6 +38,9 @@ export const HOME_CUSTOM_TOURS_BLURB =
 export const HOME_CUSTOM_TOUR_FAQ = {
   question: 'Can you arrange a custom private tour?',
   answer: `Yes. Custom private tours are available on request and quoted individually — not through the standard online package checkout. Visit ${SITE}/custom-tours to see how it works and message us on WhatsApp.`,
+  answerBeforeLink:
+    'Yes. Custom private tours are available on request and quoted individually — not through the standard online package checkout. Visit ',
+  answerAfterLink: ' to see how it works and message us on WhatsApp.',
 } as const
 
 export const CUSTOM_TOURS_WHATSAPP_MESSAGE =

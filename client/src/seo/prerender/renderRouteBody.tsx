@@ -34,6 +34,7 @@ import {
   guideRegistration,
 } from '../siteConfig'
 import { EXPERIENCE_SLUGS } from '../routes'
+import PrerenderSiteNav from './PrerenderSiteNav'
 
 function escapeText(text: string): string {
   return text
@@ -72,6 +73,7 @@ function ExperiencePrerender({ slug }: { slug: string }) {
 
   return (
     <article data-prerender="body">
+      <PrerenderSiteNav />
       <header>
         <h1>{content.display_name}</h1>
         <p>{content.short_description}</p>
@@ -169,6 +171,7 @@ function HomePrerender() {
 
   return (
     <article data-prerender="body">
+      <PrerenderSiteNav />
       <header>
         <p>
           {guideRegistration.label} · Muslim-friendly private tours
@@ -235,7 +238,11 @@ function HomePrerender() {
       <section>
         <h2>FAQ</h2>
         <h3>{HOME_CUSTOM_TOUR_FAQ.question}</h3>
-        <p>{HOME_CUSTOM_TOUR_FAQ.answer}</p>
+        <p>
+          {HOME_CUSTOM_TOUR_FAQ.answerBeforeLink}
+          <a href="/custom-tours">/custom-tours</a>
+          {HOME_CUSTOM_TOUR_FAQ.answerAfterLink}
+        </p>
       </section>
 
       <section>
@@ -254,6 +261,7 @@ function HomePrerender() {
 function BookPrerender() {
   return (
     <article data-prerender="body">
+      <PrerenderSiteNav />
       <h1>Book your private experience</h1>
       <p>Live pricing · guest checkout with Yoco · sign in optional</p>
       <p>
@@ -285,6 +293,7 @@ function CustomToursPrerender() {
   const waHref = whatsappWithMessage(CUSTOM_TOURS_WHATSAPP_MESSAGE)
   return (
     <article data-prerender="body">
+      <PrerenderSiteNav />
       <h1>Custom private tours</h1>
       <p>{CUSTOM_TOURS_INTRO}</p>
       <section>
