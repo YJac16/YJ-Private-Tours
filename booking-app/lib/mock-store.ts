@@ -466,13 +466,40 @@ let businessSettings: Record<string, unknown> = {
   },
 }
 
-export function useMockStore() {
+export const BOOKING_BACKEND_NOT_CONFIGURED =
+  'Booking backend not configured (Supabase env missing in production)'
+
+export function isVercelProduction(): boolean {
+  return process.env.VERCEL_ENV === 'production'
+}
+
+function supabaseEnvMissing(): boolean {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || ''
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+  return !url || !key || url.includes('your-project')
+}
+
+/** Throws in Vercel production when Supabase server env is missing or placeholder. */
+export function assertBookingBackendConfigured(): void {
+  if (!isVercelProduction()) return
+  if (supabaseEnvMissing()) {
+    throw new Error(BOOKING_BACKEND_NOT_CONFIGURED)
+  }
+}
+
+export function isBookingBackendConfigError(e: unknown): boolean {
+  return e instanceof Error && e.message === BOOKING_BACKEND_NOT_CONFIGURED
+}
+
+export function useMockStore(): boolean {
+  if (isVercelProduction()) {
+    assertBookingBackendConfigured()
+    return false
+  }
   if (process.env.BOOKING_MOCK === '1' || process.env.BOOKING_MOCK === 'true') {
     return true
   }
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || ''
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-  if (!url || !key || url.includes('your-project')) {
+  if (supabaseEnvMissing()) {
     return true
   }
   return false

@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { mockDb, useMockStore } from '../booking-app/lib/mock-store'
+import { isBookingBackendConfigError, mockDb, useMockStore } from '../booking-app/lib/mock-store'
 import { createClient } from '@supabase/supabase-js'
 import {
   bookingOccupiesSlot,
@@ -148,6 +148,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     return res.status(200).json({ slots })
   } catch (e: unknown) {
+    if (isBookingBackendConfigError(e)) {
+      return res.status(500).json({ error: (e as Error).message })
+    }
     return res.status(500).json({
       error: e instanceof Error ? e.message : 'Slots failed',
     })

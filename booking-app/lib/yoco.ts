@@ -3,7 +3,12 @@
  * Secret key stays server-side only. Public key is for client display / future SDK use.
  */
 
-import { useMockStore } from './mock-store'
+import {
+  assertBookingBackendConfigured,
+  isBookingBackendConfigError,
+  isVercelProduction,
+  useMockStore,
+} from './mock-store'
 
 const YOCO_CHECKOUT_URL = 'https://payments.yoco.com/api/checkouts'
 
@@ -35,7 +40,9 @@ export async function createYocoCheckout(opts: {
     throw new Error('Amount must be at least 100 cents (R1)')
   }
 
-  if (useMockStore()) {
+  if (isVercelProduction()) {
+    assertBookingBackendConfigured()
+  } else if (useMockStore()) {
     const refQ = opts.bookingReference
       ? `&ref=${encodeURIComponent(opts.bookingReference)}`
       : ''

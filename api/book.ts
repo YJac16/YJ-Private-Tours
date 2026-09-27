@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { mockDb, useMockStore } from '../booking-app/lib/mock-store'
+import { isBookingBackendConfigError, mockDb, useMockStore } from '../booking-app/lib/mock-store'
 import { createClient } from '@supabase/supabase-js'
 import {
   calculatePrice,
@@ -102,7 +102,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') return methodNotAllowed(res, ['POST'])
 
   try {
-    if (!useMockStore() && !process.env.YOCO_SECRET_KEY) {
+    let mockMode: boolean
+    try {
+      mockMode = useMockStore()
+    } catch (e) {
+      if (isBookingBackendConfigError(e)) {
+        return res.status(500).json({ error: (e as Error).message })
+      }
+      throw e
+    }
+
+    if (!mockMode && !process.env.YOCO_SECRET_KEY) {
       return res.status(500).json({
         error: 'Payment is not configured (missing YOCO_SECRET_KEY on the host).',
       })
@@ -156,7 +166,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const booking_reference = generateBookingReference()
 
-    if (useMockStore()) {
+    if (mockMode) {
       const catalog = mockDb.catalog()
       const tour = catalog.tours.find((t) => t.id === tour_id)
       const vehicle = catalog.vehicles.find((v) => v.id === vehicle_id)
@@ -529,6 +539,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       checkout_id: checkout.id,
     })
   } catch (e: unknown) {
+    if (isBookingBackendConfigError(e)) {
+      return res.status(500).json({ error: (e as Error).message })
+    }
     return res.status(400).json({
       error: e instanceof Error ? e.message : 'Booking failed',
     })
