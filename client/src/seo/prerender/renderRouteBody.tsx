@@ -5,6 +5,17 @@ import TermsPage from '../../pages/TermsPage'
 import PrivacyPage from '../../pages/PrivacyPage'
 import CookiesPage from '../../pages/CookiesPage'
 import { SsrAuthProvider } from '../../lib/auth'
+import {
+  CUSTOM_TOURS_CHECKOUT_LINE,
+  CUSTOM_TOURS_EXAMPLES,
+  CUSTOM_TOURS_HOW_IT_WORKS,
+  CUSTOM_TOURS_INTRO,
+  CUSTOM_TOURS_PRICING_LINE,
+  CUSTOM_TOURS_WHAT_TO_SEND,
+  CUSTOM_TOURS_WHATSAPP_MESSAGE,
+  HOME_CUSTOM_TOUR_FAQ,
+  HOME_CUSTOM_TOURS_BLURB,
+} from '../../data/customToursCopy'
 import { EXPERIENCE_DEFAULTS } from '../../data/experienceDefaults'
 import {
   FLOOR_VEHICLES,
@@ -14,13 +25,13 @@ import {
 import { HERMANUS_DURATION_LABEL } from '../../data/hermanusDuration'
 import { galleryImages } from '../../data/gallery'
 import { formatFromOneGuest, formatZarComma, startingFromCents } from '../../lib/pricing'
+import { whatsappWithMessage } from '../../lib/whatsappLinks'
 import {
   BUSINESS_EMAIL,
   BUSINESS_NAME,
   BUSINESS_PHONE,
-  GUIDE_REGISTRATION_LABEL,
   SITE,
-  TOUR_CONFIRMATION_NOTICE,
+  guideRegistration,
 } from '../siteConfig'
 import { EXPERIENCE_SLUGS } from '../routes'
 
@@ -78,7 +89,6 @@ function ExperiencePrerender({ slug }: { slug: string }) {
             </>
           ) : null}
         </p>
-        <p>{TOUR_CONFIRMATION_NOTICE}</p>
       </header>
 
       <section>
@@ -161,7 +171,7 @@ function HomePrerender() {
     <article data-prerender="body">
       <header>
         <p>
-          {GUIDE_REGISTRATION_LABEL} · Muslim-friendly private tours
+          {guideRegistration.label} · Muslim-friendly private tours
         </p>
         <h1>Private &amp; Muslim-Friendly Tours of Cape Town</h1>
         <p>Private Journeys, Thoughtfully Guided.</p>
@@ -215,6 +225,20 @@ function HomePrerender() {
       </section>
 
       <section>
+        <h2>Custom private tours</h2>
+        <p>{HOME_CUSTOM_TOURS_BLURB}</p>
+        <p>
+          <a href={`${SITE}/custom-tours`}>Plan a custom tour</a>
+        </p>
+      </section>
+
+      <section>
+        <h2>FAQ</h2>
+        <h3>{HOME_CUSTOM_TOUR_FAQ.question}</h3>
+        <p>{HOME_CUSTOM_TOUR_FAQ.answer}</p>
+      </section>
+
+      <section>
         <h2>Contact</h2>
         <p>
           WhatsApp: {BUSINESS_PHONE} · Email: {BUSINESS_EMAIL}
@@ -237,7 +261,6 @@ function BookPrerender() {
         pay securely online. Muslim-friendly, halal-aware pacing available on
         request for relevant tours.
       </p>
-      <p>{TOUR_CONFIRMATION_NOTICE}</p>
       <section>
         <h2>Experiences available to book</h2>
         <ul>
@@ -254,6 +277,45 @@ function BookPrerender() {
           })}
         </ul>
       </section>
+    </article>
+  )
+}
+
+function CustomToursPrerender() {
+  const waHref = whatsappWithMessage(CUSTOM_TOURS_WHATSAPP_MESSAGE)
+  return (
+    <article data-prerender="body">
+      <h1>Custom private tours</h1>
+      <p>{CUSTOM_TOURS_INTRO}</p>
+      <section>
+        <h2>Examples</h2>
+        <ul>
+          {CUSTOM_TOURS_EXAMPLES.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+      </section>
+      <section>
+        <h2>How it works</h2>
+        <ol>
+          {CUSTOM_TOURS_HOW_IT_WORKS.map((step) => (
+            <li key={step}>{step}</li>
+          ))}
+        </ol>
+      </section>
+      <section>
+        <h2>What to send us</h2>
+        <ul>
+          {CUSTOM_TOURS_WHAT_TO_SEND.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+      </section>
+      <p>{CUSTOM_TOURS_CHECKOUT_LINE}</p>
+      <p>{CUSTOM_TOURS_PRICING_LINE}</p>
+      <p>
+        <a href={waHref}>Plan a custom tour</a>
+      </p>
     </article>
   )
 }
@@ -292,6 +354,8 @@ export function renderRouteBody(routePath: string): string {
     element = <HomePrerender />
   } else if (routePath === '/book') {
     element = <BookPrerender />
+  } else if (routePath === '/custom-tours') {
+    element = <CustomToursPrerender />
   } else if (routePath === '/gallery') {
     element = <GalleryPrerender />
   } else if (routePath === '/terms') {
@@ -326,6 +390,7 @@ export function allPrerenderBodyPaths(): string[] {
   return [
     '/',
     '/book',
+    '/custom-tours',
     '/gallery',
     '/terms',
     '/privacy',

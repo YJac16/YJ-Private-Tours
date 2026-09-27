@@ -16,8 +16,7 @@ import {
 import { useAuth } from '../lib/auth'
 import { useCatalog } from '../hooks/useCatalog'
 import {
-  GUIDE_REGISTRATION_NUMBER,
-  TOUR_CONFIRMATION_NOTICE,
+  guideRegistration,
 } from '../seo/siteConfig'
 import {
   calculatePrice,
@@ -210,7 +209,7 @@ export default function BookPage() {
     if (!catalog) return
 
     setGuideRegistrationNumber(
-      catalog.guide_registration_number?.trim() || GUIDE_REGISTRATION_NUMBER
+      catalog.guide_registration_number?.trim() || guideRegistration.number
     )
 
     if (tourSlug) {
@@ -1062,9 +1061,6 @@ export default function BookPage() {
                       <p className="text-sm text-brand-green/80">
                         Confirm to create your booking (Pending Payment) and
                         continue to Yoco — no account required.
-                      </p>
-                      <p className="text-sm text-brand-green/85 leading-relaxed">
-                        {TOUR_CONFIRMATION_NOTICE}
                       </p>
                       {!accessToken && (
                         <p className="text-sm text-brand-green/80 bg-white border border-brand-cream-dark rounded-xl px-3 py-2">

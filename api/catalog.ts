@@ -71,9 +71,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const catalog = mockDb.catalog()
       return res.status(200).json({
         ...catalog,
-        guide_registration_number:
-          (catalog as { guide_registration_number?: string }).guide_registration_number ||
-          'WC16134',
         tours: (catalog.tours || []).filter((t: { slug?: string; admin_meta?: Record<string, unknown> }) =>
           isTourPubliclyVisible({
             slug: t.slug,
@@ -170,7 +167,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       settings,
       blocked_dates: (blocked ?? []).map((b) => b.blocked_date),
       yoco_public_key: process.env.NEXT_PUBLIC_YOCO_PUBLIC_KEY || null,
-      guide_registration_number: guide_registration_number || 'WC16134',
+      guide_registration_number: guide_registration_number || null,
     })
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Catalog failed'

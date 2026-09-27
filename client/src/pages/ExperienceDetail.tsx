@@ -28,7 +28,7 @@ import {
   buildFaqJsonLd,
   buildTouristTripJsonLd,
 } from '../seo/routes'
-import { SITE, TOUR_CONFIRMATION_NOTICE } from '../seo/siteConfig'
+import { SITE } from '../seo/siteConfig'
 import { startingFromCents } from '../lib/pricing'
 import CatalogLoadError from '../components/CatalogLoadError'
 import { resolveExperienceContent } from '../lib/resolveExperience'
@@ -391,9 +391,6 @@ export default function ExperienceDetail() {
                   />
                 )}
               </div>
-              <p className="text-brand-cream/90 text-sm max-w-xl leading-relaxed mb-4">
-                {TOUR_CONFIRMATION_NOTICE}
-              </p>
               <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 max-w-lg">
                 <Link
                   to={bookPath}
@@ -893,9 +890,6 @@ export default function ExperienceDetail() {
                 />
               </div>
             )}
-            <p className="text-sm text-brand-cream/90 leading-relaxed mb-5 max-w-lg">
-              {TOUR_CONFIRMATION_NOTICE}
-            </p>
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 max-w-md">
               <Link
                 to={bookPath}

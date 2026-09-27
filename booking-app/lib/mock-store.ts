@@ -443,7 +443,6 @@ let businessSettings: Record<string, unknown> = {
   currency: 'ZAR',
   vat_percent: 15,
   business_hours: '',
-  guide_registration_number: 'WC16134',
   discounts: [],
   pdf_templates: {
     quotation: {
@@ -509,7 +508,7 @@ export const mockDb = {
       tours,
       settings: { ...bookingSettings },
       blocked_dates: [...blockedDates],
-      guide_registration_number: reg || 'WC16134',
+      guide_registration_number: reg || null,
     }
   },
 

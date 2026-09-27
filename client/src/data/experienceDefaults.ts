@@ -31,11 +31,6 @@ const sharedFaqs = (duration: string): ExperienceContent['faqs'] => [
     answer:
       'Yes. All KhayrCape Experiences are private and personalised — no large groups and no shared coaches.',
   },
-  {
-    question: 'Is my tour confirmed immediately?',
-    answer:
-      "Private tours are confirmed on request. We'll confirm your date and time after you book.",
-  },
 ]
 
 export const EXPERIENCE_DEFAULTS: Record<string, ExperienceContent> = {
@@ -605,11 +600,6 @@ export const EXPERIENCE_DEFAULTS: Record<string, ExperienceContent> = {
         question: 'Which vehicle can I choose?',
         answer:
           'Suzuki XL6: up to 5 guests. Toyota Corolla Cross GR Sport: up to 3 guests. Mercedes-Benz GLC 220 Coupe: up to 3 guests (Premium Experience).',
-      },
-      {
-        question: 'Is my tour confirmed immediately?',
-        answer:
-          "Private tours are confirmed on request. We'll confirm your date and time after you book.",
       },
     ],
     map_embed_url:

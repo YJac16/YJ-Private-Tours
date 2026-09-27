@@ -1,27 +1,19 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { HiMenu, HiOutlineMap, HiOutlineTruck, HiOutlineUser, HiX } from 'react-icons/hi'
-import { FaCalendarCheck } from 'react-icons/fa'
+import { HiMenu, HiOutlineMap, HiX } from 'react-icons/hi'
+import { FaCalendarCheck, FaRoute } from 'react-icons/fa'
 import { useAuth } from '../lib/auth'
 
-const navLinks = [
-  { hash: 'tours', label: 'Tours' },
-  { hash: 'drivers', label: 'Drivers' },
-  { hash: 'fleet', label: 'Fleet' },
-  { hash: 'gallery', label: 'Gallery' },
-  { hash: 'about', label: 'About' },
-]
+const desktopNav = [
+  { to: '/#tours', label: 'Experiences' },
+  { to: '/custom-tours', label: 'Custom Tours' },
+] as const
 
 const mobileQuickLinks = [
-  { to: '/#tours', label: 'Tours', icon: HiOutlineMap },
-  { to: '/#drivers', label: 'Drivers', icon: HiOutlineUser },
-  { to: '/#fleet', label: 'Fleet', icon: HiOutlineTruck },
+  { to: '/#tours', label: 'Experiences', icon: HiOutlineMap },
+  { to: '/custom-tours', label: 'Custom Tours', icon: FaRoute },
   { to: '/book', label: 'Book', icon: FaCalendarCheck },
-]
-
-const drawerLinks = navLinks.filter(
-  (l) => l.hash === 'gallery' || l.hash === 'about'
-)
+] as const
 
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -168,7 +160,7 @@ export default function Navbar() {
         </button>
 
         <nav
-          className="md:hidden flex-1 min-w-0 grid grid-cols-4 gap-0"
+          className="md:hidden flex-1 min-w-0 grid grid-cols-3 gap-0"
           aria-label="Quick links"
         >
           {mobileQuickLinks.map((item) => {
@@ -189,10 +181,10 @@ export default function Navbar() {
         </nav>
 
         <nav className="hidden md:flex items-center gap-1 ml-auto">
-          {navLinks.map((link) => (
+          {desktopNav.map((link) => (
             <Link
-              key={link.hash}
-              to={`/#${link.hash}`}
+              key={link.to}
+              to={link.to}
               className="px-3 py-2 text-brand-green hover:text-brand-green-dark hover:bg-brand-cream-dark/50 rounded-lg text-sm font-medium transition-colors"
             >
               {link.label}
@@ -220,21 +212,10 @@ export default function Navbar() {
 
       <div
         className={`md:hidden overflow-hidden transition-all duration-200 ease-out ${
-          mobileOpen ? 'max-h-128 opacity-100' : 'max-h-0 opacity-0'
+          mobileOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
         }`}
       >
         <nav className="px-4 pb-4 pt-2 bg-brand-cream border-t border-brand-cream-dark flex flex-col gap-1">
-          {drawerLinks.map((link) => (
-            <Link
-              key={link.hash}
-              to={`/#${link.hash}`}
-              onClick={() => setMobileOpen(false)}
-              className="py-3 text-brand-green hover:bg-brand-cream-dark/50 rounded-lg px-2 font-medium min-h-11 flex items-center"
-            >
-              {link.label}
-            </Link>
-          ))}
-          <div className="my-1 border-t border-brand-cream-dark" />
           <p className="px-2 pt-1 text-[11px] font-semibold uppercase tracking-wide text-brand-green/55">
             Account
           </p>
