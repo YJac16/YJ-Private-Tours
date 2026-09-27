@@ -44,6 +44,9 @@ export const DEFAULT_BOOKING_SETTINGS: BookingSettings = {
   allow_larger_groups: false,
 }
 
+/** Default standard vehicle for checkout and public “From” pricing (founder: always Corolla when it fits). */
+export const DEFAULT_STANDARD_VEHICLE_SLUG = 'corolla'
+
 export function parseBookingSettings(
   raw: { max_guests_default?: number; allow_larger_groups?: boolean } | null
 ): BookingSettings {
@@ -92,10 +95,35 @@ export function defaultVehicleForGuests(
     (v) => !v.is_luxury && vehicleFitsGuests(v, passengerCount)
   )
   if (!standard.length) return null
+  const preferred = standard.find(
+    (v) => v.slug === DEFAULT_STANDARD_VEHICLE_SLUG
+  )
+  if (preferred) return preferred
   if (passengerCount <= 3) {
     return [...standard].sort((a, b) => a.capacity_max - b.capacity_max)[0]
   }
   return [...standard].sort((a, b) => b.capacity_min - a.capacity_min)[0]
+}
+
+/** Checkout vehicle list: default vehicle first, then remaining by name. */
+export function sortVehiclesForDisplay<T extends PricingVehicle>(
+  vehicles: T[],
+  passengerCount: number
+): T[] {
+  const defaultVehicle = defaultVehicleForGuests(vehicles, passengerCount)
+  return [...vehicles].sort((a, b) => {
+    if (defaultVehicle) {
+      if (a.id === defaultVehicle.id) return -1
+      if (b.id === defaultVehicle.id) return 1
+    }
+    if (a.slug === DEFAULT_STANDARD_VEHICLE_SLUG && b.slug !== DEFAULT_STANDARD_VEHICLE_SLUG) {
+      return -1
+    }
+    if (b.slug === DEFAULT_STANDARD_VEHICLE_SLUG && a.slug !== DEFAULT_STANDARD_VEHICLE_SLUG) {
+      return 1
+    }
+    return (a.name || '').localeCompare(b.name || '')
+  })
 }
 
 export function resolveVehiclePrice(vehicle: PricingVehicle): number {
@@ -212,8 +240,7 @@ export function cheapestVehicleForGuests(
 }
 
 /**
- * Minimum total for N guests: per-person × N + cheapest fitting vehicle.
- * Default N=1 for experience “starting from” displays.
+ * Public “From” total for N guests: default vehicle (Corolla when it fits) + per-person × N.
  */
 export function startingFromCents(
   tour: PricingTour,
@@ -221,7 +248,7 @@ export function startingFromCents(
   passengerCount = 1
 ): number {
   const guests = Math.max(1, Math.round(passengerCount))
-  const vehicle = cheapestVehicleForGuests(vehicles, guests)
+  const vehicle = defaultVehicleForGuests(vehicles, guests)
   const vehicleCents = vehicle ? resolveVehiclePrice(vehicle) : 0
   return vehicleCents + resolvePricePerPerson(tour) * guests
 }
@@ -261,7 +288,7 @@ export function formatStartingFromPerGuest(
 
 export function formatStartingFromNote(tour: PricingTour): string {
   if (tour.slug === 'hermanus') {
-    return '1 guest + cheapest private vehicle included · boat not included'
+    return '1 guest + default private vehicle included · boat not included'
   }
-  return '1 guest + cheapest private vehicle included'
+  return '1 guest + default private vehicle included'
 }

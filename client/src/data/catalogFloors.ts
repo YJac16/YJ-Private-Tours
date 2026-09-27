@@ -1,72 +1,25 @@
 /**
- * Static catalog floor prices for first-paint / no-JS displays.
- * Mirrors booking-app/lib/mock-store.ts defaults — update when admin pricing changes materially.
+ * Catalog floor prices for prerender / no-JS “From” lines.
+ * Populated at build time from Supabase (see scripts/refresh-catalog-pricing.ts).
  */
 import type { PricingTour, PricingVehicle } from '../lib/pricing'
-import { formatFromOneGuest, startingFromCents } from '../lib/pricing'
+import {
+  formatFromOneGuest,
+  formatZarComma,
+  startingFromCents,
+} from '../lib/pricing'
+import { BUILD_CATALOG_PRICING } from './catalogPricing.generated'
 
-export const FLOOR_VEHICLES: PricingVehicle[] = [
-  {
-    id: 'floor-suzuki',
-    slug: 'suzuki',
-    name: 'Suzuki XL6',
-    capacity_min: 1,
-    capacity_max: 5,
-    vehicle_price_cents: 320_000,
-    is_luxury: false,
-  },
-  {
-    id: 'floor-corolla',
-    slug: 'corolla',
-    name: 'Toyota Corolla Cross GR Sport',
-    capacity_min: 1,
-    capacity_max: 3,
-    vehicle_price_cents: 250_000,
-    is_luxury: false,
-  },
-  {
-    id: 'floor-mercedes',
-    slug: 'mercedes',
-    name: 'Mercedes-Benz GLC 220 Coupe',
-    capacity_min: 1,
-    capacity_max: 3,
-    vehicle_price_cents: 450_000,
-    is_luxury: true,
-  },
-]
+export { CATALOG_PRICING_SNAPSHOT_FALLBACK } from './catalogPricing.snapshot'
 
-export const FLOOR_TOURS: PricingTour[] = [
-  {
-    id: 'floor-city',
-    slug: 'city',
-    price_per_person_cents: 40_000,
-    max_guests: 5,
-  },
-  {
-    id: 'floor-peninsula',
-    slug: 'peninsula',
-    price_per_person_cents: 90_000,
-    max_guests: 5,
-  },
-  {
-    id: 'floor-winelands',
-    slug: 'winelands',
-    price_per_person_cents: 80_000,
-    max_guests: 5,
-  },
-  {
-    id: 'floor-sunset',
-    slug: 'sunset',
-    price_per_person_cents: 50_000,
-    max_guests: 5,
-  },
-  {
-    id: 'floor-hermanus',
-    slug: 'hermanus',
-    price_per_person_cents: 340_000,
-    max_guests: 5,
-  },
-]
+export const FLOOR_VEHICLES: PricingVehicle[] = BUILD_CATALOG_PRICING.vehicles.map(
+  (v) => ({ ...v })
+)
+
+export const FLOOR_TOURS: PricingTour[] = BUILD_CATALOG_PRICING.tours.map((t) => ({
+  ...t,
+  slug: t.slug,
+}))
 
 export function getFloorTour(slug: string): PricingTour | undefined {
   return FLOOR_TOURS.find((t) => t.slug === slug)
@@ -90,4 +43,15 @@ export function siteLowestFromCents(): number {
 
 export function siteLowestFromLabel(): string {
   return formatFromOneGuest(siteLowestFromCents())
+}
+
+export function catalogPricingBuildSource(): string {
+  return BUILD_CATALOG_PRICING.source
+}
+
+/** Build-time “From R…” line for experience defaults (1 guest, default vehicle). */
+export function floorFromPriceShort(slug: string): string {
+  const tour = getFloorTour(slug)
+  if (!tour) return ''
+  return `From ${formatZarComma(startingFromCents(tour, FLOOR_VEHICLES, 1))}`
 }

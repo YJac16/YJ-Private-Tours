@@ -47,6 +47,8 @@ export const DEFAULT_BOOKING_SETTINGS: BookingSettings = {
   allow_larger_groups: false,
 }
 
+export const DEFAULT_STANDARD_VEHICLE_SLUG = 'corolla'
+
 export function parseBookingSettings(
   raw: { max_guests_default?: number; allow_larger_groups?: boolean } | null
 ): BookingSettings {
@@ -96,6 +98,10 @@ export function defaultVehicleForGuests(
     (v) => !v.is_luxury && vehicleFitsGuests(v, passengerCount)
   )
   if (!standard.length) return null
+  const preferred = standard.find(
+    (v) => v.slug === DEFAULT_STANDARD_VEHICLE_SLUG
+  )
+  if (preferred) return preferred
   if (passengerCount <= 3) {
     return [...standard].sort((a, b) => a.capacity_max - b.capacity_max)[0]
   }
@@ -210,8 +216,7 @@ export function cheapestVehicleForGuests(
 }
 
 /**
- * Minimum total for N guests: per-person × N + cheapest fitting vehicle.
- * Default N=1 for experience “starting from” displays.
+ * Public “From” total: default vehicle + per-person × guests (display only).
  */
 export function startingFromCents(
   tour: PricingTour,
@@ -219,7 +224,7 @@ export function startingFromCents(
   passengerCount = 1
 ): number {
   const guests = Math.max(1, Math.round(passengerCount))
-  const vehicle = cheapestVehicleForGuests(vehicles, guests)
+  const vehicle = defaultVehicleForGuests(vehicles, guests)
   const vehicleCents = vehicle ? resolveVehiclePrice(vehicle) : 0
   return vehicleCents + resolvePricePerPerson(tour) * guests
 }

@@ -26,6 +26,7 @@ import {
   maxGuestsForTour,
   resolvePricePerPerson,
   resolveVehiclePrice,
+  sortVehiclesForDisplay,
   startingFromCents,
   validateBookingGuests,
   vehicleFitsGuests,
@@ -202,6 +203,11 @@ export default function BookPage() {
 
   const fittingVehicles = useMemo(
     () => vehiclesForGuestCount(vehicles, Math.max(1, peopleCount)),
+    [vehicles, peopleCount]
+  )
+
+  const displayVehicles = useMemo(
+    () => sortVehiclesForDisplay(vehicles, Math.max(1, peopleCount)),
     [vehicles, peopleCount]
   )
 
@@ -626,7 +632,7 @@ export default function BookPage() {
                                   {t.description}
                                 </p>
                                 <p className="text-xs text-brand-green/70">
-                                  1 guest + cheapest vehicle included
+                                  1 guest + default vehicle (Corolla Cross) included
                                 </p>
                               </div>
                             </div>
@@ -872,7 +878,7 @@ export default function BookPage() {
                         <h3 className="text-sm font-semibold text-brand-green">
                           Select your vehicle
                         </h3>
-                        {vehicles.map((v) => {
+                        {displayVehicles.map((v) => {
                           const fits = vehicleFitsGuests(v, peopleCount)
                           const preview =
                             selectedTour && fits
@@ -1231,11 +1237,6 @@ export default function BookPage() {
                     vehicleName={selectedVehicle?.name}
                     variant="compact"
                   />
-                  {selectedTour && !selectedVehicle && (
-                    <p className="text-xs text-brand-green/60">
-                      {formatTourFromPrice(selectedTour)} before vehicle
-                    </p>
-                  )}
                 </div>
               </aside>
             )}

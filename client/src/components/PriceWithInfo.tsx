@@ -1,9 +1,6 @@
 import { useId, useState } from 'react'
 import { HiOutlineInformationCircle } from 'react-icons/hi'
-import {
-  HERMANUS_PRICE_INFO_TEXT,
-  PRICE_INFO_TEXT,
-} from '../lib/experienceTypes'
+import { hermanusPriceInfoText, PRICE_INFO_TEXT } from '../lib/experienceTypes'
 import type { PricingTour, PricingVehicle } from '../lib/pricing'
 import {
   formatStartingFromNote,
@@ -28,7 +25,7 @@ export default function PriceWithInfo({
   const [open, setOpen] = useState(false)
   const tipId = useId()
   const infoText =
-    tour.slug === 'hermanus' ? HERMANUS_PRICE_INFO_TEXT : PRICE_INFO_TEXT
+    tour.slug === 'hermanus' ? hermanusPriceInfoText() : PRICE_INFO_TEXT
 
   return (
     <div className={className}>
