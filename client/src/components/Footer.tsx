@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { HiOutlineLocationMarker, HiOutlinePhone } from 'react-icons/hi'
 import { WA_PHONE_E164 } from '../lib/whatsappLinks'
+import { GUIDE_REGISTRATION_LABEL } from '../seo/siteConfig'
 
 const WA_DISPLAY = '+27 82 327 7446'
 const WA_HREF = `https://wa.me/${WA_PHONE_E164}`
@@ -13,6 +14,7 @@ export default function Footer() {
           KhayrCape Experiences
         </p>
         <p className="text-brand-cream/90 italic">Private Journeys, Thoughtfully Guided.</p>
+        <p className="text-sm text-brand-cream/85">{GUIDE_REGISTRATION_LABEL}</p>
         <div className="flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-6 text-brand-cream/80">
           <span className="inline-flex items-center gap-2">
             <span className="inline-flex shrink-0" aria-hidden>

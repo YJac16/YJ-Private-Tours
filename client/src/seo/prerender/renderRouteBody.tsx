@@ -5,6 +5,17 @@ import TermsPage from '../../pages/TermsPage'
 import PrivacyPage from '../../pages/PrivacyPage'
 import CookiesPage from '../../pages/CookiesPage'
 import { SsrAuthProvider } from '../../lib/auth'
+import {
+  CUSTOM_TOURS_CHECKOUT_LINE,
+  CUSTOM_TOURS_EXAMPLES,
+  CUSTOM_TOURS_HOW_IT_WORKS,
+  CUSTOM_TOURS_INTRO,
+  CUSTOM_TOURS_PRICING_LINE,
+  CUSTOM_TOURS_WHAT_TO_SEND,
+  CUSTOM_TOURS_WHATSAPP_MESSAGE,
+  HOME_CUSTOM_TOUR_FAQ,
+  HOME_CUSTOM_TOURS_BLURB,
+} from '../../data/customToursCopy'
 import { EXPERIENCE_DEFAULTS } from '../../data/experienceDefaults'
 import {
   FLOOR_VEHICLES,
@@ -14,13 +25,16 @@ import {
 import { HERMANUS_DURATION_LABEL } from '../../data/hermanusDuration'
 import { galleryImages } from '../../data/gallery'
 import { formatFromOneGuest, formatZarComma, startingFromCents } from '../../lib/pricing'
+import { whatsappWithMessage } from '../../lib/whatsappLinks'
 import {
   BUSINESS_EMAIL,
   BUSINESS_NAME,
   BUSINESS_PHONE,
   SITE,
+  guideRegistration,
 } from '../siteConfig'
 import { EXPERIENCE_SLUGS } from '../routes'
+import PrerenderSiteNav from './PrerenderSiteNav'
 
 function escapeText(text: string): string {
   return text
@@ -59,6 +73,7 @@ function ExperiencePrerender({ slug }: { slug: string }) {
 
   return (
     <article data-prerender="body">
+      <PrerenderSiteNav />
       <header>
         <h1>{content.display_name}</h1>
         <p>{content.short_description}</p>
@@ -156,8 +171,11 @@ function HomePrerender() {
 
   return (
     <article data-prerender="body">
+      <PrerenderSiteNav />
       <header>
-        <p>Registered professional tourist guide · Muslim-friendly private tours</p>
+        <p>
+          {guideRegistration.label} · Muslim-friendly private tours
+        </p>
         <h1>Private &amp; Muslim-Friendly Tours of Cape Town</h1>
         <p>Private Journeys, Thoughtfully Guided.</p>
         <p>Relaxed, cultural, and scenic experiences with a qualified local guide</p>
@@ -210,6 +228,24 @@ function HomePrerender() {
       </section>
 
       <section>
+        <h2>Custom private tours</h2>
+        <p>{HOME_CUSTOM_TOURS_BLURB}</p>
+        <p>
+          <a href={`${SITE}/custom-tours`}>Plan a custom tour</a>
+        </p>
+      </section>
+
+      <section>
+        <h2>FAQ</h2>
+        <h3>{HOME_CUSTOM_TOUR_FAQ.question}</h3>
+        <p>
+          {HOME_CUSTOM_TOUR_FAQ.answerBeforeLink}
+          <a href="/custom-tours">/custom-tours</a>
+          {HOME_CUSTOM_TOUR_FAQ.answerAfterLink}
+        </p>
+      </section>
+
+      <section>
         <h2>Contact</h2>
         <p>
           WhatsApp: {BUSINESS_PHONE} · Email: {BUSINESS_EMAIL}
@@ -225,6 +261,7 @@ function HomePrerender() {
 function BookPrerender() {
   return (
     <article data-prerender="body">
+      <PrerenderSiteNav />
       <h1>Book your private experience</h1>
       <p>Live pricing · guest checkout with Yoco · sign in optional</p>
       <p>
@@ -248,6 +285,46 @@ function BookPrerender() {
           })}
         </ul>
       </section>
+    </article>
+  )
+}
+
+function CustomToursPrerender() {
+  const waHref = whatsappWithMessage(CUSTOM_TOURS_WHATSAPP_MESSAGE)
+  return (
+    <article data-prerender="body">
+      <PrerenderSiteNav />
+      <h1>Custom private tours</h1>
+      <p>{CUSTOM_TOURS_INTRO}</p>
+      <section>
+        <h2>Examples</h2>
+        <ul>
+          {CUSTOM_TOURS_EXAMPLES.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+      </section>
+      <section>
+        <h2>How it works</h2>
+        <ol>
+          {CUSTOM_TOURS_HOW_IT_WORKS.map((step) => (
+            <li key={step}>{step}</li>
+          ))}
+        </ol>
+      </section>
+      <section>
+        <h2>What to send us</h2>
+        <ul>
+          {CUSTOM_TOURS_WHAT_TO_SEND.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+      </section>
+      <p>{CUSTOM_TOURS_CHECKOUT_LINE}</p>
+      <p>{CUSTOM_TOURS_PRICING_LINE}</p>
+      <p>
+        <a href={waHref}>Plan a custom tour</a>
+      </p>
     </article>
   )
 }
@@ -286,6 +363,8 @@ export function renderRouteBody(routePath: string): string {
     element = <HomePrerender />
   } else if (routePath === '/book') {
     element = <BookPrerender />
+  } else if (routePath === '/custom-tours') {
+    element = <CustomToursPrerender />
   } else if (routePath === '/gallery') {
     element = <GalleryPrerender />
   } else if (routePath === '/terms') {
@@ -303,10 +382,24 @@ export function renderRouteBody(routePath: string): string {
   return renderToStaticMarkup(element)
 }
 
+/** Minimal crawler-visible body for static 404.html (no homepage hero or JSON-LD). */
+export function renderNotFoundPrerenderBody(): string {
+  return renderToStaticMarkup(
+    <article data-prerender="body">
+      <h1>Page not found</h1>
+      <p>This page does not exist on {BUSINESS_NAME}.</p>
+      <p>
+        <a href={`${SITE}/`}>Home</a> · <a href={`${SITE}/book`}>Book</a>
+      </p>
+    </article>
+  )
+}
+
 export function allPrerenderBodyPaths(): string[] {
   return [
     '/',
     '/book',
+    '/custom-tours',
     '/gallery',
     '/terms',
     '/privacy',

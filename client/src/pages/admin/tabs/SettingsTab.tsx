@@ -169,7 +169,7 @@ export default function SettingsTab({ pin }: Props) {
                 guide_registration_number: e.target.value,
               }))
             }
-            placeholder="e.g. WC1234 — shown on site when set"
+            placeholder="WC16134"
           />
         </label>
         <div className="grid sm:grid-cols-2 gap-3">

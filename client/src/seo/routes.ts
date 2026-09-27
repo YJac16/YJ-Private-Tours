@@ -1,3 +1,4 @@
+import { CUSTOM_TOURS_INTRO, HOME_CUSTOM_TOUR_FAQ } from '../data/customToursCopy'
 import { EXPERIENCE_DEFAULTS } from '../data/experienceDefaults'
 import { FLOOR_TOURS, FLOOR_VEHICLES, getFloorTour } from '../data/catalogFloors'
 import { formatFromOneGuest, startingFromCents } from '../lib/pricing'
@@ -7,6 +8,8 @@ import {
   BUSINESS_PHONE,
   DEFAULT_OG,
   SITE,
+  guideRegistration,
+  guideRegistrationCredentialJsonLd,
 } from './siteConfig'
 
 export type RouteMeta = {
@@ -33,6 +36,12 @@ export const STATIC_PAGE_META: RouteMeta[] = [
     title: 'Book a Private Tour — KhayrCape Experiences',
     description:
       'Book your private Cape Town tour online. Choose your experience, date, vehicle, and pay securely with Yoco — no account required.',
+  },
+  {
+    path: '/custom-tours',
+    title: 'Custom Private Tours — KhayrCape Experiences',
+    description:
+      'Private custom Cape Town and Western Cape itineraries on request. Message us for availability and a tailored quote.',
   },
   {
     path: '/gallery',
@@ -105,6 +114,10 @@ export function experienceMeta(slug: string): RouteMeta | null {
   }
 }
 
+export const CUSTOM_TOURS_META: RouteMeta = STATIC_PAGE_META.find(
+  (r) => r.path === '/custom-tours'
+)!
+
 export function allPrerenderRoutes(): RouteMeta[] {
   const experiences = EXPERIENCE_SLUGS.map((slug) => experienceMeta(slug)).filter(
     Boolean
@@ -113,9 +126,13 @@ export function allPrerenderRoutes(): RouteMeta[] {
   return [
     {
       ...HOME_META,
-      jsonLd: buildLocalBusinessJsonLd(),
+      jsonLd: [buildLocalBusinessJsonLd(), buildFaqJsonLd([HOME_CUSTOM_TOUR_FAQ])],
     },
-    ...STATIC_PAGE_META.filter((r) => r.path !== '/'),
+    ...STATIC_PAGE_META.filter((r) => r.path !== '/').map((route) =>
+      route.path === '/custom-tours'
+        ? { ...route, jsonLd: buildCustomToursServiceJsonLd() }
+        : route
+    ),
     ...experiences,
   ]
 }
@@ -135,7 +152,8 @@ export function buildLocalBusinessJsonLd(): Record<string, unknown> {
     image: DEFAULT_OG,
     telephone: BUSINESS_PHONE,
     email: BUSINESS_EMAIL,
-    description: HOME_META.description,
+    description: `${HOME_META.description} ${guideRegistration.label}.`,
+    hasCredential: guideRegistrationCredentialJsonLd(),
     areaServed: {
       '@type': 'City',
       name: 'Cape Town',
@@ -204,4 +222,28 @@ export function buildTouristTripJsonLd(
   }
 
   return trip
+}
+
+export function buildCustomToursServiceJsonLd(): Record<string, unknown> {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Service',
+    name: 'Custom private tours',
+    description: CUSTOM_TOURS_INTRO,
+    url: `${SITE}/custom-tours`,
+    provider: {
+      '@type': 'TravelAgency',
+      name: BUSINESS_NAME,
+      url: SITE,
+      telephone: BUSINESS_PHONE,
+    },
+    areaServed: {
+      '@type': 'City',
+      name: 'Cape Town',
+      containedInPlace: {
+        '@type': 'AdministrativeArea',
+        name: 'Western Cape',
+      },
+    },
+  }
 }

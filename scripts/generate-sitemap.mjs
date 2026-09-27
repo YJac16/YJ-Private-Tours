@@ -13,6 +13,7 @@ const today = new Date().toISOString().slice(0, 10)
 const URLS = [
   { loc: '/', changefreq: 'weekly', priority: '1.0' },
   { loc: '/book', changefreq: 'weekly', priority: '0.9' },
+  { loc: '/custom-tours', changefreq: 'monthly', priority: '0.85' },
   { loc: '/gallery', changefreq: 'monthly', priority: '0.7' },
   { loc: '/experience/hermanus', changefreq: 'weekly', priority: '0.9' },
   { loc: '/experience/city', changefreq: 'monthly', priority: '0.8' },

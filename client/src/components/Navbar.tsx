@@ -1,27 +1,15 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { HiMenu, HiOutlineMap, HiOutlineTruck, HiOutlineUser, HiX } from 'react-icons/hi'
-import { FaCalendarCheck } from 'react-icons/fa'
+import { HiMenu, HiOutlineMap, HiX } from 'react-icons/hi'
+import { FaCalendarCheck, FaRoute } from 'react-icons/fa'
 import { useAuth } from '../lib/auth'
+import { PRIMARY_SITE_NAV } from '../seo/primaryNav'
 
-const navLinks = [
-  { hash: 'tours', label: 'Tours' },
-  { hash: 'drivers', label: 'Drivers' },
-  { hash: 'fleet', label: 'Fleet' },
-  { hash: 'gallery', label: 'Gallery' },
-  { hash: 'about', label: 'About' },
-]
-
-const mobileQuickLinks = [
-  { to: '/#tours', label: 'Tours', icon: HiOutlineMap },
-  { to: '/#drivers', label: 'Drivers', icon: HiOutlineUser },
-  { to: '/#fleet', label: 'Fleet', icon: HiOutlineTruck },
-  { to: '/book', label: 'Book', icon: FaCalendarCheck },
-]
-
-const drawerLinks = navLinks.filter(
-  (l) => l.hash === 'gallery' || l.hash === 'about'
-)
+const mobileNavIcons = {
+  Experiences: HiOutlineMap,
+  'Custom Tours': FaRoute,
+  Book: FaCalendarCheck,
+} as const
 
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -168,19 +156,27 @@ export default function Navbar() {
         </button>
 
         <nav
-          className="md:hidden flex-1 min-w-0 grid grid-cols-4 gap-0"
-          aria-label="Quick links"
+          className="flex-1 min-w-0 grid grid-cols-3 gap-0 md:flex md:flex-initial md:items-center md:gap-1 md:ml-auto"
+          aria-label="Primary"
         >
-          {mobileQuickLinks.map((item) => {
-            const Icon = item.icon
+          {PRIMARY_SITE_NAV.map((item) => {
+            const Icon = mobileNavIcons[item.label]
+            const isBook = item.label === 'Book'
             return (
               <Link
-                key={item.label}
-                to={item.to}
-                className="flex flex-col items-center justify-center py-2 px-0.5 min-h-12 min-w-0 text-brand-green hover:bg-brand-cream-dark/40 rounded-lg"
+                key={item.href}
+                to={item.href}
+                className={
+                  isBook
+                    ? 'flex flex-col md:flex-row items-center justify-center py-2 px-0.5 md:px-3 md:py-2 min-h-12 md:min-h-0 min-w-0 text-brand-cream bg-brand-green hover:bg-brand-green-dark md:rounded-lg text-[11px] md:text-sm font-semibold transition-colors md:ml-1'
+                    : 'flex flex-col md:flex-row items-center justify-center py-2 px-0.5 md:px-3 md:py-2 min-h-12 md:min-h-0 min-w-0 text-brand-green hover:bg-brand-cream-dark/40 md:hover:text-brand-green-dark md:rounded-lg text-[11px] md:text-sm font-medium md:font-medium transition-colors'
+                }
               >
-                <Icon className="shrink-0 text-base" aria-hidden />
-                <span className="text-[11px] font-semibold leading-tight truncate w-full text-center">
+                <Icon
+                  className="shrink-0 text-base md:hidden mb-0.5"
+                  aria-hidden
+                />
+                <span className="font-semibold md:font-[inherit] leading-tight truncate w-full md:w-auto text-center">
                   {item.label}
                 </span>
               </Link>
@@ -188,24 +184,9 @@ export default function Navbar() {
           })}
         </nav>
 
-        <nav className="hidden md:flex items-center gap-1 ml-auto">
-          {navLinks.map((link) => (
-            <Link
-              key={link.hash}
-              to={`/#${link.hash}`}
-              className="px-3 py-2 text-brand-green hover:text-brand-green-dark hover:bg-brand-cream-dark/50 rounded-lg text-sm font-medium transition-colors"
-            >
-              {link.label}
-            </Link>
-          ))}
-          <Link
-            to="/book"
-            className="inline-flex items-center gap-1.5 px-3 py-2 ml-1 bg-brand-green hover:bg-brand-green-dark text-brand-cream rounded-lg text-sm font-semibold transition-colors"
-          >
-            Book
-          </Link>
+        <div className="hidden md:block shrink-0">
           <AuthLinks />
-        </nav>
+        </div>
 
         <button
           type="button"
@@ -220,21 +201,10 @@ export default function Navbar() {
 
       <div
         className={`md:hidden overflow-hidden transition-all duration-200 ease-out ${
-          mobileOpen ? 'max-h-128 opacity-100' : 'max-h-0 opacity-0'
+          mobileOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
         }`}
       >
         <nav className="px-4 pb-4 pt-2 bg-brand-cream border-t border-brand-cream-dark flex flex-col gap-1">
-          {drawerLinks.map((link) => (
-            <Link
-              key={link.hash}
-              to={`/#${link.hash}`}
-              onClick={() => setMobileOpen(false)}
-              className="py-3 text-brand-green hover:bg-brand-cream-dark/50 rounded-lg px-2 font-medium min-h-11 flex items-center"
-            >
-              {link.label}
-            </Link>
-          ))}
-          <div className="my-1 border-t border-brand-cream-dark" />
           <p className="px-2 pt-1 text-[11px] font-semibold uppercase tracking-wide text-brand-green/55">
             Account
           </p>

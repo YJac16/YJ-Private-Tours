@@ -10,6 +10,7 @@ import PrivacyPage from './pages/PrivacyPage'
 import CookiesPage from './pages/CookiesPage'
 import NotFoundPage from './pages/NotFoundPage'
 import BookPage from './pages/BookPage'
+import CustomToursPage from './pages/CustomToursPage'
 import DriverSchedulePage from './pages/DriverSchedulePage'
 import AdminPricingPage from './pages/AdminPricingPage'
 import LoginPage from './pages/LoginPage'
@@ -32,6 +33,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/book" element={<BookPage />} />
+        <Route path="/custom-tours" element={<CustomToursPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />

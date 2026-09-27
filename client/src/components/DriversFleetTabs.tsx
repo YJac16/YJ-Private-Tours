@@ -8,6 +8,7 @@ import PriceWithInfo from './PriceWithInfo'
 import CatalogLoadError from './CatalogLoadError'
 import { isDateInSeason, WHALE_SEASON } from '../lib/seasonalVisibility'
 import { HERMANUS_DURATION_LABEL } from '../data/hermanusDuration'
+import { guideRegistration } from '../seo/siteConfig'
 
 const DRIVER_CHAT_ME = whatsappWithMessage(
   "Hi Yaseen, I'd like to chat with you about booking a tour."
@@ -334,11 +335,9 @@ export default function DriversFleetTabs() {
                     Meet Your Private Cape Town Guide
                   </h3>
                   <p className="text-brand-gold font-semibold mt-1">Yaseen</p>
-                  {catalog?.guide_registration_number && (
-                    <p className="mt-2 inline-flex text-xs font-semibold text-brand-green bg-brand-gold/25 border border-brand-gold/40 rounded-md px-2 py-1">
-                      Guide · {catalog.guide_registration_number}
-                    </p>
-                  )}
+                  <p className="mt-2 inline-flex text-xs font-semibold text-brand-green bg-brand-gold/25 border border-brand-gold/40 rounded-md px-2 py-1">
+                    {guideRegistration.label}
+                  </p>
                 </div>
                 <p className="text-sm sm:text-base text-brand-green/90 leading-relaxed">
                   Local Cape Town guide offering private, flexible
