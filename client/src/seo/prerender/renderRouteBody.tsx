@@ -35,6 +35,9 @@ function fromPriceForSlug(slug: string): string {
   const tour = getFloorTour(slug)
   if (!tour) return ''
   const cents = startingFromCents(tour, FLOOR_VEHICLES, 1)
+  if (slug === 'hermanus') {
+    return `From ${formatZarComma(cents)}`
+  }
   return formatFromOneGuest(cents)
 }
 
@@ -154,10 +157,10 @@ function HomePrerender() {
   return (
     <article data-prerender="body">
       <header>
-        <p>Muslim-friendly private tours</p>
+        <p>Registered professional tourist guide · Muslim-friendly private tours</p>
         <h1>Private &amp; Muslim-Friendly Tours of Cape Town</h1>
         <p>Private Journeys, Thoughtfully Guided.</p>
-        <p>Relaxed, cultural, and scenic private experiences</p>
+        <p>Relaxed, cultural, and scenic experiences with a qualified local guide</p>
         <p>{fromPrice}</p>
       </header>
 

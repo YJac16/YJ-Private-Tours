@@ -22,7 +22,7 @@ export const HOME_META: RouteMeta = {
   path: '/',
   title: 'KhayrCape Experiences — Private Muslim-Friendly Cape Town Tours',
   description:
-    'Private Cape Town tours with a local Cape Town guide — City & Culture, Cape Peninsula, Halal-friendly Winelands, and Ocean Sunset experiences. Book online or WhatsApp.',
+    'Private Cape Town tours with a registered local guide — City & Culture, Cape Peninsula, Halal-friendly Winelands, and Ocean Sunset experiences. Book online or WhatsApp.',
   ogType: 'website',
 }
 
