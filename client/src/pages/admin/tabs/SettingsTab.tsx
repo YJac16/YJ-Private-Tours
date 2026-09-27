@@ -9,7 +9,7 @@ import { cardClass, inputClass, labelClass } from '../adminShared'
 type Props = { pin: string }
 
 const defaultSettings = (): BusinessSettings => ({
-  company_name: 'Khayr Cape Experiences',
+  company_name: 'KhayrCape Experiences',
   logo_url: '',
   email: '',
   whatsapp: '',

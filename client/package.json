@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "rimraf dist && tsc -b && vite build && node ../scripts/generate-seo-manifest.mjs && node ../scripts/prerender-routes.mjs && node ../scripts/generate-sitemap.mjs",
+    "build": "rimraf dist && tsc -b && vite build && npx tsx --tsconfig tsconfig.prerender.json ../scripts/export-seo-manifest.ts && npx tsx --tsconfig tsconfig.prerender.json ../scripts/render-prerender-bodies.ts && node ../scripts/prerender-routes.mjs && npx tsx --tsconfig tsconfig.prerender.json ../scripts/generate-llms-txt.ts && npx tsx --tsconfig tsconfig.prerender.json scripts/generate-404-html.tsx && node ../scripts/generate-sitemap.mjs",
     "lint": "eslint .",
     "preview": "vite preview"
   },
@@ -31,6 +31,7 @@
     "globals": "^16.5.0",
     "postcss": "^8.5.6",
     "rimraf": "^6.0.1",
+    "tsx": "^4.20.5",
     "tailwindcss": "^4.1.18",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.46.4",

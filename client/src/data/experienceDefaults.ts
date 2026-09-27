@@ -1,4 +1,5 @@
 import type { ExperienceContent } from '../lib/experienceTypes'
+import { HERMANUS_DURATION_LABEL } from './hermanusDuration'
 
 const sharedFaqs = (duration: string): ExperienceContent['faqs'] => [
   {
@@ -13,7 +14,7 @@ const sharedFaqs = (duration: string): ExperienceContent['faqs'] => [
   {
     question: 'Can the itinerary be customised?',
     answer:
-      'Yes. Every Khayr Cape Experience is private, so we can adjust stops and pacing to suit your interests, mobility, and schedule.',
+      'Yes. Every KhayrCape Experience is private, so we can adjust stops and pacing to suit your interests, mobility, and schedule.',
   },
   {
     question: 'What should I bring?',
@@ -28,7 +29,7 @@ const sharedFaqs = (duration: string): ExperienceContent['faqs'] => [
   {
     question: 'Is this a private experience?',
     answer:
-      'Yes. All Khayr Cape Experiences are private and personalised — no large groups and no shared coaches.',
+      'Yes. All KhayrCape Experiences are private and personalised — no large groups and no shared coaches.',
   },
 ]
 
@@ -140,9 +141,9 @@ export const EXPERIENCE_DEFAULTS: Record<string, ExperienceContent> = {
     faqs: sharedFaqs('3–4 hours'),
     map_embed_url:
       'https://maps.google.com/maps?q=Bo-Kaap,+Cape+Town&t=&z=13&ie=UTF8&iwloc=&output=embed',
-    seo_title: 'Cape Town City & Culture Experience | Khayr Cape Experiences',
+    seo_title: 'Cape Town City & Culture Experience | KhayrCape Experiences',
     seo_description:
-      'Private Cape Town city tour with Bo-Kaap, Signal Hill, historic landmarks, and hotel pickup. Book online with Khayr Cape Experiences.',
+      'Private Cape Town city tour with Bo-Kaap, Signal Hill, historic landmarks, and hotel pickup. Book online with KhayrCape Experiences.',
     seo_image: '/experiences/bo-kaap.jpg',
     pricing_notes:
       'Guest rate plus private vehicle fee selected during booking.',
@@ -250,7 +251,7 @@ export const EXPERIENCE_DEFAULTS: Record<string, ExperienceContent> = {
     faqs: sharedFaqs('3.5–4.5 hours (express) or longer by request'),
     map_embed_url:
       'https://maps.google.com/maps?q=Cape+Point,+South+Africa&t=&z=11&ie=UTF8&iwloc=&output=embed',
-    seo_title: 'Cape Peninsula Experience | Khayr Cape Experiences',
+    seo_title: 'Cape Peninsula Experience | KhayrCape Experiences',
     seo_description:
       'Private Cape Peninsula tour with Chapman’s Peak and Cape Point. Flexible pacing, hotel pickup, and online booking.',
     seo_image: '/experiences/cape-point.jpg',
@@ -348,7 +349,7 @@ export const EXPERIENCE_DEFAULTS: Record<string, ExperienceContent> = {
     faqs: sharedFaqs('2–3 hours'),
     map_embed_url:
       'https://maps.google.com/maps?q=Camps+Bay,+Cape+Town&t=&z=13&ie=UTF8&iwloc=&output=embed',
-    seo_title: 'Ocean Sunset Experience | Khayr Cape Experiences',
+    seo_title: 'Ocean Sunset Experience | KhayrCape Experiences',
     seo_description:
       'Private Atlantic Seaboard sunset experience in Cape Town with Camps Bay viewpoints and hotel pickup.',
     seo_image: '/experiences/camps-bay-cape-town.jpg',
@@ -364,7 +365,7 @@ export const EXPERIENCE_DEFAULTS: Record<string, ExperienceContent> = {
     hero_tagline:
       'Mountain valleys, vineyard scenery, and flexible halal-friendly stops — privately guided.',
     detailed_description:
-      'This private winelands experience focuses on scenery, culture, and comfortable pacing rather than rushed tasting rooms. Ideal for Muslim-friendly travellers, families, and guests who want beautiful landscapes with thoughtful stop recommendations.\n\nYour registered guide shares local insight across Stellenbosch / Franschhoek vistas while adapting the day to your preferences. Every Khayr Cape Experience remains private and personalised — no shared groups, with hotel or Airbnb pickup and an air-conditioned vehicle throughout.',
+      'This private winelands experience focuses on scenery, culture, and comfortable pacing rather than rushed tasting rooms. Ideal for Muslim-friendly travellers, families, and guests who want beautiful landscapes with thoughtful stop recommendations.\n\nYour registered guide shares local insight across Stellenbosch / Franschhoek vistas while adapting the day to your preferences. Every KhayrCape Experience remains private and personalised — no shared groups, with hotel or Airbnb pickup and an air-conditioned vehicle throughout.',
     hero_image: '/experiences/unsplash-franschhoek-vineyard-mountains.jpg',
     gallery_images: [
       '/experiences/unsplash-franschhoek-vineyard-mountains.jpg',
@@ -457,7 +458,7 @@ export const EXPERIENCE_DEFAULTS: Record<string, ExperienceContent> = {
     faqs: sharedFaqs('5–6 hours'),
     map_embed_url:
       'https://maps.google.com/maps?q=Stellenbosch+Winelands&t=&z=11&ie=UTF8&iwloc=&output=embed',
-    seo_title: 'Halal-Friendly Winelands Experience | Khayr Cape Experiences',
+    seo_title: 'Halal-Friendly Winelands Experience | KhayrCape Experiences',
     seo_description:
       'Private Stellenbosch and Franschhoek winelands experience with halal-aware options, hotel pickup, and flexible pacing.',
     seo_image: '/experiences/unsplash-franschhoek-vineyard-mountains.jpg',
@@ -610,7 +611,7 @@ export const EXPERIENCE_DEFAULTS: Record<string, ExperienceContent> = {
     seo_image: '/experiences/hermanus-cliff-path-coast.jpg',
     pricing_notes:
       'From R5,900 per private group (1 guest + cheapest private vehicle). Boat tour not included.',
-    duration_label: 'Full Day · 8–10 hours',
+    duration_label: HERMANUS_DURATION_LABEL,
   },
 }
 

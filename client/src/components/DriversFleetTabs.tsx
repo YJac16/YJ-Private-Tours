@@ -7,6 +7,7 @@ import { useCatalog } from '../hooks/useCatalog'
 import PriceWithInfo from './PriceWithInfo'
 import CatalogLoadError from './CatalogLoadError'
 import { isDateInSeason, WHALE_SEASON } from '../lib/seasonalVisibility'
+import { HERMANUS_DURATION_LABEL } from '../data/hermanusDuration'
 
 const DRIVER_CHAT_ME = whatsappWithMessage(
   "Hi Yaseen, I'd like to chat with you about booking a tour."
@@ -40,7 +41,7 @@ const timeSlotTours: TimeSlotTour[] = [
     title: 'Hermanus Whale Experience',
     tourSlug: 'hermanus',
     timeBadge: '🐋 WHALE SEASON',
-    duration: 'Full Day · 8–10 hours',
+    duration: HERMANUS_DURATION_LABEL,
     bullets: [
       'Private journey from Cape Town',
       'Land-based whale-season viewing',

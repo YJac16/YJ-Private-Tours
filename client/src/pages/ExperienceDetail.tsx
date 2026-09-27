@@ -48,6 +48,7 @@ import {
   isTourPubliclyVisible,
   WHALE_SEASON,
 } from '../lib/seasonalVisibility'
+import { HERMANUS_DURATION_LABEL } from '../data/hermanusDuration'
 import { whatsappWithMessage } from '../lib/whatsappLinks'
 import type { Vehicle } from '../lib/bookingApi'
 
@@ -603,7 +604,7 @@ export default function ExperienceDetail() {
                     value: formatSeasonLabel(WHALE_SEASON),
                   },
                   { label: 'Experience', value: 'Full Day' },
-                  { label: 'Duration', value: 'Approximately 8–10 hours' },
+                  { label: 'Duration', value: HERMANUS_DURATION_LABEL },
                   { label: 'Start', value: 'Cape Town' },
                   { label: 'Destination', value: 'Hermanus' },
                   {
@@ -801,7 +802,7 @@ export default function ExperienceDetail() {
                   { label: 'Experience', value: 'Full Day' },
                   {
                     label: 'Duration',
-                    value: 'Approximately 8–10 hours',
+                    value: HERMANUS_DURATION_LABEL,
                   },
                   { label: 'Start', value: 'Cape Town' },
                   { label: 'Destination', value: 'Hermanus' },

@@ -130,6 +130,7 @@ export function buildLocalBusinessJsonLd(): Record<string, unknown> {
     '@context': 'https://schema.org',
     '@type': 'TravelAgency',
     name: BUSINESS_NAME,
+    alternateName: 'Khayr Cape Experiences',
     url: SITE,
     image: DEFAULT_OG,
     telephone: BUSINESS_PHONE,
