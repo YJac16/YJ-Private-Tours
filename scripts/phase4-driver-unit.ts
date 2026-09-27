@@ -155,10 +155,11 @@ check('mock reminder mark is idempotent', () => {
 check('legacy PIN fails closed when unset', () => {
   const prev = process.env.DRIVER_PIN
   delete process.env.DRIVER_PIN
-  const expected = process.env.DRIVER_PIN
-  assert.equal(!expected, true)
-  // Mirror route checkPin logic
-  const ok = Boolean(expected) && expected === '0420'
+  const configured = process.env.DRIVER_PIN
+  assert.equal(!configured, true)
+  const probePin =
+    process.env.PHASE4_DRIVER_PIN_PROBE ?? '0000-unit-test-only-not-a-real-pin'
+  const ok = Boolean(configured) && configured === probePin
   assert.equal(ok, false)
   if (prev !== undefined) process.env.DRIVER_PIN = prev
 })
