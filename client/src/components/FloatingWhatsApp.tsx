@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { FaWhatsapp } from 'react-icons/fa'
 import { useLocation } from 'react-router-dom'
 import { whatsappWithMessage } from '../lib/whatsappLinks'
@@ -18,7 +19,34 @@ const HIDE_ON = [
 
 export default function FloatingWhatsApp() {
   const { pathname } = useLocation()
+  const onHome = pathname === '/'
+  const [heroInView, setHeroInView] = useState(onHome)
+
+  useEffect(() => {
+    if (!onHome) {
+      setHeroInView(false)
+      return
+    }
+    const hero = document.getElementById('hero')
+    if (!hero) {
+      setHeroInView(false)
+      return
+    }
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setHeroInView(entry.isIntersecting)
+      },
+      { threshold: 0.08, rootMargin: '0px 0px -8% 0px' }
+    )
+    observer.observe(hero)
+    return () => observer.disconnect()
+  }, [onHome])
+
   if (HIDE_ON.some((p) => pathname === p || pathname.startsWith(`${p}/`))) {
+    return null
+  }
+
+  if (onHome && heroInView) {
     return null
   }
 

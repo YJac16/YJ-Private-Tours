@@ -173,12 +173,12 @@ function HomePrerender() {
     <article data-prerender="body">
       <PrerenderSiteNav />
       <header>
-        <p>
-          {guideRegistration.label} · Muslim-friendly private tours
-        </p>
+        <p className="uppercase">{guideRegistration.label}</p>
         <h1>Private &amp; Muslim-Friendly Tours of Cape Town</h1>
         <p>Private Journeys, Thoughtfully Guided.</p>
-        <p>Relaxed, cultural, and scenic experiences with a qualified local guide</p>
+        <p>
+          Relaxed, cultural and scenic experiences with a registered local guide.
+        </p>
         <p>{fromPrice}</p>
       </header>
 
