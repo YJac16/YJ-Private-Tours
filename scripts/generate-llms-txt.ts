@@ -16,7 +16,7 @@ const DIST = path.join(__dirname, '..', 'client', 'dist')
 const lines = [
   `# ${BUSINESS_NAME}`,
   '',
-  `${BUSINESS_NAME} offers private, Muslim-friendly tours of Cape Town and the Western Cape with a registered local guide.`,
+  `${BUSINESS_NAME} offers private, Muslim-friendly tours of Cape Town and the Western Cape with a local guide.`,
   'Halal-friendly options and cultural sensitivity are part of how we host guests.',
   '',
   `Site: ${SITE}`,
