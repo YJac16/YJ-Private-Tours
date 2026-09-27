@@ -6,7 +6,9 @@ import {
   BUSINESS_NAME,
   BUSINESS_PHONE,
   DEFAULT_OG,
+  GUIDE_REGISTRATION_LABEL,
   SITE,
+  guideRegistrationCredentialJsonLd,
 } from './siteConfig'
 
 export type RouteMeta = {
@@ -135,7 +137,8 @@ export function buildLocalBusinessJsonLd(): Record<string, unknown> {
     image: DEFAULT_OG,
     telephone: BUSINESS_PHONE,
     email: BUSINESS_EMAIL,
-    description: HOME_META.description,
+    description: `${HOME_META.description} ${GUIDE_REGISTRATION_LABEL}.`,
+    hasCredential: guideRegistrationCredentialJsonLd(),
     areaServed: {
       '@type': 'City',
       name: 'Cape Town',

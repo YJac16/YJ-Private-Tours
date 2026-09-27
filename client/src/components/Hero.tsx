@@ -3,6 +3,7 @@ import { HiOutlineMap, HiOutlineCalendar } from 'react-icons/hi'
 import { FaWhatsapp } from 'react-icons/fa'
 import { siteLowestFromLabel } from '../data/catalogFloors'
 import { whatsappWithMessage } from '../lib/whatsappLinks'
+import { GUIDE_REGISTRATION_LABEL } from '../seo/siteConfig'
 
 const HERO_WA = whatsappWithMessage(
   "Hi, I'd like to enquire about a private tour with KhayrCape Experiences."
@@ -40,7 +41,7 @@ export default function Hero() {
           />
         </div>
         <p className="inline-flex items-center justify-center gap-2 mb-3 text-xs sm:text-sm font-semibold tracking-wide uppercase text-white/95 bg-black/35 border border-white/20 rounded-full px-3 py-1.5 [text-shadow:0_1px_6px_rgba(0,0,0,0.5)]">
-          Registered professional tourist guide · Muslim-friendly private tours
+          {GUIDE_REGISTRATION_LABEL} · Muslim-friendly private tours
         </p>
         <h1 className="text-[1.65rem] sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-3 sm:mb-4 leading-tight [text-shadow:0_2px_16px_rgba(0,0,0,0.65),0_1px_3px_rgba(0,0,0,0.9)]">
           Private & Muslim-Friendly Tours of Cape Town

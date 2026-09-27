@@ -18,6 +18,7 @@ import {
   BUSINESS_EMAIL,
   BUSINESS_NAME,
   BUSINESS_PHONE,
+  GUIDE_REGISTRATION_LABEL,
   SITE,
 } from '../siteConfig'
 import { EXPERIENCE_SLUGS } from '../routes'
@@ -157,7 +158,9 @@ function HomePrerender() {
   return (
     <article data-prerender="body">
       <header>
-        <p>Registered professional tourist guide · Muslim-friendly private tours</p>
+        <p>
+          {GUIDE_REGISTRATION_LABEL} · Muslim-friendly private tours
+        </p>
         <h1>Private &amp; Muslim-Friendly Tours of Cape Town</h1>
         <p>Private Journeys, Thoughtfully Guided.</p>
         <p>Relaxed, cultural, and scenic experiences with a qualified local guide</p>
@@ -301,6 +304,19 @@ export function renderRouteBody(routePath: string): string {
 
   if (!element) return ''
   return renderToStaticMarkup(element)
+}
+
+/** Minimal crawler-visible body for static 404.html (no homepage hero or JSON-LD). */
+export function renderNotFoundPrerenderBody(): string {
+  return renderToStaticMarkup(
+    <article data-prerender="body">
+      <h1>Page not found</h1>
+      <p>This page does not exist on {BUSINESS_NAME}.</p>
+      <p>
+        <a href={`${SITE}/`}>Home</a> · <a href={`${SITE}/book`}>Book</a>
+      </p>
+    </article>
+  )
 }
 
 export function allPrerenderBodyPaths(): string[] {

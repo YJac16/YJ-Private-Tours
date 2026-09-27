@@ -6,6 +6,7 @@ import {
   BUSINESS_EMAIL,
   BUSINESS_NAME,
   BUSINESS_PHONE,
+  GUIDE_REGISTRATION_NUMBER,
   SITE,
 } from '../client/src/seo/siteConfig.ts'
 import { siteLowestFromLabel } from '../client/src/data/catalogFloors.ts'
@@ -16,7 +17,7 @@ const DIST = path.join(__dirname, '..', 'client', 'dist')
 const lines = [
   `# ${BUSINESS_NAME}`,
   '',
-  `${BUSINESS_NAME} offers private, Muslim-friendly tours of Cape Town and the Western Cape with a registered local guide.`,
+  `${BUSINESS_NAME} offers private, Muslim-friendly tours of Cape Town and the Western Cape with a registered local guide (reg. ${GUIDE_REGISTRATION_NUMBER}).`,
   'Halal-friendly options and cultural sensitivity are part of how we host guests.',
   '',
   `Site: ${SITE}`,

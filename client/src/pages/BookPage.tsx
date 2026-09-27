@@ -15,6 +15,7 @@ import {
 } from '../lib/bookingApi'
 import { useAuth } from '../lib/auth'
 import { useCatalog } from '../hooks/useCatalog'
+import { GUIDE_REGISTRATION_NUMBER } from '../seo/siteConfig'
 import {
   calculatePrice,
   defaultVehicleForGuests,
@@ -205,7 +206,9 @@ export default function BookPage() {
   useEffect(() => {
     if (!catalog) return
 
-    setGuideRegistrationNumber(catalog.guide_registration_number || null)
+    setGuideRegistrationNumber(
+      catalog.guide_registration_number?.trim() || GUIDE_REGISTRATION_NUMBER
+    )
 
     if (tourSlug) {
       const t = catalog.tours.find((x) => x.slug === tourSlug)

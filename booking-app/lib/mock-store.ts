@@ -443,6 +443,7 @@ let businessSettings: Record<string, unknown> = {
   currency: 'ZAR',
   vat_percent: 15,
   business_hours: '',
+  guide_registration_number: 'WC16134',
   discounts: [],
   pdf_templates: {
     quotation: {
@@ -498,12 +499,17 @@ function uuid() {
 
 export const mockDb = {
   catalog() {
+    const reg =
+      typeof businessSettings.guide_registration_number === 'string'
+        ? String(businessSettings.guide_registration_number).trim()
+        : ''
     return {
       drivers: drivers.filter((d) => d.is_active),
       vehicles,
       tours,
       settings: { ...bookingSettings },
       blocked_dates: [...blockedDates],
+      guide_registration_number: reg || 'WC16134',
     }
   },
 
