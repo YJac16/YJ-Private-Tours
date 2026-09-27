@@ -13,7 +13,7 @@ export default function Hero() {
   return (
     <section
       id="hero"
-      className="relative min-h-[100dvh] max-md:max-h-[100dvh] flex items-center justify-center px-4 py-8 sm:py-16 md:py-24 bg-cover bg-center bg-no-repeat"
+      className="relative min-h-[100dvh] flex max-md:items-start max-md:justify-start md:items-center md:justify-center px-4 max-md:pt-[calc(var(--navbar-height,4rem)+0.625rem)] max-md:pb-[calc(var(--cookie-dock-height,0px)+0.5rem)] py-8 sm:py-16 md:py-24 bg-cover bg-center max-md:bg-[position:center_38%] md:bg-center bg-no-repeat"
       style={{ backgroundImage: 'url(/cape-town-banner.jpg)' }}
     >
       <div
@@ -48,10 +48,10 @@ export default function Hero() {
         <p className="text-sm sm:text-lg md:text-xl text-white mb-2 sm:mb-3 max-w-2xl mx-auto leading-snug [text-shadow:0_1px_8px_rgba(0,0,0,0.65)]">
           Relaxed, cultural and scenic experiences with a registered local guide.
         </p>
-        <p className="inline-block text-sm sm:text-base font-semibold text-white mb-4 sm:mb-8 rounded-xl border border-white/15 bg-black/55 backdrop-blur-sm px-4 py-2.5 sm:px-5 sm:py-3 shadow-lg shadow-black/30">
+        <p className="inline-block text-sm sm:text-base font-semibold text-white mb-3 sm:mb-8 rounded-xl border border-white/15 bg-black/55 backdrop-blur-sm px-4 py-2 sm:py-2.5 sm:px-5 sm:py-3 shadow-lg shadow-black/30">
           {fromPrice}
         </p>
-        <div className="flex flex-col gap-2.5 sm:gap-4 justify-stretch sm:flex-row sm:justify-center items-stretch sm:items-center max-w-md sm:max-w-none mx-auto">
+        <div className="flex flex-col gap-2 sm:gap-4 justify-stretch sm:flex-row sm:justify-center items-stretch sm:items-center max-w-md sm:max-w-none mx-auto max-md:pb-0">
           <Link
             to="/book"
             className="inline-flex items-center justify-center gap-2 px-6 py-3 min-h-11 sm:min-h-12 bg-brand-green hover:bg-brand-green-dark text-brand-cream font-semibold rounded-xl transition-all shadow-lg shadow-black/25 active:scale-[0.98] w-full sm:w-auto sm:min-w-50 border-2 border-white/20 order-1"
