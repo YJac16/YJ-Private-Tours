@@ -28,8 +28,7 @@ export function mergeBookingsById<T extends { id: string }>(
 
 /**
  * List bookings visible to a signed-in account holder.
- * Identity: auth.users.id via bookings.client_user_id, plus legacy rows matched by client_email.
- * Consent (client_consents) is not consulted — viewing history is independent of signing consent.
+ * Caller must pass userId + email from accountBookingIdentity() (JWT user only).
  */
 export async function listAccountBookingsForUser(
   sb: SupabaseClient,

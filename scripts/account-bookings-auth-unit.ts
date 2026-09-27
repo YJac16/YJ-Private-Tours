@@ -149,6 +149,23 @@ async function main() {
     'Client A must not see Client B booking'
   )
 
+  const spoofQuery = await invoke('GET', {
+    token: clientToken,
+    query: { email: clientBEmail },
+  })
+  assert.equal(spoofQuery.status, 200)
+  assert.ok(
+    (spoofQuery.payload.bookings as Array<{ booking_reference?: string }>).some(
+      (b) => b.booking_reference === 'KC-ACCT-TEST-1'
+    )
+  )
+  assert.ok(
+    !(spoofQuery.payload.bookings as Array<{ booking_reference?: string }>).some(
+      (b) => b.booking_reference === 'KC-ACCT-TEST-B'
+    ),
+    '?email=Client B must not change list for Client A token'
+  )
+
   console.log('account-bookings-auth-unit: ok')
 }
 

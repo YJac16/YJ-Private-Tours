@@ -22,6 +22,20 @@ export type AuthContext = {
   accessToken: string
 }
 
+/**
+ * Booking list/detail identity: Supabase auth user from the bearer JWT only.
+ * Never use req.query, req.body, headers (except Authorization), or profiles.email for matching.
+ */
+export function accountBookingIdentity(auth: AuthContext): {
+  userId: string
+  email: string | null
+} {
+  return {
+    userId: auth.user.id,
+    email: auth.user.email ?? null,
+  }
+}
+
 function supabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY

@@ -7,7 +7,7 @@ import {
 } from '../booking-app/lib/booking-lifecycle'
 import { mockDb, useMockStore } from '../booking-app/lib/mock-store'
 import { createYocoCheckout } from '../booking-app/lib/yoco'
-import { getAuthContext, isAuthError, normalizeUserRole, type AuthContext } from './_lib/authUser'
+import { getAuthContext, isAuthError, normalizeUserRole, accountBookingIdentity, type AuthContext } from './_lib/authUser'
 import { methodNotAllowed, readJson } from './_lib/http'
 import {
   ACCOUNT_BOOKING_SELECT,
@@ -301,7 +301,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(auth.status).json({ error: auth.error })
     }
 
-    const email = auth.profile.email || auth.user.email || null
+    const { userId, email } = accountBookingIdentity(auth)
     const isAdmin = auth.role === 'admin'
     const bookingId =
       (req.query.id ? String(req.query.id) : '') ||
@@ -312,7 +312,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (bookingId) {
           const b = mockDb.getAccountBookingDetail(
             bookingId,
-            auth.user.id,
+            userId,
             email,
             isAdmin
           )
@@ -321,7 +321,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           return res.status(200).json({ booking: b, history })
         }
         const status = req.query.status ? String(req.query.status) : ''
-        let bookings = mockDb.listAccountBookings(auth.user.id, email)
+        let bookings = mockDb.listAccountBookings(userId, email)
         if (status === 'upcoming') {
           const today = new Date().toISOString().slice(0, 10)
           bookings = bookings.filter(
@@ -356,7 +356,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           .maybeSingle()
         if (error) return res.status(500).json({ error: error.message })
         if (!data) return res.status(404).json({ error: 'Booking not found' })
-        if (!ownsBooking(data, auth.user.id, email, isAdmin)) {
+        if (!ownsBooking(data, userId, email, isAdmin)) {
           return res.status(403).json({ error: 'Forbidden' })
         }
         const { data: history } = await sb
@@ -379,7 +379,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       try {
         const bookings = await listAccountBookingsForUser(
           sb,
-          auth.user.id,
+          userId,
           email,
           status || undefined
         )
@@ -400,7 +400,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (useMockStore()) {
         const detail = mockDb.getAccountBookingDetail(
           id,
-          auth.user.id,
+          userId,
           email,
           isAdmin
         )
@@ -460,7 +460,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         .maybeSingle()
       if (findErr) return res.status(500).json({ error: findErr.message })
       if (!existing) return res.status(404).json({ error: 'Booking not found' })
-      if (!ownsBooking(existing, auth.user.id, email, isAdmin)) {
+      if (!ownsBooking(existing, userId, email, isAdmin)) {
         return res.status(403).json({ error: 'Forbidden' })
       }
 

@@ -4,7 +4,7 @@
  */
 
 import { calculatePrice } from './pricing'
-import { bookingOccupiesSlot, isRefundEligible, PENDING_HOLD_MINUTES } from './booking-lifecycle'
+import { bookingOccupiesSlot, isRefundEligible, pendingHoldExpiredForSweep, PENDING_HOLD_MINUTES } from './booking-lifecycle'
 
 export type MockDriver = {
   id: string
@@ -523,11 +523,13 @@ function slotBlockedByBooking(b: { status: string; created_at: string }) {
   return bookingOccupiesSlot(b)
 }
 
-function expireStalePendingMockBookings(): number {
-  const cutoff = Date.now() - PENDING_HOLD_MINUTES * 60 * 1000
+function expireStalePendingMockBookings(nowMs: number = Date.now()): number {
   let count = 0
   for (const b of bookings) {
-    if (b.status === 'pending' && new Date(b.created_at).getTime() < cutoff) {
+    if (
+      b.status === 'pending' &&
+      pendingHoldExpiredForSweep(b.created_at, nowMs)
+    ) {
       b.status = 'expired'
       b.payment_status = 'cancelled'
       b.trip_status = 'cancelled'
@@ -1885,8 +1887,8 @@ export const mockDb = {
     }
   },
 
-  expireStalePendingBookings() {
-    return expireStalePendingMockBookings()
+  expireStalePendingBookings(nowMs?: number) {
+    return expireStalePendingMockBookings(nowMs)
   },
 
   /** Test helper: simulate pending hold elapsed without waiting. */
