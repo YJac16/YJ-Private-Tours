@@ -7,8 +7,12 @@ import {
 } from '../booking-app/lib/booking-lifecycle'
 import { mockDb, useMockStore } from '../booking-app/lib/mock-store'
 import { createYocoCheckout } from '../booking-app/lib/yoco'
-import { getAuthContext, isAuthError, normalizeUserRole, requireAuth, type AuthContext } from './_lib/authUser'
+import { getAuthContext, isAuthError, normalizeUserRole, type AuthContext } from './_lib/authUser'
 import { methodNotAllowed, readJson } from './_lib/http'
+import {
+  ACCOUNT_BOOKING_SELECT,
+  listAccountBookingsForUser,
+} from './_lib/accountBookingsList'
 
 function supabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL
@@ -17,11 +21,13 @@ function supabaseAdmin() {
   return createClient(url, key, { auth: { persistSession: false } })
 }
 
-function escapePostgrestString(value: string): string {
-  return `"${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`
+function headerValue(req: VercelRequest, name: string): string {
+  const raw = req.headers[name.toLowerCase()]
+  return Array.isArray(raw) ? String(raw[0] || '') : String(raw || '')
 }
 
-async function requireAccountBookingsAuth(
+/** Authenticated account holder (client or admin). Consent is not required to list bookings. */
+async function assertAccountBookingsAccess(
   req: VercelRequest
 ): Promise<AuthContext | { error: string; status: number }> {
   const auth = await getAuthContext(req)
@@ -36,11 +42,6 @@ async function requireAccountBookingsAuth(
     }
   }
   return auth
-}
-
-function headerValue(req: VercelRequest, name: string): string {
-  const raw = req.headers[name.toLowerCase()]
-  return Array.isArray(raw) ? String(raw[0] || '') : String(raw || '')
 }
 
 async function handleConsent(req: VercelRequest, res: VercelResponse) {
@@ -194,19 +195,7 @@ async function handleConsent(req: VercelRequest, res: VercelResponse) {
   return methodNotAllowed(res, ['GET', 'POST'])
 }
 
-const BOOKING_SELECT = `
-  id, booking_date, start_time, status, trip_status, payment_status,
-  client_name, client_email, client_phone, notes, driver_id, client_user_id,
-  guest_count, adult_count, child_count, passenger_count,
-  grand_total_cents, final_price_cents,
-  pickup_address, special_requests, booking_reference,
-  cancel_reason, cancelled_at, cancelled_by,
-  refund_status, refund_amount_cents, refunded_at, refund_external_id,
-  reschedule_requested_at, reschedule_note, yoco_payment_reference,
-  tour:tours(id, name, slug),
-  vehicle:vehicles(id, name, slug),
-  driver:drivers(id, name, full_name)
-`
+const BOOKING_SELECT = ACCOUNT_BOOKING_SELECT
 
 function ownsBooking(
   booking: { client_user_id?: string | null; client_email?: string | null },
@@ -307,7 +296,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return handleConsent(req, res)
     }
 
-    const auth = await requireAccountBookingsAuth(req)
+    const auth = await assertAccountBookingsAccess(req)
     if (isAuthError(auth)) {
       return res.status(auth.status).json({ error: auth.error })
     }
@@ -357,6 +346,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
 
       const sb = supabaseAdmin()
+      await expireStalePendingBookings(sb)
 
       if (bookingId) {
         const { data, error } = await sb
@@ -383,39 +373,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         })
       }
 
-      let query = sb
-        .from('bookings')
-        .select(BOOKING_SELECT)
-        .order('booking_date', { ascending: false })
-        .order('start_time', { ascending: false })
-
-      if (email) {
-        const emailNorm = email.trim().toLowerCase()
-        query = query.or(
-          `client_user_id.eq.${auth.user.id},client_email.eq.${escapePostgrestString(emailNorm)}`
+      const status = req.query.status
+        ? (String(req.query.status) as '' | 'upcoming' | 'past' | 'cancelled')
+        : ''
+      try {
+        const bookings = await listAccountBookingsForUser(
+          sb,
+          auth.user.id,
+          email,
+          status || undefined
         )
-      } else {
-        query = query.eq('client_user_id', auth.user.id)
+        return res.status(200).json({ bookings })
+      } catch (e: unknown) {
+        return res.status(500).json({
+          error: e instanceof Error ? e.message : 'Could not load bookings',
+        })
       }
-
-      const status = req.query.status ? String(req.query.status) : ''
-      if (status === 'upcoming') {
-        const today = new Date().toISOString().slice(0, 10)
-        query = query
-          .in('status', ['pending', 'paid'])
-          .gte('booking_date', today)
-      } else if (status === 'cancelled') {
-        query = query.in('status', ['cancelled', 'expired'])
-      } else if (status === 'past') {
-        const today = new Date().toISOString().slice(0, 10)
-        query = query.or(
-          `booking_date.lt.${today},status.in.(cancelled,expired)`
-        )
-      }
-
-      const { data, error } = await query
-      if (error) return res.status(500).json({ error: error.message })
-      return res.status(200).json({ bookings: data ?? [] })
     }
 
     if (req.method === 'POST') {

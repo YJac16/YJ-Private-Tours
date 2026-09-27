@@ -100,6 +100,55 @@ async function main() {
   const noAuth = await invoke('GET')
   assert.equal(noAuth.status, 401)
 
+  const noBookingsClient = await invoke('GET', {
+    token: mockToken('client', 'acct-empty-client', 'empty@test.khayrcape.com'),
+  })
+  assert.equal(noBookingsClient.status, 200)
+  assert.equal(
+    (noBookingsClient.payload.bookings as unknown[]).length,
+    0,
+    'client with no bookings sees empty list'
+  )
+
+  const clientBId = 'acct-test-client-b'
+  const clientBEmail = 'acct-client-b@test.khayrcape.com'
+  mockDb.createBooking({
+    driver_id: driver.id,
+    tour_id: tour.id,
+    vehicle_id: vehicle.id,
+    booking_date: farDate,
+    start_time: '10:00',
+    client_name: 'Client B',
+    client_email: clientBEmail,
+    client_phone: '+27000000002',
+    client_user_id: clientBId,
+    guest_count: 1,
+    adult_count: 1,
+    child_count: 0,
+    passenger_count: 1,
+    vehicle_price_cents: 250000,
+    price_per_person_cents: 40000,
+    passenger_total_cents: 40000,
+    grand_total_cents: 290000,
+    final_price_cents: 290000,
+    booking_reference: 'KC-ACCT-TEST-B',
+  })
+
+  const clientBRes = await invoke('GET', {
+    token: mockToken('client', clientBId, clientBEmail),
+  })
+  assert.ok(
+    (clientBRes.payload.bookings as Array<{ booking_reference?: string }>).some(
+      (b) => b.booking_reference === 'KC-ACCT-TEST-B'
+    )
+  )
+  assert.ok(
+    !(listRes.payload.bookings as Array<{ booking_reference?: string }>).some(
+      (b) => b.booking_reference === 'KC-ACCT-TEST-B'
+    ),
+    'Client A must not see Client B booking'
+  )
+
   console.log('account-bookings-auth-unit: ok')
 }
 

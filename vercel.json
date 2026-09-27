@@ -45,6 +45,10 @@
       "destination": "/api/cron?job=driver-reminders"
     },
     {
+      "source": "/api/expire-pending",
+      "destination": "/api/cron?job=expire-pending"
+    },
+    {
       "source": "/api/account-consent",
       "destination": "/api/account-bookings?resource=consent"
     },
@@ -80,6 +84,10 @@
     {
       "path": "/api/cron",
       "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron?job=expire-pending",
+      "schedule": "*/30 * * * *"
     }
   ]
 }

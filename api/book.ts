@@ -102,7 +102,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') return methodNotAllowed(res, ['POST'])
 
   try {
-    if (!process.env.YOCO_SECRET_KEY) {
+    if (!useMockStore() && !process.env.YOCO_SECRET_KEY) {
       return res.status(500).json({
         error: 'Payment is not configured (missing YOCO_SECRET_KEY on the host).',
       })

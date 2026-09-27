@@ -6,6 +6,7 @@
     "build": "cd client && npm ci && npm run build",
     "test:pricing": "npx tsx scripts/pricing-corolla-from-unit.ts && npx tsx scripts/phase7-hermanus-unit.ts",
     "test:account-bookings": "npx tsx scripts/account-bookings-auth-unit.ts && npx tsx scripts/account-bookings-ui-unit.ts",
+    "test:booking-integrity": "npx tsx scripts/admin-api-handlers-unit.ts && npx tsx scripts/verify-api-handlers-import.ts && npx tsx scripts/booking-flow-integration.ts && npm run test:account-bookings",
     "deploy": "npx vercel --prod",
     "deploy:preview": "npx vercel"
   },

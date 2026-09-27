@@ -3,6 +3,8 @@
  * Secret key stays server-side only. Public key is for client display / future SDK use.
  */
 
+import { useMockStore } from './mock-store'
+
 const YOCO_CHECKOUT_URL = 'https://payments.yoco.com/api/checkouts'
 
 export type YocoCheckoutResult = {
@@ -23,11 +25,6 @@ export async function createYocoCheckout(opts: {
   /** Override default key — use a unique suffix when retrying after an expired checkout. */
   idempotencyKey?: string
 }): Promise<YocoCheckoutResult> {
-  const secretKey = process.env.YOCO_SECRET_KEY
-  if (!secretKey) {
-    throw new Error('YOCO_SECRET_KEY is not configured')
-  }
-
   const site = (
     process.env.SITE_URL ||
     (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '') ||
@@ -36,6 +33,24 @@ export async function createYocoCheckout(opts: {
   const amount = Math.round(Number(opts.amountCents))
   if (!Number.isFinite(amount) || amount < 100) {
     throw new Error('Amount must be at least 100 cents (R1)')
+  }
+
+  if (useMockStore()) {
+    const refQ = opts.bookingReference
+      ? `&ref=${encodeURIComponent(opts.bookingReference)}`
+      : ''
+    return {
+      id: `mock_ch_${opts.bookingId}`,
+      redirectUrl: `${site}/thank-you?payment=success&booking_id=${opts.bookingId}${refQ}`,
+      amount,
+      currency: 'ZAR',
+      status: 'created',
+    }
+  }
+
+  const secretKey = process.env.YOCO_SECRET_KEY
+  if (!secretKey) {
+    throw new Error('YOCO_SECRET_KEY is not configured')
   }
 
   const refQ = opts.bookingReference

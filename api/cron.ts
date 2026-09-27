@@ -4,6 +4,7 @@ import {
   shouldSendDriverReminder,
   tomorrowCapeTownYmd,
 } from '../booking-app/lib/driver-reminders'
+import { expireStalePendingBookings } from '../booking-app/lib/booking-lifecycle'
 import { drainEmailOutbox } from '../booking-app/lib/email-outbox'
 import {
   bookingRowToEmailDetails,
@@ -36,7 +37,18 @@ function jobName(req: VercelRequest): string {
   const url = String(req.url || '')
   if (url.includes('email-outbox')) return 'email-outbox'
   if (url.includes('driver-reminders')) return 'driver-reminders'
+  if (url.includes('expire-pending')) return 'expire-pending'
   return 'email-outbox'
+}
+
+async function runExpirePending(res: VercelResponse) {
+  if (useMockStore()) {
+    const expired = mockDb.expireStalePendingBookings()
+    return res.status(200).json({ ok: true, mock: true, expired })
+  }
+  const sb = supabaseAdmin()
+  const expired = await expireStalePendingBookings(sb)
+  return res.status(200).json({ ok: true, mock: false, expired })
 }
 
 async function runEmailOutbox(res: VercelResponse) {
@@ -154,6 +166,7 @@ async function runDriverReminders(res: VercelResponse) {
  * Combined cron entry for Hobby plan function limits.
  * - /api/cron?job=email-outbox
  * - /api/cron?job=driver-reminders
+ * - /api/cron?job=expire-pending
  * Rewrites keep legacy paths working.
  */
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -168,8 +181,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const job = jobName(req)
     if (job === 'driver-reminders') return runDriverReminders(res)
     if (job === 'email-outbox') return runEmailOutbox(res)
+    if (job === 'expire-pending') return runExpirePending(res)
 
     // Daily combined run (Hobby: one cron/day)
+    const expired = useMockStore()
+      ? mockDb.expireStalePendingBookings()
+      : await expireStalePendingBookings(supabaseAdmin())
     const email = await (async () => {
       const sb = useMockStore() ? null : supabaseAdmin()
       return drainEmailOutbox(sb)
@@ -190,6 +207,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     await runDriverReminders(remindersRes as unknown as VercelResponse)
     return res.status(200).json({
       ok: true,
+      expired,
       email,
       reminders: remindersRes.body,
     })

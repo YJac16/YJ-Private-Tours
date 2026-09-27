@@ -3,6 +3,12 @@ import { bookingRowToEmailDetails, notifyDriverBooking } from './notify'
 
 export const PENDING_HOLD_MINUTES = 30
 
+/**
+ * Pending checkout hold: 30 minutes from created_at.
+ * Lazy expiry: expireStalePendingBookings() on api/slots, api/book, api/admin-trips, and daily/half-hourly cron.
+ * Availability queries must treat pending older than the hold as free even before the sweep runs (see bookingOccupiesSlot).
+ */
+
 type BookingPaidRow = {
   id: string
   status: string
@@ -60,6 +66,22 @@ export async function expireStalePendingBookings(
     return ids.length
   }
   return typeof data === 'number' ? data : Number(data) || 0
+}
+
+/** ISO timestamp: pending bookings created before this do not hold slots. */
+export function pendingHoldCutoffIso(nowMs: number = Date.now()): string {
+  return new Date(nowMs - PENDING_HOLD_MINUTES * 60 * 1000).toISOString()
+}
+
+/** Whether a booking row should block driver/vehicle availability (paid, or pending within hold). */
+export function bookingOccupiesSlot(
+  booking: { status: string; created_at?: string | null },
+  nowMs: number = Date.now()
+): boolean {
+  if (booking.status === 'paid') return true
+  if (booking.status !== 'pending') return false
+  if (!booking.created_at) return true
+  return new Date(booking.created_at).getTime() >= nowMs - PENDING_HOLD_MINUTES * 60 * 1000
 }
 
 export function expectedBookingAmountCents(booking: {
