@@ -1,22 +1,39 @@
 /**
- * Seed idempotent test Auth users for live sign-in checks.
+ * DO NOT RUN AGAINST PRODUCTION.
+ *
+ * Seeds idempotent test Auth users for local/staging sign-in checks.
+ * Resets passwords and can relink the first drivers row to the test driver,
+ * overwriting the real driver link.
  *
  * Usage (from repo root, with service role in env):
+ *   SEED_ALLOW_RUN=yes-i-understand \
+ *   SEED_ADMIN_PASSWORD=... SEED_DRIVER_PASSWORD=... SEED_CLIENT_PASSWORD=... \
  *   node scripts/seed-test-auth-users.mjs
  *
  * Required env:
- *   SUPABASE_URL or NEXT_PUBLIC_SUPABASE_URL
+ *   SEED_ALLOW_RUN=yes-i-understand  (explicit acknowledgement)
+ *   SEED_ADMIN_PASSWORD, SEED_DRIVER_PASSWORD, SEED_CLIENT_PASSWORD
+ *   SUPABASE_URL or NEXT_PUBLIC_SUPABASE_URL (must NOT be production project)
  *   SUPABASE_SERVICE_ROLE_KEY
  *
- * Default test accounts:
- *   client@test.khayrcape.com / TestClient123!  → /account
- *   driver@test.khayrcape.com / TestDriver123!  → /driver
- *   admin@test.khayrcape.com  / TestAdmin123!   → /admin/pricing
+ * Test account emails (passwords from env only):
+ *   client@test.khayrcape.com  → /account
+ *   driver@test.khayrcape.com  → /driver
+ *   admin@test.khayrcape.com   → /admin/pricing
  */
 
 import { createClient } from '@supabase/supabase-js'
 import { readFileSync, existsSync } from 'fs'
 import { resolve } from 'path'
+
+const PRODUCTION_SUPABASE_PROJECT_REF = 'pmurlvtlgfneswhmyzvh'
+
+if (process.env.SEED_ALLOW_RUN !== 'yes-i-understand') {
+  console.error(
+    'Refusing to run: set SEED_ALLOW_RUN=yes-i-understand to acknowledge this script resets passwords and may relink drivers.'
+  )
+  process.exit(1)
+}
 
 function loadEnvFile(filePath) {
   if (!existsSync(filePath)) return
@@ -52,9 +69,27 @@ const url =
   process.env.VITE_SUPABASE_URL
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
+const clientPassword = process.env.SEED_CLIENT_PASSWORD
+const driverPassword = process.env.SEED_DRIVER_PASSWORD
+const adminPassword = process.env.SEED_ADMIN_PASSWORD
+
+if (!clientPassword || !driverPassword || !adminPassword) {
+  console.error(
+    'Missing one or more required env vars: SEED_CLIENT_PASSWORD, SEED_DRIVER_PASSWORD, SEED_ADMIN_PASSWORD'
+  )
+  process.exit(1)
+}
+
 if (!url || !serviceKey) {
   console.error(
     'Missing SUPABASE_URL / NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY'
+  )
+  process.exit(1)
+}
+
+if (url.includes(PRODUCTION_SUPABASE_PROJECT_REF)) {
+  console.error(
+    `Refusing to run: SUPABASE URL appears to target production project ref ${PRODUCTION_SUPABASE_PROJECT_REF}.`
   )
   process.exit(1)
 }
@@ -66,19 +101,19 @@ const sb = createClient(url, serviceKey, {
 const users = [
   {
     email: 'client@test.khayrcape.com',
-    password: 'TestClient123!',
+    password: clientPassword,
     role: 'client',
     full_name: 'Test Client',
   },
   {
     email: 'driver@test.khayrcape.com',
-    password: 'TestDriver123!',
+    password: driverPassword,
     role: 'driver',
     full_name: 'Test Driver',
   },
   {
     email: 'admin@test.khayrcape.com',
-    password: 'TestAdmin123!',
+    password: adminPassword,
     role: 'admin',
     full_name: 'Test Admin',
   },
@@ -177,4 +212,4 @@ for (const u of users) {
   await ensureUser(u)
 }
 
-console.log('Done. Test sign-in with the documented emails/passwords.')
+console.log('Done. Test auth users seeded (credentials from env only).')
