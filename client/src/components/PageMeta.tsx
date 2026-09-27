@@ -1,7 +1,5 @@
 import { useEffect } from 'react'
-
-const SITE = 'https://khayrcapeexperiences.com'
-const DEFAULT_OG = `${SITE}/cape-town-og.jpg`
+import { DEFAULT_OG, SITE } from '../seo/siteConfig'
 
 export type PageMetaProps = {
   title: string

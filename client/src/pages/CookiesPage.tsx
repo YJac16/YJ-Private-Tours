@@ -1,10 +1,16 @@
 import { Link } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
+import PageMeta from '../components/PageMeta'
 
 export default function CookiesPage() {
   return (
     <>
+      <PageMeta
+        title="Cookie Policy — KhayrCape Experiences"
+        description="How KhayrCape Experiences uses cookies and browser storage for sign-in, bookings, and site preferences."
+        path="/cookies"
+      />
       <Navbar />
       <main className="min-h-screen bg-brand-cream">
         <article className="max-w-3xl mx-auto px-4 py-8 md:py-12">

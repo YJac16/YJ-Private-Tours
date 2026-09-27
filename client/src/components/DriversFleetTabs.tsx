@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { HiOutlineUser, HiOutlineTruck, HiOutlineMap } from 'react-icons/hi'
 import { whatsappWithMessage } from '../lib/whatsappLinks'
+import { FLOOR_VEHICLES, resolveTourPricing } from '../data/catalogFloors'
 import { useCatalog } from '../hooks/useCatalog'
 import PriceWithInfo from './PriceWithInfo'
 import CatalogLoadError from './CatalogLoadError'
@@ -158,7 +159,8 @@ export default function DriversFleetTabs() {
     error: pricingError,
     retry: retryPricing,
   } = useCatalog()
-  const catalogVehicles = catalog?.vehicles ?? []
+  const catalogVehicles =
+    catalog?.vehicles?.length ? catalog.vehicles : FLOOR_VEHICLES
   const hashTab = tabFromHash(location.hash)
   const [pickedTab, setPickedTab] = useState<TabId | null>(null)
   const activeTab = hashTab ?? pickedTab ?? 'tours'
@@ -242,7 +244,10 @@ export default function DriversFleetTabs() {
 
             <div className="grid grid-cols-1 gap-4 md:gap-6 md:max-w-4xl md:mx-auto">
               {visibleTours.map((tour) => {
-                const catalogTour = tourBySlug(tour.tourSlug)
+                const catalogTour = resolveTourPricing(
+                  tour.tourSlug,
+                  tourBySlug(tour.tourSlug)
+                )
                 return (
                   <article
                     key={tour.title}
@@ -275,17 +280,13 @@ export default function DriversFleetTabs() {
                         {tour.title}
                       </h3>
                       <p className="text-sm text-brand-green/85">{tour.duration}</p>
-                      {catalogTour ? (
+                      {catalogTour && (
                         <PriceWithInfo
                           tour={catalogTour}
                           vehicles={catalogVehicles}
                           compact
                         />
-                      ) : pricingLoading ? (
-                        <p className="text-sm font-semibold text-brand-green">
-                          Loading rates…
-                        </p>
-                      ) : null}
+                      )}
                       <p className="text-sm text-brand-green/90 leading-snug">
                         {tour.bullets.join(' · ')}
                       </p>

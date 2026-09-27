@@ -1,7 +1,16 @@
 import { Link } from 'react-router-dom'
 import { HiOutlineMap, HiOutlineCalendar } from 'react-icons/hi'
+import { FaWhatsapp } from 'react-icons/fa'
+import { siteLowestFromLabel } from '../data/catalogFloors'
+import { whatsappWithMessage } from '../lib/whatsappLinks'
+
+const HERO_WA = whatsappWithMessage(
+  "Hi, I'd like to enquire about a private tour with KhayrCape Experiences."
+)
 
 export default function Hero() {
+  const fromPrice = siteLowestFromLabel()
+
   return (
     <section
       id="hero"
@@ -30,16 +39,31 @@ export default function Hero() {
             className="relative mx-auto h-32 sm:h-40 md:h-48 w-auto object-contain filter-[drop-shadow(0_1px_2px_rgba(0,0,0,0.75))_drop-shadow(0_6px_18px_rgba(0,0,0,0.5))]"
           />
         </div>
+        <p className="inline-flex items-center justify-center gap-2 mb-3 text-xs sm:text-sm font-semibold tracking-wide uppercase text-white/95 bg-black/35 border border-white/20 rounded-full px-3 py-1.5 [text-shadow:0_1px_6px_rgba(0,0,0,0.5)]">
+          Registered professional tourist guide · Muslim-friendly private tours
+        </p>
         <h1 className="text-[1.65rem] sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-3 sm:mb-4 leading-tight [text-shadow:0_2px_16px_rgba(0,0,0,0.65),0_1px_3px_rgba(0,0,0,0.9)]">
           Private & Muslim-Friendly Tours of Cape Town
         </h1>
         <p className="text-lg sm:text-xl md:text-2xl text-white font-semibold mb-1 sm:mb-2 [text-shadow:0_1px_10px_rgba(0,0,0,0.7)]">
           Private Journeys, Thoughtfully Guided.
         </p>
-        <p className="text-base sm:text-lg md:text-xl text-white mb-8 sm:mb-10 max-w-2xl mx-auto leading-snug [text-shadow:0_1px_8px_rgba(0,0,0,0.65)]">
+        <p className="text-base sm:text-lg md:text-xl text-white mb-2 max-w-2xl mx-auto leading-snug [text-shadow:0_1px_8px_rgba(0,0,0,0.65)]">
           Relaxed, cultural, and scenic experiences with a qualified local guide
         </p>
+        <p className="text-sm sm:text-base text-brand-gold font-semibold mb-8 sm:mb-10 [text-shadow:0_1px_8px_rgba(0,0,0,0.65)]">
+          {fromPrice} per guest · private vehicle included
+        </p>
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-stretch sm:justify-center items-stretch sm:items-center max-w-md sm:max-w-none mx-auto">
+          <a
+            href={HERO_WA}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3.5 sm:py-3 min-h-12 bg-[#25D366] hover:bg-[#20BD5A] text-white font-semibold rounded-xl transition-all shadow-lg shadow-black/20 active:scale-[0.98] border-2 border-white/20 w-full sm:w-auto sm:min-w-50"
+          >
+            <FaWhatsapp className="text-2xl shrink-0" />
+            WhatsApp us
+          </a>
           <Link
             to="/#tours"
             className="inline-flex items-center justify-center gap-2 px-6 py-3.5 sm:py-3 min-h-12 bg-white text-brand-green font-semibold rounded-xl transition-all shadow-lg shadow-black/20 hover:bg-brand-cream active:scale-[0.98] border-2 border-white/30 w-full sm:w-auto sm:min-w-50"
