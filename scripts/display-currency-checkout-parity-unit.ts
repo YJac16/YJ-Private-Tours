@@ -18,76 +18,75 @@ process.env.BOOKING_MOCK = '1'
 const DISPLAY_CURRENCIES = ['USD', 'EUR', 'GBP', 'ZAR'] as const
 const SITE = 'https://preview.test'
 
+/** Hard-coded POST /api/book body (City, 2 guests, mock catalog IDs) — not from builder. */
+const EXPECTED_CREATE_BOOKING_BODY = {
+  booking_date: '2026-10-15',
+  start_time: '08:00',
+  driver_id: '11111111-1111-1111-1111-111111111111',
+  tour_id: '22222222-2222-2222-2222-222222222201',
+  vehicle_id: '33333333-3333-3333-3333-333333333303',
+  adult_count: 2,
+  child_count: 0,
+  client_name: 'Parity Guest',
+  client_email: 'parity@test.khayrcape.com',
+  client_phone: '+27000000000',
+  client_country: 'ZA',
+  pickup_address: 'Cape Town',
+  dietary_requirements: undefined,
+  flight_number: undefined,
+  special_requests: undefined,
+  guest_consent_acknowledged: true,
+}
+
 const sampleRates: EcbRatesSnapshot = {
   fetchedAt: '2026-09-28T00:00:00.000Z',
   perEur: { EUR: 1, USD: 1.14, GBP: 0.86, ZAR: 18.5 },
 }
 
-function legacyInlineCreateBookingBody(
-  input: Parameters<typeof buildCreateBookingRequestBody>[0]
-) {
-  return {
-    booking_date: input.booking_date,
-    start_time: input.start_time,
-    driver_id: input.driver_id,
-    tour_id: input.tour_id,
-    vehicle_id: input.vehicle_id,
-    adult_count: input.peopleCount,
-    child_count: 0,
-    client_name: input.name.trim(),
-    client_email: input.email.trim(),
-    client_phone: input.phone.trim(),
-    client_country: input.country.trim() || undefined,
-    pickup_address: input.pickupAddress.trim(),
-    dietary_requirements: input.dietary.trim() || undefined,
-    flight_number: input.flightNumber.trim() || undefined,
-    special_requests: input.specialRequests.trim() || undefined,
-    guest_consent_acknowledged: !input.accessToken
-      ? input.guestConsentAck
-      : undefined,
-  }
-}
-
 async function main() {
   const catalog = mockDb.catalog()
-  const tour = catalog.tours[0]
-  const vehicle =
-    catalog.vehicles.find((v) => v.slug === 'corolla') ?? catalog.vehicles[0]
+  const tour = catalog.tours.find((t) => t.slug === 'city')
+  const vehicle = catalog.vehicles.find((v) => v.slug === 'corolla')
   const driver = catalog.drivers[0]
   assert.ok(tour && vehicle && driver)
 
-  const breakdown = calculatePrice(tour, vehicle, 3, 0)
+  const breakdown = calculatePrice(tour, vehicle, 2, 0)
+  assert.equal(breakdown.grand_total_cents, 330_000, 'City + 2 guests + Corolla = ZAR 3,300')
+
   const builderInput = {
     booking_date: '2026-10-15',
     start_time: '08:00',
     driver_id: driver.id,
     tour_id: tour.id,
     vehicle_id: vehicle.id,
-    peopleCount: 3,
+    peopleCount: 2,
     name: ' Parity Guest ',
     email: ' parity@test.khayrcape.com ',
     phone: ' +27000000000 ',
     country: ' ZA ',
     pickupAddress: ' Cape Town ',
-    dietary: ' none ',
-    flightNumber: ' SA123 ',
-    specialRequests: ' window seat ',
+    dietary: '',
+    flightNumber: '',
+    specialRequests: '',
     accessToken: null as string | null,
     guestConsentAck: true,
   }
 
   const builtBody = buildCreateBookingRequestBody(builderInput)
-  assert.deepEqual(builtBody, legacyInlineCreateBookingBody(builderInput))
+  assert.deepEqual(builtBody, EXPECTED_CREATE_BOOKING_BODY)
 
   const yocoHttpBody = buildYocoCheckoutHttpBody({
     amountCents: breakdown.grand_total_cents,
-    bookingId: 'booking-parity-1',
-    bookingReference: 'KC-PARITY',
+    bookingId: 'booking-parity-city-2',
+    bookingReference: 'KC-PARITY-CITY2',
     clientName: builtBody.client_name,
     clientEmail: builtBody.client_email,
     tourName: tour.name,
     siteBase: SITE,
   })
+
+  assert.equal(yocoHttpBody.amount, 330_000)
+  assert.equal(yocoHttpBody.currency, 'ZAR')
 
   const baseline = JSON.stringify({
     createBookingBody: builtBody,
@@ -113,16 +112,21 @@ async function main() {
     store.set(DISPLAY_CURRENCY_STORAGE_KEY, code)
     assert.equal(resolveDisplayCurrencyPreference(['en-US']), code)
 
+    const pricingBreakdown = calculatePrice(tour, vehicle, 2, 0)
     const createBookingBody = buildCreateBookingRequestBody(builderInput)
     const yocoBody = buildYocoCheckoutHttpBody({
-      amountCents: breakdown.grand_total_cents,
-      bookingId: 'booking-parity-1',
-      bookingReference: 'KC-PARITY',
+      amountCents: pricingBreakdown.grand_total_cents,
+      bookingId: 'booking-parity-city-2',
+      bookingReference: 'KC-PARITY-CITY2',
       clientName: createBookingBody.client_name,
       clientEmail: createBookingBody.client_email,
       tourName: tour.name,
       siteBase: SITE,
     })
+
+    assert.equal(yocoBody.amount, 330_000)
+    assert.equal(yocoBody.currency, 'ZAR')
+    assert.deepEqual(createBookingBody, EXPECTED_CREATE_BOOKING_BODY)
 
     const payload = JSON.stringify({
       createBookingBody,
@@ -131,7 +135,7 @@ async function main() {
     assert.equal(payload, baseline, `payload must not depend on ${code}`)
 
     const approx = formatApproxLine(
-      breakdown.grand_total_cents,
+      pricingBreakdown.grand_total_cents,
       code,
       sampleRates
     )

@@ -458,6 +458,13 @@ export default function BookPage() {
     else void handlePay()
   }
 
+  const mobileScrollPaddingClass =
+    showMobileBar && !loading
+      ? fxDisclaimerVisible
+        ? 'max-lg:pb-[calc(var(--cookie-dock-height,0px)+8.75rem+env(safe-area-inset-bottom,0px))]'
+        : 'max-lg:pb-[calc(var(--cookie-dock-height,0px)+4.75rem+env(safe-area-inset-bottom,0px))]'
+      : 'pb-36'
+
   if (successId) {
     return (
       <>
@@ -494,7 +501,9 @@ export default function BookPage() {
         path="/book"
       />
       <Navbar />
-      <main className="min-h-[70vh] bg-brand-cream-light px-4 py-8 sm:py-12 pb-36 lg:pb-28">
+      <main
+        className={`min-h-[70vh] bg-brand-cream-light px-4 py-8 sm:py-12 lg:pb-28 ${mobileScrollPaddingClass}`}
+      >
         <div className="max-w-5xl mx-auto">
           <h1 className="text-2xl sm:text-3xl font-bold text-brand-green text-center mb-2">
             Book your private experience
@@ -599,6 +608,9 @@ export default function BookPage() {
                       <legend className="text-lg font-bold text-brand-green mb-1">
                         Select your experience
                       </legend>
+                      <div className="hidden lg:flex justify-end -mt-1 mb-1">
+                        <DisplayCurrencySwitcher />
+                      </div>
                       {tours.map((t) => {
                         const fromCents = startingFromCents(t, vehicles, 1)
                         return (
@@ -1275,9 +1287,9 @@ export default function BookPage() {
 
       {showMobileBar && fxDisclaimerVisible && (
         <div
-          className={`lg:hidden fixed inset-x-0 z-40 px-3 pb-1 ${MOBILE_BOOK_DISCLAIMER_ABOVE_STICKY_CLASS}`}
+          className={`lg:hidden fixed inset-x-0 z-40 border-t border-brand-cream-dark bg-brand-cream/95 backdrop-blur px-3 py-1.5 shadow-[0_-4px_12px_rgba(0,0,0,0.06)] ${MOBILE_BOOK_DISCLAIMER_ABOVE_STICKY_CLASS}`}
         >
-          <FxDisclaimer className="max-w-5xl mx-auto bg-brand-cream/90 rounded-md px-1" />
+          <FxDisclaimer className="max-w-5xl mx-auto" />
         </div>
       )}
 

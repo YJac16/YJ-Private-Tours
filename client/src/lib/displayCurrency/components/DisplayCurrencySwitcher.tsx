@@ -45,7 +45,7 @@ export default function DisplayCurrencySwitcher({
         ))}
       </select>
       <HiOutlineChevronDown
-        className={`pointer-events-none absolute text-brand-green/60 ${
+        className={`pointer-events-none absolute text-current ${
           compact ? 'right-1 size-3' : 'right-1.5 size-3.5'
         }`}
         aria-hidden

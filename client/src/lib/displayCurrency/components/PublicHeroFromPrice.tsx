@@ -18,7 +18,7 @@ export default function PublicHeroFromPrice({ className = '' }: Props) {
         approxClassName="text-xs text-white/85 tabular-nums mt-0.5"
       />
       <div className="flex justify-center">
-        <DisplayCurrencySwitcher className="[&_select]:text-white/95 [&_select]:border-white/30 [&_select]:bg-black/40" />
+        <DisplayCurrencySwitcher className="text-white/95 [&_select]:text-white/95 [&_select]:border-white/30 [&_select]:bg-black/40" />
       </div>
     </div>
   )
