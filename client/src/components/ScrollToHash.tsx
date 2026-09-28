@@ -17,7 +17,7 @@ export default function ScrollToHash() {
     }
 
     const id = hash.slice(1)
-    const targetId = TAB_SECTION_HASHES.has(id) ? 'tours-drivers-fleet' : id
+    const targetId = TAB_SECTION_HASHES.has(id) ? 'tours' : id
 
     const scroll = () => {
       const el = document.getElementById(targetId)

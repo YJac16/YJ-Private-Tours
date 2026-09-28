@@ -35,13 +35,15 @@ export default function Navbar() {
   const displayName =
     profile?.full_name || profile?.email || user?.email || 'Account'
 
+  const closeMobile = () => setMobileOpen(false)
+
   const AuthLinks = ({ mobile = false }: { mobile?: boolean }) => {
     if (loading) return null
     if (!user) {
       return (
         <Link
           to="/login"
-          onClick={() => setMobileOpen(false)}
+          onClick={closeMobile}
           className={
             mobile
               ? 'py-3 text-brand-green hover:bg-brand-cream-dark/50 rounded-lg px-2 min-h-11 font-medium flex items-center'
@@ -58,7 +60,7 @@ export default function Navbar() {
         <>
           <Link
             to={accountHref}
-            onClick={() => setMobileOpen(false)}
+            onClick={closeMobile}
             className="py-3 text-brand-green hover:bg-brand-cream-dark/50 rounded-lg px-2 font-medium min-h-11 flex items-center"
           >
             {role === 'admin'
@@ -70,7 +72,7 @@ export default function Navbar() {
           {role === 'admin' && (
             <Link
               to="/account"
-              onClick={() => setMobileOpen(false)}
+              onClick={closeMobile}
               className="py-3 text-brand-green hover:bg-brand-cream-dark/50 rounded-lg px-2 font-medium min-h-11 flex items-center"
             >
               Client account
@@ -79,7 +81,7 @@ export default function Navbar() {
           <button
             type="button"
             onClick={async () => {
-              setMobileOpen(false)
+              closeMobile()
               await signOut()
               navigate('/')
             }}
@@ -139,9 +141,11 @@ export default function Navbar() {
     )
   }
 
+  const mobileMenuNav = PRIMARY_SITE_NAV.filter((item) => item.label !== 'Book')
+
   return (
     <header className="sticky top-0 z-50 bg-brand-cream/95 backdrop-blur border-b border-brand-cream-dark shadow-sm">
-      <div className="max-w-6xl mx-auto px-3 sm:px-4 flex items-center gap-1 h-16 md:h-18">
+      <div className="max-w-6xl mx-auto px-3 sm:px-4 flex items-center gap-2 h-16 md:h-18">
         <button
           type="button"
           onClick={goHome}
@@ -155,12 +159,20 @@ export default function Navbar() {
           />
         </button>
 
+        <div className="flex-1 min-w-0 md:hidden" aria-hidden />
+
+        <Link
+          to="/book"
+          className="md:hidden shrink-0 inline-flex items-center justify-center px-4 py-2 min-h-11 rounded-lg text-brand-cream bg-brand-green hover:bg-brand-green-dark text-sm font-semibold transition-colors"
+        >
+          Book
+        </Link>
+
         <nav
-          className="flex-1 min-w-0 grid grid-cols-3 gap-0 md:flex md:flex-initial md:items-center md:gap-1 md:ml-auto"
+          className="hidden md:flex md:flex-initial md:items-center md:gap-1 md:ml-auto"
           aria-label="Primary"
         >
           {PRIMARY_SITE_NAV.map((item) => {
-            const Icon = mobileNavIcons[item.label]
             const isBook = item.label === 'Book'
             return (
               <Link
@@ -168,17 +180,11 @@ export default function Navbar() {
                 to={item.href}
                 className={
                   isBook
-                    ? 'flex flex-col md:flex-row items-center justify-center py-2 px-0.5 md:px-3 md:py-2 min-h-12 md:min-h-0 min-w-0 text-brand-cream bg-brand-green hover:bg-brand-green-dark md:rounded-lg text-[11px] md:text-sm font-semibold transition-colors md:ml-1'
-                    : 'flex flex-col md:flex-row items-center justify-center py-2 px-0.5 md:px-3 md:py-2 min-h-12 md:min-h-0 min-w-0 text-brand-green hover:bg-brand-cream-dark/40 md:hover:text-brand-green-dark md:rounded-lg text-[11px] md:text-sm font-medium md:font-medium transition-colors'
+                    ? 'inline-flex items-center px-3 py-2 text-brand-cream bg-brand-green hover:bg-brand-green-dark rounded-lg text-sm font-semibold transition-colors md:ml-1'
+                    : 'inline-flex items-center px-3 py-2 text-brand-green hover:bg-brand-cream-dark/40 hover:text-brand-green-dark rounded-lg text-sm font-medium transition-colors'
                 }
               >
-                <Icon
-                  className="shrink-0 text-base md:hidden mb-0.5"
-                  aria-hidden
-                />
-                <span className="font-semibold md:font-[inherit] leading-tight truncate w-full md:w-auto text-center">
-                  {item.label}
-                </span>
+                {item.label}
               </Link>
             )
           })}
@@ -194,18 +200,40 @@ export default function Navbar() {
           className="md:hidden shrink-0 p-2 rounded-lg text-brand-green hover:bg-brand-cream-dark/50 min-h-11 min-w-11 flex items-center justify-center"
           aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
           aria-expanded={mobileOpen}
+          aria-controls="mobile-primary-nav"
         >
           {mobileOpen ? <HiX className="text-2xl" /> : <HiMenu className="text-2xl" />}
         </button>
       </div>
 
       <div
+        id="mobile-primary-nav"
         className={`md:hidden overflow-hidden transition-all duration-200 ease-out ${
-          mobileOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+          mobileOpen ? 'max-h-[28rem] opacity-100' : 'max-h-0 opacity-0'
         }`}
       >
-        <nav className="px-4 pb-4 pt-2 bg-brand-cream border-t border-brand-cream-dark flex flex-col gap-1">
+        <nav
+          className="px-4 pb-4 pt-2 bg-brand-cream border-t border-brand-cream-dark flex flex-col gap-1"
+          aria-label="Primary mobile"
+        >
           <p className="px-2 pt-1 text-[11px] font-semibold uppercase tracking-wide text-brand-green/55">
+            Explore
+          </p>
+          {mobileMenuNav.map((item) => {
+            const Icon = mobileNavIcons[item.label]
+            return (
+              <Link
+                key={item.href}
+                to={item.href}
+                onClick={closeMobile}
+                className="py-3 text-brand-green hover:bg-brand-cream-dark/50 rounded-lg px-2 min-h-11 font-medium flex items-center gap-2"
+              >
+                <Icon className="text-lg shrink-0" aria-hidden />
+                {item.label}
+              </Link>
+            )
+          })}
+          <p className="px-2 pt-3 text-[11px] font-semibold uppercase tracking-wide text-brand-green/55">
             Account
           </p>
           <AuthLinks mobile />

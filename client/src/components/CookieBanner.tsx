@@ -34,7 +34,6 @@ export default function CookieBanner() {
 
     const measure = () => {
       const rect = el.getBoundingClientRect()
-      // offsetHeight + rect check: include padding, border, and safe-area inset
       syncCookieDockHeight(Math.max(el.offsetHeight, rect.height))
     }
 
@@ -69,27 +68,53 @@ export default function CookieBanner() {
       ref={dockRef}
       role="dialog"
       aria-label="Cookie notice"
-      className="fixed bottom-0 inset-x-0 z-60 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]"
+      className="fixed bottom-0 inset-x-0 z-60"
     >
-      <div className="max-w-3xl mx-auto rounded-2xl border border-brand-cream-dark bg-brand-cream shadow-lg p-4 sm:p-5 flex flex-col sm:flex-row gap-4 sm:items-center">
-        <p className="text-sm text-brand-green/90 flex-1 leading-relaxed">
-          We use essential cookies and similar storage to keep you signed in and run bookings. See our{' '}
-          <Link to="/cookies" className="underline font-semibold text-brand-green">
-            Cookie Policy
-          </Link>{' '}
-          and{' '}
-          <Link to="/privacy" className="underline font-semibold text-brand-green">
-            Privacy Policy
-          </Link>
-          .
-        </p>
-        <button
-          type="button"
-          onClick={accept}
-          className="shrink-0 min-h-12 px-5 rounded-lg bg-brand-green text-brand-cream font-semibold hover:opacity-95"
-        >
-          Accept
-        </button>
+      {/* Mobile: slim bottom bar */}
+      <div className="md:hidden border-t border-brand-cream-dark bg-brand-cream/98 backdrop-blur-sm px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+        <div className="flex items-center gap-2 max-w-6xl mx-auto min-h-10">
+          <p className="text-[11px] leading-tight text-brand-green/90 flex-1 min-w-0">
+            Essential cookies only.{' '}
+            <Link to="/cookies" className="underline font-semibold text-brand-green">
+              Cookie Policy
+            </Link>
+            {' · '}
+            <Link to="/privacy" className="underline font-semibold text-brand-green whitespace-nowrap">
+              Privacy
+            </Link>
+          </p>
+          <button
+            type="button"
+            onClick={accept}
+            className="shrink-0 min-h-9 px-3 rounded-md bg-brand-green text-brand-cream text-xs font-semibold hover:opacity-95"
+          >
+            Accept
+          </button>
+        </div>
+      </div>
+
+      {/* Desktop: full banner */}
+      <div className="hidden md:block p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+        <div className="max-w-3xl mx-auto rounded-2xl border border-brand-cream-dark bg-brand-cream shadow-lg p-4 sm:p-5 flex flex-col sm:flex-row gap-4 sm:items-center">
+          <p className="text-sm text-brand-green/90 flex-1 leading-relaxed">
+            We use essential cookies and similar storage to keep you signed in and run bookings. See our{' '}
+            <Link to="/cookies" className="underline font-semibold text-brand-green">
+              Cookie Policy
+            </Link>{' '}
+            and{' '}
+            <Link to="/privacy" className="underline font-semibold text-brand-green">
+              Privacy Policy
+            </Link>
+            .
+          </p>
+          <button
+            type="button"
+            onClick={accept}
+            className="shrink-0 min-h-12 px-5 rounded-lg bg-brand-green text-brand-cream font-semibold hover:opacity-95"
+          >
+            Accept
+          </button>
+        </div>
       </div>
     </div>
   )

@@ -190,12 +190,12 @@ export default function DriversFleetTabs() {
 
   return (
     <section
-      id="tours-drivers-fleet"
+      id="tours"
       className="py-10 md:py-24 bg-brand-cream-light px-4 scroll-mt-28 md:scroll-mt-24"
     >
       <div className="max-w-6xl mx-auto">
         <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-brand-green mb-3 text-center leading-tight">
-          Tours, Drivers & Fleet
+          Explore Our Experiences
         </h2>
         <p className="text-brand-green/90 text-center mb-8 md:mb-10 max-w-2xl mx-auto text-sm sm:text-base leading-snug">
           Meet your guide, see our vehicles, and explore tour options below.
