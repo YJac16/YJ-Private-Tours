@@ -6,6 +6,7 @@ import { FLOOR_VEHICLES, resolveTourPricing } from '../data/catalogFloors'
 import { useCatalog } from '../hooks/useCatalog'
 import PriceWithInfo from './PriceWithInfo'
 import CatalogLoadError from './CatalogLoadError'
+import DisplayCurrencySwitcher from '../lib/displayCurrency/components/DisplayCurrencySwitcher'
 import { isDateInSeason, WHALE_SEASON } from '../lib/seasonalVisibility'
 import { HERMANUS_DURATION_LABEL } from '../data/hermanusDuration'
 import { guideRegistration } from '../seo/siteConfig'
@@ -228,6 +229,9 @@ export default function DriversFleetTabs() {
         {activeTab === 'tours' && (
           <div id="tours-panel" className="space-y-5 max-w-xl mx-auto md:max-w-none">
             <div className="text-center md:max-w-2xl md:mx-auto mb-2">
+              <div className="flex flex-wrap items-center justify-center gap-2 mb-2">
+                <DisplayCurrencySwitcher />
+              </div>
               <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-brand-green">
                 Choose Your Experience
               </h3>

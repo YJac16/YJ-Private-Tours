@@ -1,7 +1,8 @@
 import { CUSTOM_TOURS_INTRO, HOME_CUSTOM_TOUR_FAQ } from '../data/customToursCopy'
 import { EXPERIENCE_DEFAULTS } from '../data/experienceDefaults'
 import { FLOOR_TOURS, FLOOR_VEHICLES, getFloorTour } from '../data/catalogFloors'
-import { formatFromOneGuest, startingFromCents } from '../lib/pricing'
+import { formatPublicFromOneGuest } from '../lib/publicZarText'
+import { startingFromCents } from '../lib/pricing'
 import {
   BUSINESS_EMAIL,
   BUSINESS_NAME,
@@ -163,7 +164,9 @@ export function buildLocalBusinessJsonLd(): Record<string, unknown> {
       },
     },
     priceRange:
-      lowest < Number.POSITIVE_INFINITY ? formatFromOneGuest(lowest) : '$$',
+      lowest < Number.POSITIVE_INFINITY
+        ? formatPublicFromOneGuest(lowest)
+        : '$$',
     sameAs: [`https://wa.me/${BUSINESS_PHONE.replace('+', '')}`],
   }
 }

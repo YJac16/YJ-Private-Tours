@@ -1,15 +1,13 @@
 import { Link } from 'react-router-dom'
 import { HiOutlineCalendar } from 'react-icons/hi'
 import { FaWhatsapp } from 'react-icons/fa'
-import { siteLowestFromLabel } from '../data/catalogFloors'
+import PublicHeroFromPrice from '../lib/displayCurrency/components/PublicHeroFromPrice'
 import { WA_PHONE_E164 } from '../lib/whatsappLinks'
 import { guideRegistration } from '../seo/siteConfig'
 
 const HERO_WA_HREF = `https://wa.me/${WA_PHONE_E164}`
 
 export default function Hero() {
-  const fromPrice = siteLowestFromLabel()
-
   return (
     <section
       id="hero"
@@ -48,9 +46,9 @@ export default function Hero() {
         <p className="text-sm sm:text-lg md:text-xl text-white mb-2 sm:mb-3 max-w-2xl mx-auto leading-snug [text-shadow:0_1px_8px_rgba(0,0,0,0.65)]">
           Relaxed, cultural and scenic experiences with a registered local guide.
         </p>
-        <p className="inline-block text-sm sm:text-base font-semibold text-white mb-3 sm:mb-8 rounded-xl border border-white/15 bg-black/55 backdrop-blur-sm px-4 py-2 sm:py-2.5 sm:px-5 sm:py-3 shadow-lg shadow-black/30">
-          {fromPrice}
-        </p>
+        <div className="inline-block text-sm sm:text-base text-white mb-3 sm:mb-8 rounded-xl border border-white/15 bg-black/55 backdrop-blur-sm px-4 py-2 sm:py-2.5 sm:px-5 sm:py-3 shadow-lg shadow-black/30 text-left sm:text-center">
+          <PublicHeroFromPrice />
+        </div>
         <div className="flex flex-col gap-2 sm:gap-4 justify-stretch sm:flex-row sm:justify-center items-stretch sm:items-center max-w-md sm:max-w-none mx-auto max-md:pb-0">
           <Link
             to="/book"

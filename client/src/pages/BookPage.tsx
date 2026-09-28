@@ -21,8 +21,6 @@ import {
 import {
   calculatePrice,
   defaultVehicleForGuests,
-  formatTourFromPrice,
-  formatZar,
   maxGuestsForTour,
   resolvePricePerPerson,
   resolveVehiclePrice,
@@ -32,7 +30,13 @@ import {
   vehicleFitsGuests,
   vehiclesForGuestCount,
 } from '../lib/pricing'
-import { MOBILE_FIXED_ABOVE_COOKIE_BOTTOM_CLASS } from '../lib/cookieDockOffset'
+import { formatPublicPayLabel, formatPublicZarAmount } from '../lib/displayCurrency/formatPublicPrice'
+import PublicPrice, { PublicPriceInline } from '../lib/displayCurrency/components/PublicPrice'
+import DisplayCurrencySwitcher from '../lib/displayCurrency/components/DisplayCurrencySwitcher'
+import FxDisclaimer from '../lib/displayCurrency/components/FxDisclaimer'
+import { useDisplayCurrency } from '../lib/displayCurrency/DisplayCurrencyContext'
+import { buildCreateBookingRequestBody } from '../../../booking-app/lib/book-create-request'
+import { MOBILE_FIXED_ABOVE_COOKIE_BOTTOM_CLASS, MOBILE_BOOK_DISCLAIMER_ABOVE_STICKY_CLASS } from '../lib/cookieDockOffset'
 
 const STEPS = [
   'Experience',
@@ -60,6 +64,7 @@ export default function BookPage() {
     error: catalogError,
     retry: retryCatalog,
   } = useCatalog()
+  const { showFxDisclaimer } = useDisplayCurrency()
   const drivers = catalog?.drivers ?? []
   const vehicles = catalog?.vehicles ?? []
   const tours = catalog?.tours ?? []
@@ -387,24 +392,24 @@ export default function BookPage() {
     setError(null)
     try {
       const res = await createBooking(
-        {
+        buildCreateBookingRequestBody({
           booking_date: date,
           start_time: startTime,
           driver_id: driverId,
           tour_id: tourId,
           vehicle_id: vehicleId,
-          adult_count: peopleCount,
-          child_count: 0,
-          client_name: name.trim(),
-          client_email: email.trim(),
-          client_phone: phone.trim(),
-          client_country: country.trim() || undefined,
-          pickup_address: pickupAddress.trim(),
-          dietary_requirements: dietary.trim() || undefined,
-          flight_number: flightNumber.trim() || undefined,
-          special_requests: specialRequests.trim() || undefined,
-          guest_consent_acknowledged: !accessToken ? guestConsentAck : undefined,
-        },
+          peopleCount,
+          name,
+          email,
+          phone,
+          country,
+          pickupAddress,
+          dietary,
+          flightNumber,
+          specialRequests,
+          accessToken,
+          guestConsentAck,
+        }),
         accessToken,
         idempotencyKey
       )
@@ -433,6 +438,8 @@ export default function BookPage() {
 
   const stickySummary = Boolean(liveBreakdown && step >= 1 && step < 5)
   const showMobileBar = step < STEPS.length && !loading
+  const fxDisclaimerVisible =
+    showFxDisclaimer && (step === 0 || Boolean(breakdown || liveBreakdown))
   const checkoutConsentOk = accessToken ? consentSigned : guestConsentAck
   const primaryDisabled =
     step < STEPS.length - 1
@@ -444,12 +451,19 @@ export default function BookPage() {
       : submitting
         ? 'Redirecting to Yoco…'
         : breakdown
-          ? `Pay ${formatZar(breakdown.grand_total_cents)}`
+          ? formatPublicPayLabel(breakdown.grand_total_cents)
           : 'Pay with Yoco'
   const onPrimary = () => {
     if (step < STEPS.length - 1) goNext()
     else void handlePay()
   }
+
+  const mobileScrollPaddingClass =
+    showMobileBar && !loading
+      ? fxDisclaimerVisible
+        ? 'max-lg:pb-[calc(var(--cookie-dock-height,0px)+8.75rem+env(safe-area-inset-bottom,0px))]'
+        : 'max-lg:pb-[calc(var(--cookie-dock-height,0px)+4.75rem+env(safe-area-inset-bottom,0px))]'
+      : 'pb-36'
 
   if (successId) {
     return (
@@ -487,7 +501,9 @@ export default function BookPage() {
         path="/book"
       />
       <Navbar />
-      <main className="min-h-[70vh] bg-brand-cream-light px-4 py-8 sm:py-12 pb-36 lg:pb-28">
+      <main
+        className={`min-h-[70vh] bg-brand-cream-light px-4 py-8 sm:py-12 lg:pb-28 ${mobileScrollPaddingClass}`}
+      >
         <div className="max-w-5xl mx-auto">
           <h1 className="text-2xl sm:text-3xl font-bold text-brand-green text-center mb-2">
             Book your private experience
@@ -592,6 +608,9 @@ export default function BookPage() {
                       <legend className="text-lg font-bold text-brand-green mb-1">
                         Select your experience
                       </legend>
+                      <div className="hidden lg:flex justify-end -mt-1 mb-1">
+                        <DisplayCurrencySwitcher />
+                      </div>
                       {tours.map((t) => {
                         const fromCents = startingFromCents(t, vehicles, 1)
                         return (
@@ -620,8 +639,12 @@ export default function BookPage() {
                                   <h3 className="font-bold text-brand-green text-lg">
                                     {t.name}
                                   </h3>
-                                  <span className="text-sm font-semibold text-brand-green shrink-0">
-                                    From {formatZar(fromCents)}
+                                  <span className="text-sm font-semibold text-brand-green shrink-0 text-right">
+                                    <PublicPrice
+                                      zarCents={fromCents}
+                                      variant="from"
+                                      primaryClassName=""
+                                    />
                                   </span>
                                 </div>
                                 {t.duration_label && (
@@ -640,6 +663,11 @@ export default function BookPage() {
                           </button>
                         )
                       })}
+                      {fxDisclaimerVisible && (
+                        <div className="hidden lg:block pt-1">
+                          <FxDisclaimer />
+                        </div>
+                      )}
                     </fieldset>
                   )}
 
@@ -921,7 +949,7 @@ export default function BookPage() {
                                       {v.name}
                                     </h3>
                                     <span className="text-sm font-bold text-brand-green shrink-0">
-                                      {formatZar(resolveVehiclePrice(v))}
+                                      {formatPublicZarAmount(resolveVehiclePrice(v))}
                                     </span>
                                   </div>
                                   <p className="text-sm text-brand-green/85">
@@ -929,9 +957,13 @@ export default function BookPage() {
                                     {v.luggage_capacity || 2} bags
                                   </p>
                                   {preview && (
-                                    <p className="text-sm font-semibold text-brand-green">
-                                      Total: {formatZar(preview.grand_total_cents)}
-                                    </p>
+                                    <div className="text-sm font-semibold text-brand-green">
+                                      <span>Total: </span>
+                                      <PublicPriceInline
+                                        zarCents={preview.grand_total_cents}
+                                        className="inline"
+                                      />
+                                    </div>
                                   )}
                                   {!fits && (
                                     <p className="text-xs text-amber-800">
@@ -1151,6 +1183,11 @@ export default function BookPage() {
                           vehicleName={selectedVehicle?.name}
                         />
                       )}
+                      {showFxDisclaimer && breakdown && step === 5 && (
+                        <div className="hidden lg:block">
+                          <FxDisclaimer />
+                        </div>
+                      )}
                       <div className="text-sm text-brand-green/85 bg-white border border-brand-cream-dark rounded-xl p-4 space-y-1">
                         <p>
                           <strong>{selectedTour?.name}</strong> · {date} at{' '}
@@ -1208,7 +1245,7 @@ export default function BookPage() {
                         {submitting
                           ? 'Redirecting to Yoco…'
                           : breakdown
-                            ? `Pay ${formatZar(breakdown.grand_total_cents)}`
+                            ? formatPublicPayLabel(breakdown.grand_total_cents)
                             : 'Pay with Yoco'}
                       </button>
                     )}
@@ -1238,6 +1275,9 @@ export default function BookPage() {
                     vehicleName={selectedVehicle?.name}
                     variant="compact"
                   />
+                  {fxDisclaimerVisible && step >= 1 && step < 5 && (
+                    <FxDisclaimer className="px-1" />
+                  )}
                 </div>
               </aside>
             )}
@@ -1245,11 +1285,19 @@ export default function BookPage() {
         </div>
       </main>
 
+      {showMobileBar && fxDisclaimerVisible && (
+        <div
+          className={`lg:hidden fixed inset-x-0 z-40 border-t border-brand-cream-dark bg-brand-cream/95 backdrop-blur px-3 py-1.5 shadow-[0_-4px_12px_rgba(0,0,0,0.06)] ${MOBILE_BOOK_DISCLAIMER_ABOVE_STICKY_CLASS}`}
+        >
+          <FxDisclaimer className="max-w-5xl mx-auto" />
+        </div>
+      )}
+
       {showMobileBar && (
         <div
-          className={`lg:hidden fixed inset-x-0 ${MOBILE_FIXED_ABOVE_COOKIE_BOTTOM_CLASS} z-40 border-t border-brand-cream-dark bg-brand-cream/95 backdrop-blur px-3 pt-2.5 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-8px_24px_rgba(0,0,0,0.08)]`}
+          className={`lg:hidden fixed inset-x-0 ${MOBILE_FIXED_ABOVE_COOKIE_BOTTOM_CLASS} z-40 border-t border-brand-cream-dark bg-brand-cream/95 backdrop-blur px-3 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-[0_-8px_24px_rgba(0,0,0,0.08)]`}
         >
-          <div className="max-w-5xl mx-auto flex items-center gap-2">
+          <div className="max-w-5xl mx-auto flex items-center gap-2 min-h-12">
             {step > 0 && (
               <button
                 type="button"
@@ -1257,36 +1305,47 @@ export default function BookPage() {
                   setError(null)
                   setStep((s) => s - 1)
                 }}
-                className="min-h-12 px-4 rounded-xl border border-brand-cream-dark bg-white text-brand-green font-semibold shrink-0"
+                className="min-h-11 px-3 rounded-xl border border-brand-cream-dark bg-white text-brand-green font-semibold shrink-0 text-sm"
               >
                 Back
               </button>
             )}
             <div className="flex-1 min-w-0">
-              {liveBreakdown || breakdown ? (
-                <p className="text-xs text-brand-green/70 leading-tight">
-                  Total
-                </p>
-              ) : (
-                <p className="text-xs text-brand-green/70 leading-tight">
+              {!(liveBreakdown || breakdown) && (
+                <p className="text-xs text-brand-green/70 leading-tight truncate">
                   {STEPS[step]}
                 </p>
               )}
-              <p className="font-bold text-brand-green tabular-nums text-base truncate">
-                {breakdown
-                  ? formatZar(breakdown.grand_total_cents)
-                  : liveBreakdown
-                    ? formatZar(liveBreakdown.grand_total_cents)
-                    : selectedTour
-                      ? formatTourFromPrice(selectedTour, vehicles)
-                      : '—'}
-              </p>
+              {(liveBreakdown || breakdown) && (
+                <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
+                  <PublicPriceInline
+                    compact
+                    zarCents={
+                      breakdown
+                        ? breakdown.grand_total_cents
+                        : liveBreakdown!.grand_total_cents
+                    }
+                  />
+                  <DisplayCurrencySwitcher compact />
+                </div>
+              )}
+              {!(liveBreakdown || breakdown) && selectedTour && (
+                <PublicPrice
+                  zarCents={startingFromCents(selectedTour, vehicles, 1)}
+                  variant="from"
+                  primaryClassName="font-bold truncate block text-sm"
+                  approxClassName="text-[11px] font-normal text-brand-green/70"
+                />
+              )}
+              {!(liveBreakdown || breakdown) && !selectedTour && (
+                <span className="font-bold text-sm">—</span>
+              )}
             </div>
             <button
               type="button"
               disabled={primaryDisabled}
               onClick={onPrimary}
-              className="min-h-12 px-5 rounded-xl bg-brand-green text-brand-cream font-semibold disabled:opacity-40 shadow-sm shrink-0"
+              className="min-h-11 px-4 rounded-xl bg-brand-green text-brand-cream font-semibold disabled:opacity-40 shadow-sm shrink-0 text-sm"
             >
               {primaryLabel}
             </button>

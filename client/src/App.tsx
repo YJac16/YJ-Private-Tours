@@ -25,9 +25,11 @@ import ScrollToTop from './components/ScrollToTop'
 import ScrollToHash from './components/ScrollToHash'
 import FloatingWhatsApp from './components/FloatingWhatsApp'
 import CookieBanner from './components/CookieBanner'
+import { DisplayCurrencyProvider } from './lib/displayCurrency/DisplayCurrencyContext'
 
 function App() {
   return (
+    <DisplayCurrencyProvider>
     <BrowserRouter>
       <ScrollToHash />
       <Routes>
@@ -61,6 +63,7 @@ function App() {
       <FloatingWhatsApp />
       <CookieBanner />
     </BrowserRouter>
+    </DisplayCurrencyProvider>
   )
 }
 

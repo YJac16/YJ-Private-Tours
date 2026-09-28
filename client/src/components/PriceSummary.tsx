@@ -1,5 +1,7 @@
 import type { PriceBreakdown } from '../lib/pricing'
-import { formatZar } from '../lib/pricing'
+import { formatPublicZarAmount } from '../lib/displayCurrency/formatPublicPrice'
+import { PublicPriceInline } from '../lib/displayCurrency/components/PublicPrice'
+import DisplayCurrencySwitcher from '../lib/displayCurrency/components/DisplayCurrencySwitcher'
 
 type Props = {
   breakdown: PriceBreakdown | null
@@ -40,7 +42,7 @@ export default function PriceSummary({
         <div className="flex justify-between gap-3 text-[15px] text-brand-green">
           <span>Vehicle fee:</span>
           <span className="font-bold tabular-nums">
-            {formatZar(breakdown.vehicle_price_cents)}
+            {formatPublicZarAmount(breakdown.vehicle_price_cents)}
           </span>
         </div>
       )}
@@ -48,7 +50,7 @@ export default function PriceSummary({
       <div className="flex justify-between gap-3 text-[15px] text-brand-green">
         <span>Price per person:</span>
         <span className="font-bold tabular-nums">
-          {formatZar(breakdown.price_per_person_cents)}
+          {formatPublicZarAmount(breakdown.price_per_person_cents)}
         </span>
       </div>
 
@@ -61,16 +63,19 @@ export default function PriceSummary({
         <div className="flex justify-between gap-3 text-[15px] text-brand-green/80">
           <span>Passenger total:</span>
           <span className="font-semibold tabular-nums">
-            {formatZar(breakdown.passenger_total_cents)}
+            {formatPublicZarAmount(breakdown.passenger_total_cents)}
           </span>
         </div>
       )}
 
-      <div className="border-t border-brand-cream-dark/50 pt-3 flex justify-between gap-3 items-baseline">
-        <span className="font-bold text-lg text-brand-green">Total:</span>
-        <span className="font-bold text-xl tabular-nums text-brand-green">
-          {formatZar(breakdown.grand_total_cents)}
-        </span>
+      <div className="border-t border-brand-cream-dark/50 pt-3 flex justify-between gap-3 items-start">
+        <span className="font-bold text-lg text-brand-green pt-0.5">Total:</span>
+        <div className="text-right">
+          <PublicPriceInline zarCents={breakdown.grand_total_cents} />
+          <div className="mt-1 flex justify-end">
+            <DisplayCurrencySwitcher compact />
+          </div>
+        </div>
       </div>
     </div>
   )
