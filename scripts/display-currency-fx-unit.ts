@@ -2,14 +2,14 @@
  * FX maths, ECB parse, rounding, and client approx fallback behaviour.
  */
 import assert from 'node:assert/strict'
-import { parseEcbDailyXml } from '../client/src/lib/displayCurrency/ecbParse.ts'
 import {
   approximateDisplayAmount,
   convertZarMajorToDisplay,
   formatApproxLine,
+  parseEcbDailyXml,
   roundToNearestFive,
-} from '../client/src/lib/displayCurrency/fxMath.ts'
-import type { EcbRatesSnapshot } from '../client/src/lib/displayCurrency/types.ts'
+} from '../booking-app/lib/display-currency-fx.ts'
+import type { EcbRatesSnapshot } from '../booking-app/lib/display-currency-fx.ts'
 
 const SAMPLE_XML = `<?xml version="1.0" encoding="UTF-8"?>
 <gesmes:Envelope xmlns:gesmes="http://www.gesmes.org/xml/2002-09-01" xmlns="http://www.ecb.int/vocabulary/2002-09-01/eurofxref">
@@ -44,7 +44,10 @@ function main() {
   assert.equal(formatApproxLine(290_000, 'USD', null), null)
   assert.equal(formatApproxLine(290_000, 'USD', snapshot)?.startsWith('≈ USD'), true)
 
-  assert.equal(approximateDisplayAmount(290_000, 'USD', snapshot), roundToNearestFive(expectedUsd))
+  assert.equal(
+    approximateDisplayAmount(290_000, 'USD', snapshot),
+    roundToNearestFive(expectedUsd)
+  )
 
   assert.equal(parseEcbDailyXml('<bad>'), null)
   assert.equal(formatApproxLine(100_000, 'EUR', null), null)

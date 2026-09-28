@@ -2,7 +2,6 @@ import type { PriceBreakdown } from '../lib/pricing'
 import { formatPublicZarAmount } from '../lib/displayCurrency/formatPublicPrice'
 import { PublicPriceInline } from '../lib/displayCurrency/components/PublicPrice'
 import DisplayCurrencySwitcher from '../lib/displayCurrency/components/DisplayCurrencySwitcher'
-import FxDisclaimer from '../lib/displayCurrency/components/FxDisclaimer'
 
 type Props = {
   breakdown: PriceBreakdown | null
@@ -78,7 +77,6 @@ export default function PriceSummary({
           </div>
         </div>
       </div>
-      <FxDisclaimer className="pt-1" />
     </div>
   )
 }

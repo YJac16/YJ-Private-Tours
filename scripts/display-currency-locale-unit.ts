@@ -5,6 +5,7 @@ import assert from 'node:assert/strict'
 import { defaultDisplayCurrencyFromLocales } from '../client/src/lib/displayCurrency/localeDefault.ts'
 import { DISPLAY_CURRENCY_STORAGE_KEY } from '../client/src/lib/displayCurrency/constants.ts'
 import { readStoredDisplayCurrency } from '../client/src/lib/displayCurrency/storage.ts'
+import { resolveDisplayCurrencyPreference } from '../client/src/lib/displayCurrency/resolveDisplayCurrency.ts'
 
 function main() {
   assert.equal(defaultDisplayCurrencyFromLocales(['en-US']), 'USD')
@@ -18,7 +19,6 @@ function main() {
   assert.equal(defaultDisplayCurrencyFromLocales(['en']), 'USD')
   assert.equal(defaultDisplayCurrencyFromLocales(['xx-XX']), 'USD')
 
-  // Manual stored choice is read separately (simulated via localStorage stub)
   const original = globalThis.localStorage
   const store = new Map<string, string>()
   ;(globalThis as { localStorage?: Storage }).localStorage = {
@@ -34,6 +34,8 @@ function main() {
   store.set(DISPLAY_CURRENCY_STORAGE_KEY, 'GBP')
   assert.equal(readStoredDisplayCurrency(), 'GBP')
   assert.equal(defaultDisplayCurrencyFromLocales(['en-US']), 'USD')
+  assert.equal(resolveDisplayCurrencyPreference(['en-US']), 'GBP')
+
   ;(globalThis as { localStorage?: Storage }).localStorage = original
 
   console.log('display-currency-locale-unit: ok')

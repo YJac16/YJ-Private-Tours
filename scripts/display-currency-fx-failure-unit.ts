@@ -3,22 +3,28 @@
  */
 import assert from 'node:assert/strict'
 import type { VercelRequest, VercelResponse } from '@vercel/node'
+import {
+  cacheControlForFxRates,
+  shouldShowFxDisclaimer,
+} from '../booking-app/lib/display-currency-fx.ts'
 import handler, {
   __resetFxRatesCacheForTests,
   __seedFxRatesCacheForTests,
 } from '../api/fx-rates.ts'
-import { formatApproxLine } from '../client/src/lib/displayCurrency/fxMath.ts'
+import { formatApproxLine } from '../booking-app/lib/display-currency-fx.ts'
 
 async function invoke() {
   let status = 200
   let body: Record<string, unknown> = {}
+  let cacheControl = ''
   const req = { method: 'GET', query: {}, headers: {}, url: '/api/fx-rates' } as VercelRequest
   const res = {
     status(code: number) {
       status = code
       return this
     },
-    setHeader() {
+    setHeader(name: string, value: string) {
+      if (name.toLowerCase() === 'cache-control') cacheControl = value
       return this
     },
     json(payload: unknown) {
@@ -27,12 +33,13 @@ async function invoke() {
     },
   } as VercelResponse
   await handler(req, res)
-  return { status, body }
+  return { status, body, cacheControl }
 }
 
 async function main() {
   __resetFxRatesCacheForTests()
   assert.equal(formatApproxLine(100_000, 'USD', null), null)
+  assert.equal(shouldShowFxDisclaimer('USD', null), false)
 
   const originalFetch = globalThis.fetch
   globalThis.fetch = async () => {
@@ -41,7 +48,9 @@ async function main() {
   const first = await invoke()
   assert.equal(first.status, 200)
   assert.equal(first.body.rates, null)
-  assert.equal(formatApproxLine(100_000, 'USD', null), null)
+  assert.ok(first.cacheControl.includes('s-maxage=300'))
+  assert.ok(!first.cacheControl.includes('s-maxage=86400'))
+  assert.equal(shouldShowFxDisclaimer('USD', null), false)
 
   __seedFxRatesCacheForTests({
     fetchedAt: '2026-01-01',
@@ -57,7 +66,21 @@ async function main() {
 
   const second = await invoke()
   assert.ok(second.body.rates)
-  assert.equal(formatApproxLine(100_000, 'USD', second.body.rates as never)?.startsWith('≈ USD'), true)
+  assert.ok(second.cacheControl.includes('s-maxage=86400'))
+  assert.equal(
+    formatApproxLine(100_000, 'USD', second.body.rates as never)?.startsWith('≈ USD'),
+    true
+  )
+  assert.equal(shouldShowFxDisclaimer('USD', second.body.rates as never), true)
+
+  assert.equal(
+    cacheControlForFxRates(null).includes('s-maxage=300'),
+    true
+  )
+  assert.equal(
+    cacheControlForFxRates(second.body.rates as never).includes('s-maxage=86400'),
+    true
+  )
 
   globalThis.fetch = originalFetch
   __resetFxRatesCacheForTests()

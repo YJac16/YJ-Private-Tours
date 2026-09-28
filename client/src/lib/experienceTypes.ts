@@ -1,8 +1,7 @@
 /** Shared experience content model (catalog + admin + detail pages). */
 
 import { floorFromPriceShort, getFloorTour, FLOOR_VEHICLES } from '../data/catalogFloors'
-import { formatPublicFromLabel } from './displayCurrency/formatPublicPrice'
-import { startingFromCents } from './pricing'
+import { formatZarComma, startingFromCents } from './pricing'
 
 export type TimelineStop = {
   title: string
@@ -66,5 +65,5 @@ export const PRICE_INFO_TEXT =
 export function hermanusPriceInfoText(): string {
   const tour = getFloorTour('hermanus')
   const cents = tour ? startingFromCents(tour, FLOOR_VEHICLES, 1) : 590_000
-  return `${floorFromPriceShort('hermanus') || formatPublicFromLabel(cents)} for 1 guest with the default private vehicle included. Final price depends on guest count and vehicle. The whale-watching boat is not included.`
+  return `${floorFromPriceShort('hermanus') || `From ${formatZarComma(cents)}`} for 1 guest with the default private vehicle included. Final price depends on guest count and vehicle. The whale-watching boat is not included.`
 }

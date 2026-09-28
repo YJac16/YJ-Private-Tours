@@ -7,16 +7,22 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import { defaultDisplayCurrencyFromLocales } from './localeDefault'
-import { readStoredDisplayCurrency, writeStoredDisplayCurrency } from './storage'
+import { resolveDisplayCurrencyPreference } from './resolveDisplayCurrency'
+import { writeStoredDisplayCurrency } from './storage'
 import type { DisplayCurrencyCode, EcbRatesSnapshot } from './types'
-import { formatApproxLine } from './fxMath'
+import {
+  formatApproxLine,
+  fxRatesAvailable,
+  parseFxRatesApiBody,
+  shouldShowFxDisclaimer,
+} from './ecbParse'
 
 type DisplayCurrencyContextValue = {
   currency: DisplayCurrencyCode
   setCurrency: (code: DisplayCurrencyCode) => void
   rates: EcbRatesSnapshot | null
   ratesReady: boolean
+  fxRatesAvailable: boolean
   approxLineForZarCents: (cents: number) => string | null
   showFxDisclaimer: boolean
 }
@@ -27,10 +33,7 @@ const DisplayCurrencyContext = createContext<DisplayCurrencyContextValue | null>
 
 function resolveInitialCurrency(): DisplayCurrencyCode {
   if (typeof window === 'undefined') return 'USD'
-  return (
-    readStoredDisplayCurrency() ??
-    defaultDisplayCurrencyFromLocales(navigator.languages)
-  )
+  return resolveDisplayCurrencyPreference(navigator.languages)
 }
 
 export function DisplayCurrencyProvider({ children }: { children: ReactNode }) {
@@ -46,10 +49,17 @@ export function DisplayCurrencyProvider({ children }: { children: ReactNode }) {
     const timeout = window.setTimeout(() => controller.abort(), 8_000)
 
     fetch('/api/fx-rates', { signal: controller.signal })
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data: { rates?: EcbRatesSnapshot | null } | null) => {
+      .then(async (res) => {
+        if (!res.ok) return null
+        try {
+          return await res.json()
+        } catch {
+          return null
+        }
+      })
+      .then((data: unknown) => {
         if (cancelled) return
-        if (data?.rates) setRates(data.rates)
+        setRates(parseFxRatesApiBody(data))
       })
       .catch(() => {
         /* ZAR-only display */
@@ -71,18 +81,15 @@ export function DisplayCurrencyProvider({ children }: { children: ReactNode }) {
     writeStoredDisplayCurrency(code)
   }, [])
 
+  const ratesOk = fxRatesAvailable(rates)
+
   const approxLineForZarCents = useCallback(
-    (cents: number) => formatApproxLine(cents, currency, rates),
-    [currency, rates]
+    (cents: number) =>
+      ratesOk ? formatApproxLine(cents, currency, rates) : null,
+    [currency, rates, ratesOk]
   )
 
-  const showFxDisclaimer =
-    currency !== 'ZAR' &&
-    Boolean(
-      rates?.perEur.ZAR &&
-        rates.perEur[currency] &&
-        rates.perEur[currency] > 0
-    )
+  const showFxDisclaimer = shouldShowFxDisclaimer(currency, rates) && ratesOk
 
   const value = useMemo(
     () => ({
@@ -90,10 +97,11 @@ export function DisplayCurrencyProvider({ children }: { children: ReactNode }) {
       setCurrency,
       rates,
       ratesReady,
+      fxRatesAvailable: ratesOk,
       approxLineForZarCents,
       showFxDisclaimer,
     }),
-    [currency, setCurrency, rates, ratesReady, approxLineForZarCents, showFxDisclaimer]
+    [currency, setCurrency, rates, ratesReady, ratesOk, approxLineForZarCents, showFxDisclaimer]
   )
 
   return (

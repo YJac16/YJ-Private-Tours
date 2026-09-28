@@ -73,13 +73,27 @@ export default PublicPrice
 export function PublicPriceInline({
   zarCents,
   className = '',
+  compact = false,
 }: {
   zarCents: number
   className?: string
+  compact?: boolean
 }) {
   const { approxLineForZarCents } = useDisplayCurrency()
   const primary = formatPublicZarAmount(zarCents)
   const approx = approxLineForZarCents(zarCents)
+  if (compact) {
+    return (
+      <span className={`inline-flex flex-wrap items-baseline gap-x-1.5 gap-y-0 leading-tight ${className}`}>
+        <span className="font-bold tabular-nums text-sm">{primary}</span>
+        {approx && (
+          <span className="text-[11px] font-normal text-brand-green/70 tabular-nums">
+            {approx}
+          </span>
+        )}
+      </span>
+    )
+  }
   return (
     <span className={className}>
       <span className="font-bold tabular-nums">{primary}</span>

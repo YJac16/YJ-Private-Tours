@@ -35,7 +35,7 @@ import PublicPrice, { PublicPriceInline } from '../lib/displayCurrency/component
 import DisplayCurrencySwitcher from '../lib/displayCurrency/components/DisplayCurrencySwitcher'
 import FxDisclaimer from '../lib/displayCurrency/components/FxDisclaimer'
 import { useDisplayCurrency } from '../lib/displayCurrency/DisplayCurrencyContext'
-import { MOBILE_FIXED_ABOVE_COOKIE_BOTTOM_CLASS } from '../lib/cookieDockOffset'
+import { MOBILE_FIXED_ABOVE_COOKIE_BOTTOM_CLASS, MOBILE_BOOK_DISCLAIMER_ABOVE_STICKY_CLASS } from '../lib/cookieDockOffset'
 
 const STEPS = [
   'Experience',
@@ -1163,6 +1163,9 @@ export default function BookPage() {
                           vehicleName={selectedVehicle?.name}
                         />
                       )}
+                      {showFxDisclaimer && breakdown && step === 5 && (
+                        <FxDisclaimer />
+                      )}
                       <div className="text-sm text-brand-green/85 bg-white border border-brand-cream-dark rounded-xl p-4 space-y-1">
                         <p>
                           <strong>{selectedTour?.name}</strong> · {date} at{' '}
@@ -1250,6 +1253,9 @@ export default function BookPage() {
                     vehicleName={selectedVehicle?.name}
                     variant="compact"
                   />
+                  {showFxDisclaimer && (
+                    <FxDisclaimer className="px-1" />
+                  )}
                 </div>
               </aside>
             )}
@@ -1257,11 +1263,19 @@ export default function BookPage() {
         </div>
       </main>
 
+      {showMobileBar && showFxDisclaimer && (breakdown || liveBreakdown) && (
+        <div
+          className={`lg:hidden fixed inset-x-0 z-40 px-3 pb-1 ${MOBILE_BOOK_DISCLAIMER_ABOVE_STICKY_CLASS}`}
+        >
+          <FxDisclaimer className="max-w-5xl mx-auto bg-brand-cream/90 rounded-md px-1" />
+        </div>
+      )}
+
       {showMobileBar && (
         <div
-          className={`lg:hidden fixed inset-x-0 ${MOBILE_FIXED_ABOVE_COOKIE_BOTTOM_CLASS} z-40 border-t border-brand-cream-dark bg-brand-cream/95 backdrop-blur px-3 pt-2.5 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-8px_24px_rgba(0,0,0,0.08)]`}
+          className={`lg:hidden fixed inset-x-0 ${MOBILE_FIXED_ABOVE_COOKIE_BOTTOM_CLASS} z-40 border-t border-brand-cream-dark bg-brand-cream/95 backdrop-blur px-3 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-[0_-8px_24px_rgba(0,0,0,0.08)]`}
         >
-          <div className="max-w-5xl mx-auto flex items-center gap-2">
+          <div className="max-w-5xl mx-auto flex items-center gap-2 min-h-12">
             {step > 0 && (
               <button
                 type="button"
@@ -1269,53 +1283,51 @@ export default function BookPage() {
                   setError(null)
                   setStep((s) => s - 1)
                 }}
-                className="min-h-12 px-4 rounded-xl border border-brand-cream-dark bg-white text-brand-green font-semibold shrink-0"
+                className="min-h-11 px-3 rounded-xl border border-brand-cream-dark bg-white text-brand-green font-semibold shrink-0 text-sm"
               >
                 Back
               </button>
             )}
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                {liveBreakdown || breakdown ? (
-                  <p className="text-xs text-brand-green/70 leading-tight">Total</p>
-                ) : (
-                  <p className="text-xs text-brand-green/70 leading-tight">
-                    {STEPS[step]}
-                  </p>
-                )}
-                {(liveBreakdown || breakdown) && (
-                  <DisplayCurrencySwitcher compact id="book-mobile-currency" />
-                )}
-              </div>
-              <div className="text-base text-brand-green">
-                {breakdown ? (
-                  <PublicPriceInline zarCents={breakdown.grand_total_cents} />
-                ) : liveBreakdown ? (
-                  <PublicPriceInline zarCents={liveBreakdown.grand_total_cents} />
-                ) : selectedTour ? (
-                  <PublicPrice
-                    zarCents={startingFromCents(selectedTour, vehicles, 1)}
-                    variant="from"
-                    primaryClassName="font-bold truncate block"
-                    approxClassName="text-[11px] font-normal text-brand-green/70"
+              {!(liveBreakdown || breakdown) && (
+                <p className="text-xs text-brand-green/70 leading-tight truncate">
+                  {STEPS[step]}
+                </p>
+              )}
+              {(liveBreakdown || breakdown) && (
+                <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
+                  <PublicPriceInline
+                    compact
+                    zarCents={
+                      breakdown
+                        ? breakdown.grand_total_cents
+                        : liveBreakdown!.grand_total_cents
+                    }
                   />
-                ) : (
-                  <span className="font-bold">—</span>
-                )}
-              </div>
+                  <DisplayCurrencySwitcher compact />
+                </div>
+              )}
+              {!(liveBreakdown || breakdown) && selectedTour && (
+                <PublicPrice
+                  zarCents={startingFromCents(selectedTour, vehicles, 1)}
+                  variant="from"
+                  primaryClassName="font-bold truncate block text-sm"
+                  approxClassName="text-[11px] font-normal text-brand-green/70"
+                />
+              )}
+              {!(liveBreakdown || breakdown) && !selectedTour && (
+                <span className="font-bold text-sm">—</span>
+              )}
             </div>
             <button
               type="button"
               disabled={primaryDisabled}
               onClick={onPrimary}
-              className="min-h-12 px-5 rounded-xl bg-brand-green text-brand-cream font-semibold disabled:opacity-40 shadow-sm shrink-0"
+              className="min-h-11 px-4 rounded-xl bg-brand-green text-brand-cream font-semibold disabled:opacity-40 shadow-sm shrink-0 text-sm"
             >
               {primaryLabel}
             </button>
           </div>
-          {showFxDisclaimer && (breakdown || liveBreakdown) && (
-            <FxDisclaimer className="max-w-5xl mx-auto mt-2 px-0.5" />
-          )}
         </div>
       )}
 
