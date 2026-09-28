@@ -32,6 +32,7 @@ import {
   vehicleFitsGuests,
   vehiclesForGuestCount,
 } from '../lib/pricing'
+import { MOBILE_FIXED_ABOVE_COOKIE_BOTTOM_CLASS } from '../lib/cookieDockOffset'
 
 const STEPS = [
   'Experience',
@@ -1245,7 +1246,9 @@ export default function BookPage() {
       </main>
 
       {showMobileBar && (
-        <div className="lg:hidden fixed inset-x-0 bottom-0 z-40 border-t border-brand-cream-dark bg-brand-cream/95 backdrop-blur px-3 pt-2.5 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-8px_24px_rgba(0,0,0,0.08)]">
+        <div
+          className={`lg:hidden fixed inset-x-0 ${MOBILE_FIXED_ABOVE_COOKIE_BOTTOM_CLASS} z-40 border-t border-brand-cream-dark bg-brand-cream/95 backdrop-blur px-3 pt-2.5 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-8px_24px_rgba(0,0,0,0.08)]`}
+        >
           <div className="max-w-5xl mx-auto flex items-center gap-2">
             {step > 0 && (
               <button
