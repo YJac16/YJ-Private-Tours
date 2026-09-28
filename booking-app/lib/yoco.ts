@@ -12,6 +12,59 @@ import {
 
 const YOCO_CHECKOUT_URL = 'https://payments.yoco.com/api/checkouts'
 
+export type YocoCheckoutHttpBody = {
+  amount: number
+  currency: 'ZAR'
+  successUrl: string
+  cancelUrl: string
+  failureUrl: string
+  metadata: {
+    booking_id: string
+    booking_reference: string
+    clientName: string
+    clientEmail: string
+    tourName: string
+  }
+}
+
+export function buildYocoCheckoutHttpBody(opts: {
+  amountCents: number
+  bookingId: string
+  bookingReference?: string
+  clientName?: string
+  clientEmail?: string
+  tourName?: string
+  siteBase: string
+}): YocoCheckoutHttpBody {
+  const site = opts.siteBase.replace(/\/$/, '')
+  const amount = Math.round(Number(opts.amountCents))
+  const refQ = opts.bookingReference
+    ? `&ref=${encodeURIComponent(opts.bookingReference)}`
+    : ''
+  return {
+    amount,
+    currency: 'ZAR',
+    successUrl: `${site}/thank-you?payment=success&booking_id=${opts.bookingId}${refQ}`,
+    cancelUrl: `${site}/book?cancelled=1&booking_id=${opts.bookingId}${refQ}`,
+    failureUrl: `${site}/thank-you?payment=failure&booking_id=${opts.bookingId}${refQ}`,
+    metadata: {
+      booking_id: opts.bookingId,
+      booking_reference: opts.bookingReference || '',
+      clientName: opts.clientName || '',
+      clientEmail: opts.clientEmail || '',
+      tourName: opts.tourName || '',
+    },
+  }
+}
+
+export function resolveYocoSiteBase(): string {
+  return (
+    process.env.SITE_URL ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '') ||
+    'http://localhost:5173'
+  ).replace(/\/$/, '')
+}
+
 export type YocoCheckoutResult = {
   id: string
   redirectUrl: string
@@ -30,11 +83,7 @@ export async function createYocoCheckout(opts: {
   /** Override default key — use a unique suffix when retrying after an expired checkout. */
   idempotencyKey?: string
 }): Promise<YocoCheckoutResult> {
-  const site = (
-    process.env.SITE_URL ||
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '') ||
-    'http://localhost:5173'
-  ).replace(/\/$/, '')
+  const site = resolveYocoSiteBase()
   const amount = Math.round(Number(opts.amountCents))
   if (!Number.isFinite(amount) || amount < 100) {
     throw new Error('Amount must be at least 100 cents (R1)')
@@ -60,9 +109,15 @@ export async function createYocoCheckout(opts: {
     throw new Error('YOCO_SECRET_KEY is not configured')
   }
 
-  const refQ = opts.bookingReference
-    ? `&ref=${encodeURIComponent(opts.bookingReference)}`
-    : ''
+  const httpBody = buildYocoCheckoutHttpBody({
+    amountCents: amount,
+    bookingId: opts.bookingId,
+    bookingReference: opts.bookingReference,
+    clientName: opts.clientName,
+    clientEmail: opts.clientEmail,
+    tourName: opts.tourName,
+    siteBase: site,
+  })
 
   const res = await fetch(YOCO_CHECKOUT_URL, {
     method: 'POST',
@@ -72,20 +127,7 @@ export async function createYocoCheckout(opts: {
       'Idempotency-Key':
         opts.idempotencyKey || `booking-${opts.bookingId}-${amount}`,
     },
-    body: JSON.stringify({
-      amount,
-      currency: 'ZAR',
-      successUrl: `${site}/thank-you?payment=success&booking_id=${opts.bookingId}${refQ}`,
-      cancelUrl: `${site}/book?cancelled=1&booking_id=${opts.bookingId}${refQ}`,
-      failureUrl: `${site}/thank-you?payment=failure&booking_id=${opts.bookingId}${refQ}`,
-      metadata: {
-        booking_id: opts.bookingId,
-        booking_reference: opts.bookingReference || '',
-        clientName: opts.clientName || '',
-        clientEmail: opts.clientEmail || '',
-        tourName: opts.tourName || '',
-      },
-    }),
+    body: JSON.stringify(httpBody),
   })
 
   const data = await res.json().catch(() => ({}))

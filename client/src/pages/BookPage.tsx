@@ -35,6 +35,7 @@ import PublicPrice, { PublicPriceInline } from '../lib/displayCurrency/component
 import DisplayCurrencySwitcher from '../lib/displayCurrency/components/DisplayCurrencySwitcher'
 import FxDisclaimer from '../lib/displayCurrency/components/FxDisclaimer'
 import { useDisplayCurrency } from '../lib/displayCurrency/DisplayCurrencyContext'
+import { buildCreateBookingRequestBody } from '../../../booking-app/lib/book-create-request'
 import { MOBILE_FIXED_ABOVE_COOKIE_BOTTOM_CLASS, MOBILE_BOOK_DISCLAIMER_ABOVE_STICKY_CLASS } from '../lib/cookieDockOffset'
 
 const STEPS = [
@@ -391,24 +392,24 @@ export default function BookPage() {
     setError(null)
     try {
       const res = await createBooking(
-        {
+        buildCreateBookingRequestBody({
           booking_date: date,
           start_time: startTime,
           driver_id: driverId,
           tour_id: tourId,
           vehicle_id: vehicleId,
-          adult_count: peopleCount,
-          child_count: 0,
-          client_name: name.trim(),
-          client_email: email.trim(),
-          client_phone: phone.trim(),
-          client_country: country.trim() || undefined,
-          pickup_address: pickupAddress.trim(),
-          dietary_requirements: dietary.trim() || undefined,
-          flight_number: flightNumber.trim() || undefined,
-          special_requests: specialRequests.trim() || undefined,
-          guest_consent_acknowledged: !accessToken ? guestConsentAck : undefined,
-        },
+          peopleCount,
+          name,
+          email,
+          phone,
+          country,
+          pickupAddress,
+          dietary,
+          flightNumber,
+          specialRequests,
+          accessToken,
+          guestConsentAck,
+        }),
         accessToken,
         idempotencyKey
       )
@@ -437,6 +438,8 @@ export default function BookPage() {
 
   const stickySummary = Boolean(liveBreakdown && step >= 1 && step < 5)
   const showMobileBar = step < STEPS.length && !loading
+  const fxDisclaimerVisible =
+    showFxDisclaimer && (step === 0 || Boolean(breakdown || liveBreakdown))
   const checkoutConsentOk = accessToken ? consentSigned : guestConsentAck
   const primaryDisabled =
     step < STEPS.length - 1
@@ -648,6 +651,11 @@ export default function BookPage() {
                           </button>
                         )
                       })}
+                      {fxDisclaimerVisible && (
+                        <div className="hidden lg:block pt-1">
+                          <FxDisclaimer />
+                        </div>
+                      )}
                     </fieldset>
                   )}
 
@@ -1164,7 +1172,9 @@ export default function BookPage() {
                         />
                       )}
                       {showFxDisclaimer && breakdown && step === 5 && (
-                        <FxDisclaimer />
+                        <div className="hidden lg:block">
+                          <FxDisclaimer />
+                        </div>
                       )}
                       <div className="text-sm text-brand-green/85 bg-white border border-brand-cream-dark rounded-xl p-4 space-y-1">
                         <p>
@@ -1253,7 +1263,7 @@ export default function BookPage() {
                     vehicleName={selectedVehicle?.name}
                     variant="compact"
                   />
-                  {showFxDisclaimer && (
+                  {fxDisclaimerVisible && step >= 1 && step < 5 && (
                     <FxDisclaimer className="px-1" />
                   )}
                 </div>
@@ -1263,7 +1273,7 @@ export default function BookPage() {
         </div>
       </main>
 
-      {showMobileBar && showFxDisclaimer && (breakdown || liveBreakdown) && (
+      {showMobileBar && fxDisclaimerVisible && (
         <div
           className={`lg:hidden fixed inset-x-0 z-40 px-3 pb-1 ${MOBILE_BOOK_DISCLAIMER_ABOVE_STICKY_CLASS}`}
         >

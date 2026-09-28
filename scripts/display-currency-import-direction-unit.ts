@@ -7,8 +7,8 @@ import path from 'node:path'
 
 const root = process.cwd()
 
-const forbiddenImport =
-  /displayCurrency|display-currency\/|formatPublicZar|formatPublicFrom|useDisplayCurrency|from ['"].*displayCurrency/
+export const forbiddenDisplayCurrencyImport =
+  /displayCurrency|display-currency-fx|display-currency\/|formatPublicZar|formatPublicFrom|useDisplayCurrency/
 
 const scanRoots = [
   path.join(root, 'booking-app/lib'),
@@ -31,6 +31,12 @@ const skipPaths = new Set([
   path.join(root, 'api/fx-rates.ts'),
 ])
 
+const payloadBuilderFiles = [
+  path.join(root, 'booking-app/lib/book-create-request.ts'),
+  path.join(root, 'booking-app/lib/yoco.ts'),
+  path.join(root, 'booking-app/lib/pricing.ts'),
+]
+
 const skipScriptPrefix = 'display-currency-'
 
 function shouldSkip(filePath: string): boolean {
@@ -39,8 +45,9 @@ function shouldSkip(filePath: string): boolean {
     if (filePath.startsWith(skip + path.sep)) return true
   }
   const rel = path.relative(path.join(root, 'scripts'), filePath)
-  if (rel.startsWith('..')) return false
-  if (path.basename(filePath).startsWith(skipScriptPrefix)) return true
+  if (!rel.startsWith('..') && path.basename(filePath).startsWith(skipScriptPrefix)) {
+    return true
+  }
   return false
 }
 
@@ -49,7 +56,7 @@ function scanFile(filePath: string) {
   const rel = path.relative(root, filePath)
   const src = fs.readFileSync(filePath, 'utf8')
   assert.ok(
-    !forbiddenImport.test(src),
+    !forbiddenDisplayCurrencyImport.test(src),
     `${rel} must not import display currency / FX presentation code`
   )
 }
@@ -58,19 +65,43 @@ function walk(target: string) {
   if (!fs.existsSync(target)) return
   const stat = fs.statSync(target)
   if (stat.isFile()) {
-    if (target.endsWith('.ts') || target.endsWith('.tsx')) scanFile(target)
+    if (
+      target.endsWith('.ts') ||
+      target.endsWith('.tsx') ||
+      target.endsWith('.mjs')
+    ) {
+      scanFile(target)
+    }
     return
   }
   for (const name of fs.readdirSync(target)) {
-    const p = path.join(target, name)
-    const s = fs.statSync(p)
-    if (s.isDirectory()) walk(p)
-    else if (p.endsWith('.ts') || p.endsWith('.tsx') || p.endsWith('.mjs')) scanFile(p)
+    walk(path.join(target, name))
+  }
+}
+
+function negativeSelfTest() {
+  const mustMatch = [
+    "import x from '../displayCurrency/foo'",
+    "from '../../lib/display-currency-fx'",
+    "display-currency-fx.ts",
+    "formatPublicZarAmount",
+    "useDisplayCurrency(",
+  ]
+  for (const sample of mustMatch) {
+    assert.ok(
+      forbiddenDisplayCurrencyImport.test(sample),
+      `checker should flag: ${sample}`
+    )
   }
 }
 
 function main() {
+  negativeSelfTest()
   for (const r of scanRoots) walk(r)
+  for (const f of payloadBuilderFiles) {
+    assert.ok(fs.existsSync(f), `missing ${f}`)
+    scanFile(f)
+  }
   console.log('display-currency-import-direction-unit: ok')
 }
 
