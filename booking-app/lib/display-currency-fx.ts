@@ -58,11 +58,23 @@ export function parseFxRatesApiBody(body: unknown): EcbRatesSnapshot | null {
   }
 }
 
-export function cacheControlForFxRates(rates: EcbRatesSnapshot | null): string {
-  if (rates) {
+export type FxRatesLoadSource = 'fresh' | 'last-good' | 'none'
+
+export type FxRatesLoadResult = {
+  rates: EcbRatesSnapshot | null
+  source: FxRatesLoadSource
+}
+
+export function cacheControlForFxSource(source: FxRatesLoadSource): string {
+  if (source === 'fresh') {
     return 'public, s-maxage=86400, stale-while-revalidate=86400'
   }
   return 'public, s-maxage=300, stale-while-revalidate=60'
+}
+
+/** @deprecated use cacheControlForFxSource */
+export function cacheControlForFxRates(rates: EcbRatesSnapshot | null): string {
+  return cacheControlForFxSource(rates ? 'fresh' : 'none')
 }
 
 /** Round to nearest 5; halves round up (152.5 → 155). */

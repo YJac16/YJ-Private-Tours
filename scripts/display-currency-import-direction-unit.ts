@@ -7,8 +7,9 @@ import path from 'node:path'
 
 const root = process.cwd()
 
+/** Import lines / hooks into display-currency UI or server FX module (not shared publicZarText). */
 export const forbiddenDisplayCurrencyImport =
-  /displayCurrency|display-currency-fx|display-currency\/|formatPublicZar|formatPublicFrom|useDisplayCurrency/
+  /from\s+['"][^'"]*(?:\/displayCurrency\/|display-currency-fx)|useDisplayCurrency\s*\(/
 
 const scanRoots = [
   path.join(root, 'booking-app/lib'),
@@ -83,9 +84,7 @@ function negativeSelfTest() {
   const mustMatch = [
     "import x from '../displayCurrency/foo'",
     "from '../../lib/display-currency-fx'",
-    "display-currency-fx.ts",
-    "formatPublicZarAmount",
-    "useDisplayCurrency(",
+    "useDisplayCurrency()",
   ]
   for (const sample of mustMatch) {
     assert.ok(

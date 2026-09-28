@@ -4,7 +4,7 @@
 import assert from 'node:assert/strict'
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import {
-  cacheControlForFxRates,
+  cacheControlForFxSource,
   shouldShowFxDisclaimer,
 } from '../booking-app/lib/display-currency-fx.ts'
 import handler, {
@@ -66,21 +66,16 @@ async function main() {
 
   const second = await invoke()
   assert.ok(second.body.rates)
-  assert.ok(second.cacheControl.includes('s-maxage=86400'))
+  assert.ok(second.cacheControl.includes('s-maxage=300'))
+  assert.ok(!second.cacheControl.includes('s-maxage=86400'))
   assert.equal(
     formatApproxLine(100_000, 'USD', second.body.rates as never)?.startsWith('≈ USD'),
     true
   )
   assert.equal(shouldShowFxDisclaimer('USD', second.body.rates as never), true)
 
-  assert.equal(
-    cacheControlForFxRates(null).includes('s-maxage=300'),
-    true
-  )
-  assert.equal(
-    cacheControlForFxRates(second.body.rates as never).includes('s-maxage=86400'),
-    true
-  )
+  assert.equal(cacheControlForFxSource('last-good').includes('s-maxage=300'), true)
+  assert.equal(cacheControlForFxSource('fresh').includes('s-maxage=86400'), true)
 
   globalThis.fetch = originalFetch
   __resetFxRatesCacheForTests()

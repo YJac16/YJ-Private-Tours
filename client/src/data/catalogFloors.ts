@@ -4,10 +4,10 @@
  */
 import type { PricingTour, PricingVehicle } from '../lib/pricing'
 import {
-  formatFromOneGuest,
   formatZarComma,
   startingFromCents,
 } from '../lib/pricing'
+import { formatPublicFromOneGuest } from '../lib/publicZarText'
 import { BUILD_CATALOG_PRICING } from './catalogPricing.generated'
 
 export { CATALOG_PRICING_SNAPSHOT_FALLBACK } from './catalogPricing.snapshot'
@@ -42,7 +42,7 @@ export function siteLowestFromCents(): number {
 }
 
 export function siteLowestFromLabel(): string {
-  return formatFromOneGuest(siteLowestFromCents())
+  return formatPublicFromOneGuest(siteLowestFromCents())
 }
 
 export function catalogPricingBuildSource(): string {

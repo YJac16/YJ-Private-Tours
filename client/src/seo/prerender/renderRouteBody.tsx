@@ -24,7 +24,8 @@ import {
 } from '../../data/catalogFloors'
 import { HERMANUS_DURATION_LABEL } from '../../data/hermanusDuration'
 import { galleryImages } from '../../data/gallery'
-import { formatFromOneGuest, formatZarComma, startingFromCents } from '../../lib/pricing'
+import { formatPublicFromLabel, formatPublicFromOneGuest } from '../../lib/publicZarText'
+import { startingFromCents } from '../../lib/pricing'
 import { whatsappWithMessage } from '../../lib/whatsappLinks'
 import {
   BUSINESS_EMAIL,
@@ -50,9 +51,9 @@ function fromPriceForSlug(slug: string): string {
   if (!tour) return ''
   const cents = startingFromCents(tour, FLOOR_VEHICLES, 1)
   if (slug === 'hermanus') {
-    return `From ${formatZarComma(cents)}`
+    return formatPublicFromLabel(cents)
   }
-  return formatFromOneGuest(cents)
+  return formatPublicFromOneGuest(cents)
 }
 
 function Paragraphs({ text }: { text: string }) {
@@ -420,8 +421,8 @@ export function tourSummaryLines(): string[] {
         : content?.duration_label || ''
     const priceLabel =
       slug === 'hermanus'
-        ? `From ${formatZarComma(cents)}`
-        : formatFromOneGuest(cents)
+        ? formatPublicFromLabel(cents)
+        : formatPublicFromOneGuest(cents)
     return `- ${content?.display_name}: ${SITE}/experience/${slug} (${priceLabel}, ${duration})`
   })
 }

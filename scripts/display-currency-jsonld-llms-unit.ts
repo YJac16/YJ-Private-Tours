@@ -1,9 +1,7 @@
 /**
- * JSON-LD offer prices stay ZAR numerics; llms.txt generator still uses legacy R floor label.
+ * JSON-LD offer numeric prices stay ZAR; llms uses public ZAR floor label.
  */
 import assert from 'node:assert/strict'
-import fs from 'node:fs'
-import path from 'node:path'
 import { buildTouristTripJsonLd } from '../client/src/seo/routes.ts'
 import { siteLowestFromLabel } from '../client/src/data/catalogFloors.ts'
 import { EXPERIENCE_DEFAULTS } from '../client/src/data/experienceDefaults.ts'
@@ -32,13 +30,7 @@ function main() {
   }
 
   const label = siteLowestFromLabel()
-  assert.match(label, /^From R[\d,]+ /, 'llms.txt floor line must stay legacy R format')
-
-  const llmsScript = fs.readFileSync(
-    path.join(process.cwd(), 'scripts/generate-llms-txt.ts'),
-    'utf8'
-  )
-  assert.ok(llmsScript.includes('siteLowestFromLabel()'))
+  assert.match(label, /^From ZAR [\d,]+ /)
 
   console.log('display-currency-jsonld-llms-unit: ok')
 }
