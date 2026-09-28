@@ -21,8 +21,6 @@ import {
 import {
   calculatePrice,
   defaultVehicleForGuests,
-  formatTourFromPrice,
-  formatZar,
   maxGuestsForTour,
   resolvePricePerPerson,
   resolveVehiclePrice,
@@ -32,6 +30,11 @@ import {
   vehicleFitsGuests,
   vehiclesForGuestCount,
 } from '../lib/pricing'
+import { formatPublicPayLabel, formatPublicZarAmount } from '../lib/displayCurrency/formatPublicPrice'
+import PublicPrice, { PublicPriceInline } from '../lib/displayCurrency/components/PublicPrice'
+import DisplayCurrencySwitcher from '../lib/displayCurrency/components/DisplayCurrencySwitcher'
+import FxDisclaimer from '../lib/displayCurrency/components/FxDisclaimer'
+import { useDisplayCurrency } from '../lib/displayCurrency/DisplayCurrencyContext'
 import { MOBILE_FIXED_ABOVE_COOKIE_BOTTOM_CLASS } from '../lib/cookieDockOffset'
 
 const STEPS = [
@@ -60,6 +63,7 @@ export default function BookPage() {
     error: catalogError,
     retry: retryCatalog,
   } = useCatalog()
+  const { showFxDisclaimer } = useDisplayCurrency()
   const drivers = catalog?.drivers ?? []
   const vehicles = catalog?.vehicles ?? []
   const tours = catalog?.tours ?? []
@@ -444,7 +448,7 @@ export default function BookPage() {
       : submitting
         ? 'Redirecting to Yoco…'
         : breakdown
-          ? `Pay ${formatZar(breakdown.grand_total_cents)}`
+          ? formatPublicPayLabel(breakdown.grand_total_cents)
           : 'Pay with Yoco'
   const onPrimary = () => {
     if (step < STEPS.length - 1) goNext()
@@ -620,8 +624,12 @@ export default function BookPage() {
                                   <h3 className="font-bold text-brand-green text-lg">
                                     {t.name}
                                   </h3>
-                                  <span className="text-sm font-semibold text-brand-green shrink-0">
-                                    From {formatZar(fromCents)}
+                                  <span className="text-sm font-semibold text-brand-green shrink-0 text-right">
+                                    <PublicPrice
+                                      zarCents={fromCents}
+                                      variant="from"
+                                      primaryClassName=""
+                                    />
                                   </span>
                                 </div>
                                 {t.duration_label && (
@@ -921,7 +929,7 @@ export default function BookPage() {
                                       {v.name}
                                     </h3>
                                     <span className="text-sm font-bold text-brand-green shrink-0">
-                                      {formatZar(resolveVehiclePrice(v))}
+                                      {formatPublicZarAmount(resolveVehiclePrice(v))}
                                     </span>
                                   </div>
                                   <p className="text-sm text-brand-green/85">
@@ -929,9 +937,13 @@ export default function BookPage() {
                                     {v.luggage_capacity || 2} bags
                                   </p>
                                   {preview && (
-                                    <p className="text-sm font-semibold text-brand-green">
-                                      Total: {formatZar(preview.grand_total_cents)}
-                                    </p>
+                                    <div className="text-sm font-semibold text-brand-green">
+                                      <span>Total: </span>
+                                      <PublicPriceInline
+                                        zarCents={preview.grand_total_cents}
+                                        className="inline"
+                                      />
+                                    </div>
                                   )}
                                   {!fits && (
                                     <p className="text-xs text-amber-800">
@@ -1208,7 +1220,7 @@ export default function BookPage() {
                         {submitting
                           ? 'Redirecting to Yoco…'
                           : breakdown
-                            ? `Pay ${formatZar(breakdown.grand_total_cents)}`
+                            ? formatPublicPayLabel(breakdown.grand_total_cents)
                             : 'Pay with Yoco'}
                       </button>
                     )}
@@ -1263,24 +1275,34 @@ export default function BookPage() {
               </button>
             )}
             <div className="flex-1 min-w-0">
-              {liveBreakdown || breakdown ? (
-                <p className="text-xs text-brand-green/70 leading-tight">
-                  Total
-                </p>
-              ) : (
-                <p className="text-xs text-brand-green/70 leading-tight">
-                  {STEPS[step]}
-                </p>
-              )}
-              <p className="font-bold text-brand-green tabular-nums text-base truncate">
-                {breakdown
-                  ? formatZar(breakdown.grand_total_cents)
-                  : liveBreakdown
-                    ? formatZar(liveBreakdown.grand_total_cents)
-                    : selectedTour
-                      ? formatTourFromPrice(selectedTour, vehicles)
-                      : '—'}
-              </p>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {liveBreakdown || breakdown ? (
+                  <p className="text-xs text-brand-green/70 leading-tight">Total</p>
+                ) : (
+                  <p className="text-xs text-brand-green/70 leading-tight">
+                    {STEPS[step]}
+                  </p>
+                )}
+                {(liveBreakdown || breakdown) && (
+                  <DisplayCurrencySwitcher compact id="book-mobile-currency" />
+                )}
+              </div>
+              <div className="text-base text-brand-green">
+                {breakdown ? (
+                  <PublicPriceInline zarCents={breakdown.grand_total_cents} />
+                ) : liveBreakdown ? (
+                  <PublicPriceInline zarCents={liveBreakdown.grand_total_cents} />
+                ) : selectedTour ? (
+                  <PublicPrice
+                    zarCents={startingFromCents(selectedTour, vehicles, 1)}
+                    variant="from"
+                    primaryClassName="font-bold truncate block"
+                    approxClassName="text-[11px] font-normal text-brand-green/70"
+                  />
+                ) : (
+                  <span className="font-bold">—</span>
+                )}
+              </div>
             </div>
             <button
               type="button"
@@ -1291,6 +1313,9 @@ export default function BookPage() {
               {primaryLabel}
             </button>
           </div>
+          {showFxDisclaimer && (breakdown || liveBreakdown) && (
+            <FxDisclaimer className="max-w-5xl mx-auto mt-2 px-0.5" />
+          )}
         </div>
       )}
 

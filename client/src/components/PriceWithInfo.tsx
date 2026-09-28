@@ -2,10 +2,8 @@ import { useId, useState } from 'react'
 import { HiOutlineInformationCircle } from 'react-icons/hi'
 import { hermanusPriceInfoText, PRICE_INFO_TEXT } from '../lib/experienceTypes'
 import type { PricingTour, PricingVehicle } from '../lib/pricing'
-import {
-  formatStartingFromNote,
-  formatStartingFromPerGuest,
-} from '../lib/pricing'
+import { startingFromCents, formatStartingFromNote } from '../lib/pricing'
+import PublicPrice from '../lib/displayCurrency/components/PublicPrice'
 
 type Props = {
   tour: PricingTour
@@ -35,7 +33,11 @@ export default function PriceWithInfo({
             compact ? 'text-sm' : 'text-base'
           }`}
         >
-          {formatStartingFromPerGuest(tour, vehicles)}
+          <PublicPrice
+            zarCents={startingFromCents(tour, vehicles, 1)}
+            variant="from-one-guest"
+            primaryClassName=""
+          />
         </p>
         <button
           type="button"

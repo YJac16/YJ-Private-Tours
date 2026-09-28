@@ -5,9 +5,9 @@
 import type { PricingTour, PricingVehicle } from '../lib/pricing'
 import {
   formatFromOneGuest,
-  formatZarComma,
   startingFromCents,
 } from '../lib/pricing'
+import { formatPublicFromLabel } from '../lib/displayCurrency/formatPublicPrice'
 import { BUILD_CATALOG_PRICING } from './catalogPricing.generated'
 
 export { CATALOG_PRICING_SNAPSHOT_FALLBACK } from './catalogPricing.snapshot'
@@ -53,5 +53,5 @@ export function catalogPricingBuildSource(): string {
 export function floorFromPriceShort(slug: string): string {
   const tour = getFloorTour(slug)
   if (!tour) return ''
-  return `From ${formatZarComma(startingFromCents(tour, FLOOR_VEHICLES, 1))}`
+  return formatPublicFromLabel(startingFromCents(tour, FLOOR_VEHICLES, 1))
 }
