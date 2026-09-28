@@ -1,5 +1,8 @@
 /** Shared experience content model (catalog + admin + detail pages). */
 
+import { floorFromPriceShort, getFloorTour, FLOOR_VEHICLES } from '../data/catalogFloors'
+import { formatZarComma, startingFromCents } from './pricing'
+
 export type TimelineStop = {
   title: string
   description: string
@@ -57,7 +60,10 @@ export const HERMANUS_HIGHLIGHTS = [
 ] as const
 
 export const PRICE_INFO_TEXT =
-  'Starting from shows the minimum for 1 guest with the cheapest private vehicle included. Your final price depends on guest count and the vehicle you choose at booking.'
+  'Starting from shows the minimum for 1 guest with the default private vehicle (Corolla Cross when it fits) included. Your final price depends on guest count and the vehicle you choose at booking.'
 
-export const HERMANUS_PRICE_INFO_TEXT =
-  'From R5,900 for 1 guest with the cheapest private vehicle included. Final price depends on guest count and vehicle. The whale-watching boat is not included.'
+export function hermanusPriceInfoText(): string {
+  const tour = getFloorTour('hermanus')
+  const cents = tour ? startingFromCents(tour, FLOOR_VEHICLES, 1) : 590_000
+  return `${floorFromPriceShort('hermanus') || `From ${formatZarComma(cents)}`} for 1 guest with the default private vehicle included. Final price depends on guest count and vehicle. The whale-watching boat is not included.`
+}

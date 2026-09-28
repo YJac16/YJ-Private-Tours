@@ -155,27 +155,3 @@ export async function createYocoRefund(opts: {
   }
   return { ok: true, status: res.status, data }
 }
-
-/** Default tour prices in ZAR cents (server authority). */
-export const TOUR_PRICES_CENTS: Record<string, number> = {
-  city: 150000,
-  peninsula: 280000,
-  sunset: 180000,
-  winelands: 400000,
-  // UUID seeds from schema
-  '22222222-2222-2222-2222-222222222201': 150000,
-  '22222222-2222-2222-2222-222222222202': 280000,
-  '22222222-2222-2222-2222-222222222203': 400000,
-  '22222222-2222-2222-2222-222222222204': 180000,
-}
-
-export function resolveTourAmountCents(
-  tourIdOrSlug: string,
-  clientAmount?: number
-): number {
-  const fromMap = TOUR_PRICES_CENTS[tourIdOrSlug]
-  if (fromMap) return fromMap
-  const n = Number(clientAmount)
-  if (Number.isFinite(n) && n >= 100) return Math.round(n)
-  return 150000 // fallback City Tour price
-}

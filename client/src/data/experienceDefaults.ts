@@ -1,4 +1,5 @@
 import type { ExperienceContent } from '../lib/experienceTypes'
+import { floorFromPriceShort } from './catalogFloors'
 import { HERMANUS_DURATION_LABEL } from './hermanusDuration'
 
 const sharedFaqs = (duration: string): ExperienceContent['faqs'] => [
@@ -609,8 +610,7 @@ export const EXPERIENCE_DEFAULTS: Record<string, ExperienceContent> = {
     seo_description:
       'Experience Hermanus during whale season with a private day experience from Cape Town, including private transport, a local Cape Town guide, scenic coastal sightseeing and land-based whale-viewing opportunities.',
     seo_image: '/experiences/hermanus-cliff-path-coast.jpg',
-    pricing_notes:
-      'From R5,900. Boat tour not included.',
+    pricing_notes: `${floorFromPriceShort('hermanus')}. Boat tour not included.`,
     duration_label: HERMANUS_DURATION_LABEL,
   },
 }
