@@ -4,7 +4,7 @@ import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import PasswordField from '../components/PasswordField'
 import { useAuth, type UserRole } from '../lib/auth'
-import { passwordRecoveryStartedThisLoad } from '../lib/passwordRecovery'
+import { safeNextPath } from '../lib/passwordRecovery'
 
 function hubForRole(role: UserRole | null, from: string) {
   if (role === 'admin') return '/admin/pricing'
@@ -29,10 +29,8 @@ export default function LoginPage() {
   const location = useLocation()
   const [searchParams] = useSearchParams()
   const nextParam = searchParams.get('next')
-  const from =
-    nextParam ||
-    (location.state as { from?: string } | null)?.from ||
-    '/'
+  const stateFrom = (location.state as { from?: string } | null)?.from
+  const from = nextParam ? safeNextPath(nextParam) : stateFrom || '/'
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -42,8 +40,7 @@ export default function LoginPage() {
   if (
     !loading &&
     user &&
-    passwordRecoveryPending &&
-    passwordRecoveryStartedThisLoad()
+    passwordRecoveryPending
   ) {
     return <Navigate to="/reset-password" replace />
   }
@@ -114,7 +111,7 @@ export default function LoginPage() {
               Forgot password?
             </Link>
           </p>
-          {!supabaseConfigured && (
+          {!supabaseConfigured && !import.meta.env.PROD && (
             <div className="space-y-2 border-t border-brand-cream-dark pt-4">
               <p className="text-xs text-brand-green/70 text-center">
                 Supabase env not set — use demo sign-in for local testing.

@@ -11,6 +11,7 @@ import {
   notifyDriverBooking,
 } from '../booking-app/lib/notify'
 import { mockDb, useMockStore } from '../booking-app/lib/mock-store'
+import { bearerMatches } from '../booking-app/lib/cron-auth'
 import { methodNotAllowed } from './_lib/http'
 
 function supabaseAdmin() {
@@ -21,14 +22,9 @@ function supabaseAdmin() {
 }
 
 function authorizeCron(req: VercelRequest): boolean {
-  const cronHeader = req.headers['x-vercel-cron']
-  if (cronHeader === '1') return true
-  const secret = process.env.CRON_SECRET
-  if (!secret) {
-    return useMockStore() || process.env.NODE_ENV !== 'production'
-  }
-  const auth = req.headers.authorization || ''
-  return auth === `Bearer ${secret}`
+  const header = req.headers.authorization
+  const authorization = Array.isArray(header) ? header[0] : header
+  return bearerMatches(authorization, process.env.CRON_SECRET)
 }
 
 function jobName(req: VercelRequest): string {

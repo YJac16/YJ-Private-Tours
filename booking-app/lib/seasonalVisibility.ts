@@ -118,6 +118,16 @@ export function isTourPubliclyVisible(
   return true
 }
 
+/** Fields the public catalog may expose. Internal prices stay on admin APIs. */
+export function publicTourAdminMeta(meta: unknown): Record<string, unknown> {
+  if (!meta || typeof meta !== 'object' || Array.isArray(meta)) return {}
+  const src = meta as Record<string, unknown>
+  const out: Record<string, unknown> = {}
+  if (src.season !== undefined) out.season = src.season
+  if (typeof src.status === 'string') out.status = src.status
+  return out
+}
+
 export function formatSeasonLabel(season: TourSeason = WHALE_SEASON): string {
   const months = [
     '',

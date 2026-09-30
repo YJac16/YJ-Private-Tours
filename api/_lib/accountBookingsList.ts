@@ -57,7 +57,7 @@ export async function listAccountBookingsForUser(
       emailNorm
     )
     if (emailErr) throw emailErr
-    byEmailRows = data ?? []
+    byEmailRows = (data ?? []).filter((row) => !row.client_user_id)
   }
 
   let bookings = mergeBookingsById(byUserId, byEmailRows)

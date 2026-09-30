@@ -166,6 +166,74 @@ async function main() {
     '?email=Client B must not change list for Client A token'
   )
 
+  const claimedByOther = mockDb.createBooking({
+    driver_id: driver.id,
+    tour_id: tour.id,
+    vehicle_id: vehicle.id,
+    booking_date: farDate,
+    start_time: '11:00',
+    client_name: 'Taken',
+    client_email: clientEmail,
+    client_phone: '+27000000003',
+    client_user_id: 'someone-else',
+    guest_count: 1,
+    adult_count: 1,
+    child_count: 0,
+    passenger_count: 1,
+    vehicle_price_cents: 250000,
+    price_per_person_cents: 40000,
+    passenger_total_cents: 40000,
+    grand_total_cents: 290000,
+    final_price_cents: 290000,
+    booking_reference: 'KC-ACCT-OTHER-OWNER',
+  })
+
+  const guestOwned = mockDb.createBooking({
+    driver_id: driver.id,
+    tour_id: tour.id,
+    vehicle_id: vehicle.id,
+    booking_date: farDate,
+    start_time: '12:00',
+    client_name: 'Guest checkout',
+    client_email: clientEmail,
+    client_phone: '+27000000004',
+    client_user_id: null,
+    guest_count: 1,
+    adult_count: 1,
+    child_count: 0,
+    passenger_count: 1,
+    vehicle_price_cents: 250000,
+    price_per_person_cents: 40000,
+    passenger_total_cents: 40000,
+    grand_total_cents: 290000,
+    final_price_cents: 290000,
+    booking_reference: 'KC-ACCT-GUEST-EMAIL',
+  })
+
+  const ownership = await invoke('GET', { token: clientToken })
+  const refs = ownership.payload.bookings as Array<{
+    id: string
+    booking_reference?: string
+  }>
+  assert.ok(refs.some((b) => b.id === seeded.id))
+  assert.ok(refs.some((b) => b.id === guestOwned.id), 'unclaimed email match is visible')
+  assert.ok(
+    !refs.some((b) => b.id === claimedByOther.id),
+    'email match must not open a booking owned by another user'
+  )
+
+  const detailDenied = await invoke('GET', {
+    token: clientToken,
+    query: { id: claimedByOther.id },
+  })
+  assert.equal(detailDenied.status, 404)
+
+  const detailGuest = await invoke('GET', {
+    token: clientToken,
+    query: { id: guestOwned.id },
+  })
+  assert.equal(detailGuest.status, 200)
+
   console.log('account-bookings-auth-unit: ok')
 }
 

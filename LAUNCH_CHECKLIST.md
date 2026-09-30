@@ -34,7 +34,8 @@ Automated / browser pass against `https://khayrcapeexperiences.com` (mobile view
 - [ ] `SITE_URL` = production origin (no trailing slash), used for Yoco success/cancel redirects.
 - [ ] `NEXT_PUBLIC_SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` (API) and `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` (client) are set — **no mock store / mock auth in production**.
 - [ ] `YOCO_SECRET_KEY` (live) and matching `VITE_YOCO_PUBLIC_KEY` (live public key).
-- [ ] Optional but recommended: `YOCO_WEBHOOK_SECRET` and Resend vars (`RESEND_API_KEY`, verified `EMAIL_FROM`) for booking emails (guest + driver via `/api/email-outbox`).
+- [ ] `CRON_SECRET` set on the Vercel project. Scheduled `/api/cron` calls send `Authorization: Bearer <CRON_SECRET>`. A request that only sets `x-vercel-cron` is rejected.
+- [ ] `MAILERSEND_API_KEY` and `EMAIL_FROM=KhayrCape Experiences <hello.khayrcapeexperiences@gmail.com>` (sender verified in MailerSend) for booking emails (guest + driver via `/api/email-outbox`). Do not set a Resend key. Supabase Auth SMTP is a separate dashboard step for signup and password-reset mail.
 - [ ] `DRIVER_NOTIFY_EMAIL=yaseenjacobs97@gmail.com` (pending + paid booking emails to the driver).
 - [ ] Confirm `BOOKING_MOCK` is **not** set to `1` in production.
 

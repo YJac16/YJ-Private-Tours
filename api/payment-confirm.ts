@@ -3,7 +3,10 @@ import { createClient } from '@supabase/supabase-js'
 import { mockDb, useMockStore } from '../booking-app/lib/mock-store'
 import { expireStalePendingBookings } from '../booking-app/lib/booking-lifecycle'
 import { createYocoCheckout } from '../booking-app/lib/yoco'
+import { guestRetryAllowed } from './_lib/guestRetryLimit'
 import { methodNotAllowed, readJson } from './_lib/http'
+
+const RETRY_DENIED = "We couldn't start payment for that booking"
 
 /**
  * Payment status (thank-you) + guest payment retry (action=retry).
@@ -20,6 +23,17 @@ function emailsMatch(a: string, b: string) {
   return a.trim().toLowerCase() === b.trim().toLowerCase()
 }
 
+function clientIp(req: VercelRequest): string {
+  const fwd = req.headers['x-forwarded-for']
+  const raw = Array.isArray(fwd) ? fwd[0] : fwd || ''
+  const first = raw.split(',')[0]?.trim()
+  return first || req.socket?.remoteAddress || 'unknown'
+}
+
+function denyRetry(res: VercelResponse, status = 400) {
+  return res.status(status).json({ error: RETRY_DENIED })
+}
+
 async function handleGuestRetry(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') return methodNotAllowed(res, ['POST'])
   const body = await readJson(req)
@@ -31,17 +45,23 @@ async function handleGuestRetry(req: VercelRequest, res: VercelResponse) {
       .json({ error: 'booking_id and client_email are required' })
   }
 
+  if (!guestRetryAllowed(`${clientIp(req)}:${bookingId}`)) {
+    return denyRetry(res, 429)
+  }
+
   if (useMockStore()) {
     const booking = mockDb.getBooking(bookingId)
-    if (!booking) return res.status(404).json({ error: 'Booking not found' })
-    if (!emailsMatch(booking.client_email || '', email)) {
-      return res.status(403).json({ error: 'Email does not match this booking' })
+    if (!booking || !emailsMatch(booking.client_email || '', email)) {
+      return denyRetry(res)
     }
     const result = mockDb.retryPaymentCheckout(bookingId)
-    if (!result.ok) {
-      return res.status(result.status).json({ error: result.error })
-    }
-    return res.status(200).json(result)
+    if (!result.ok) return denyRetry(res)
+    return res.status(200).json({
+      ok: true,
+      booking_id: result.booking_id,
+      checkout_url: result.checkout_url,
+      checkout_id: result.checkout_id,
+    })
   }
 
   const sb = supabaseAdmin()
@@ -56,26 +76,14 @@ async function handleGuestRetry(req: VercelRequest, res: VercelResponse) {
     .maybeSingle()
 
   if (error) return res.status(500).json({ error: error.message })
-  if (!fresh) return res.status(404).json({ error: 'Booking not found' })
-  if (!emailsMatch(fresh.client_email || '', email)) {
-    return res.status(403).json({ error: 'Email does not match this booking' })
+  if (!fresh || !emailsMatch(fresh.client_email || '', email)) {
+    return denyRetry(res)
   }
-  if (fresh.status === 'paid') {
-    return res.status(400).json({ error: 'Booking is already paid' })
-  }
-  if (fresh.status !== 'pending') {
-    return res
-      .status(400)
-      .json({ error: `Cannot retry payment for status ${fresh.status}` })
-  }
+  if (fresh.status !== 'pending') return denyRetry(res)
 
   const amount =
     Number(fresh.grand_total_cents) || Number(fresh.final_price_cents) || 0
-  if (amount < 100) {
-    return res
-      .status(400)
-      .json({ error: 'Booking amount is invalid for checkout' })
-  }
+  if (amount < 100) return denyRetry(res)
 
   const nestedTour = fresh.tour as
     | { name?: string }
@@ -140,8 +148,6 @@ async function handleGuestRetry(req: VercelRequest, res: VercelResponse) {
     booking_id: fresh.id,
     checkout_url: checkout.redirectUrl,
     checkout_id: checkout.id,
-    amount_cents: amount,
-    booking_reference: fresh.booking_reference || null,
   })
 }
 
@@ -172,7 +178,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(200).json({
         success: true,
         booking_id: booking.id,
-        booking_reference: booking.booking_reference ?? null,
         status: booking.status,
         payment_status: booking.payment_status ?? booking.status,
         paid: booking.status === 'paid',
@@ -185,9 +190,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const { data: booking, error } = await sb
       .from('bookings')
-      .select(
-        'id, status, payment_status, booking_reference, grand_total_cents, final_price_cents'
-      )
+      .select('id, status, payment_status')
       .eq('id', bookingId)
       .maybeSingle()
 
@@ -198,11 +201,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).json({
       success: true,
       booking_id: booking.id,
-      booking_reference: booking.booking_reference ?? null,
       status: booking.status,
       payment_status: booking.payment_status ?? null,
-      amount_cents:
-        booking.grand_total_cents ?? booking.final_price_cents ?? null,
       paid: booking.status === 'paid',
       confirmed_via: 'status_only',
     })

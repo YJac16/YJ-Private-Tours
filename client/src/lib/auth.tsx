@@ -14,7 +14,6 @@ import {
   isPasswordRecoveryPending,
   locationStillHasAuthParams,
   PASSWORD_RECOVERY_EVENT,
-  passwordRecoveryStartedThisLoad,
 } from './passwordRecovery'
 import {
   buildMockAccessToken,
@@ -298,7 +297,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let cancelled = false
     ;(async () => {
       if (!supabaseConfigured || !supabase) {
-        applyMock(readMock())
+        if (!import.meta.env.PROD) applyMock(readMock())
         if (!cancelled) setLoading(false)
         return
       }
@@ -310,9 +309,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (cancelled) return
       const pending = isPasswordRecoveryPending()
       const authParamsLeft = locationStillHasAuthParams(window.location.href)
-      if (pending && !passwordRecoveryStartedThisLoad()) {
-        clearPasswordRecoveryPending()
-      } else if (pending && !data.session && !authParamsLeft) {
+      if (pending && !data.session && !authParamsLeft) {
         clearPasswordRecoveryPending()
       }
       setSession(data.session)
@@ -391,6 +388,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const mockSignIn = useCallback(
     async (role: UserRole, email = `${role}@demo.local`) => {
+      if (import.meta.env.PROD) return role
       const stored: MockStored = {
         role,
         id: `00000000-0000-4000-8000-${role.padEnd(12, '0').slice(0, 12)}`,

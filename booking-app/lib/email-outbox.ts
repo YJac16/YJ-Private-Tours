@@ -135,52 +135,72 @@ export async function enqueueNotification(
   return { inserted: Boolean(data?.id), id: data?.id || '' }
 }
 
-async function sendResendEmail(row: {
+export const DEFAULT_EMAIL_FROM =
+  'KhayrCape Experiences <hello.khayrcapeexperiences@gmail.com>'
+
+/** Parse `Name <email>` or a bare address. */
+export function parseEmailFrom(raw: string | undefined | null): {
+  email: string
+  name: string
+} {
+  const value = (raw || DEFAULT_EMAIL_FROM).trim()
+  const match = value.match(/^(.*)<([^>]+)>\s*$/)
+  if (match) {
+    return {
+      name: match[1].trim().replace(/^["']|["']$/g, ''),
+      email: match[2].trim(),
+    }
+  }
+  return { name: 'KhayrCape Experiences', email: value }
+}
+
+async function sendMailerSendEmail(row: {
   to_email: string
   subject: string
   body_text: string
   body_html: string | null
 }): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
-  const key = process.env.RESEND_API_KEY
+  const key = process.env.MAILERSEND_API_KEY
   if (!key) {
-    return { ok: false, error: 'RESEND_API_KEY not set' }
+    return { ok: false, error: 'MAILERSEND_API_KEY not set' }
   }
-  const from =
-    process.env.EMAIL_FROM || 'KhayrCape Bookings <onboarding@resend.dev>'
+  const from = parseEmailFrom(process.env.EMAIL_FROM)
   try {
-    const res = await fetch('https://api.resend.com/emails', {
+    const res = await fetch('https://api.mailersend.com/v1/email', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${key}`,
         'Content-Type': 'application/json',
+        Accept: 'application/json',
       },
       body: JSON.stringify({
-        from,
-        to: [row.to_email],
+        from: { email: from.email, name: from.name || undefined },
+        to: [{ email: row.to_email }],
         subject: row.subject,
-        html: row.body_html || undefined,
         text: row.body_text,
+        html: row.body_html || undefined,
       }),
     })
+    const messageId = res.headers.get('x-message-id')
     const text = await res.text()
-    let parsed: { id?: string; message?: string } = {}
+    let parsed: { message?: string; id?: string } = {}
     try {
       parsed = text ? JSON.parse(text) : {}
     } catch {
-      /* ignore */
+      /* MailerSend accepts with an empty body */
     }
     if (!res.ok) {
       return {
         ok: false,
-        error: parsed.message || text || `Resend HTTP ${res.status}`,
+        error: parsed.message || text || `MailerSend HTTP ${res.status}`,
       }
     }
-    if (!parsed.id) {
-      return { ok: false, error: 'Resend response missing id' }
-    }
-    return { ok: true, id: parsed.id }
+    return { ok: true, id: messageId || parsed.id || 'accepted' }
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : 'Resend error' }
+    return {
+      ok: false,
+      error: e instanceof Error ? e.message : 'MailerSend error',
+    }
   }
 }
 
@@ -275,8 +295,8 @@ export type DrainResult = {
 }
 
 /**
- * Drain due outbox rows via Resend.
- * Mock mode without RESEND_API_KEY: log and mark sent.
+ * Drain due outbox rows via MailerSend.
+ * A missing API key leaves the row pending with last_error set.
  */
 export async function drainEmailOutbox(
   sb?: SupabaseClient | null
@@ -287,16 +307,7 @@ export async function drainEmailOutbox(
   let failed = 0
 
   for (const row of due) {
-    if (!process.env.RESEND_API_KEY && useMockStore()) {
-      console.warn(
-        `[outbox] mock send ${row.audience}/${row.kind} → ${row.to_email}: ${row.subject}`
-      )
-      await markSent(client, row.id, `mock-${row.id}`, row.attempts)
-      sent += 1
-      continue
-    }
-
-    const result = await sendResendEmail(row)
+    const result = await sendMailerSendEmail(row)
     if (result.ok) {
       await markSent(client, row.id, result.id, row.attempts)
       sent += 1

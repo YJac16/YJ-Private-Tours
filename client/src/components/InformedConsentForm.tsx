@@ -1,4 +1,5 @@
 import { type FormEvent, useEffect, useState } from 'react'
+import { sanitizeConsentHtml } from '../lib/sanitizeHtml'
 
 type ConsentFormData = {
   id: string
@@ -92,7 +93,7 @@ export default function InformedConsentForm({
       </div>
       <div
         className="max-h-56 overflow-y-auto rounded-xl border border-brand-cream-dark bg-white px-3 py-3 text-sm text-brand-green/90 leading-relaxed prose-p:mb-2"
-        dangerouslySetInnerHTML={{ __html: form.body_html }}
+        dangerouslySetInnerHTML={{ __html: sanitizeConsentHtml(form.body_html) }}
       />
       {error && (
         <p className="text-sm text-red-800 bg-red-50 border border-red-200 rounded-xl px-3 py-2">

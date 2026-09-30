@@ -37,6 +37,7 @@ import FxDisclaimer from '../lib/displayCurrency/components/FxDisclaimer'
 import { useDisplayCurrency } from '../lib/displayCurrency/DisplayCurrencyContext'
 import { buildCreateBookingRequestBody } from '../../../booking-app/lib/book-create-request'
 import { MOBILE_FIXED_ABOVE_COOKIE_BOTTOM_CLASS, MOBILE_BOOK_DISCLAIMER_ABOVE_STICKY_CLASS } from '../lib/cookieDockOffset'
+import { sanitizeConsentHtml } from '../lib/sanitizeHtml'
 
 const STEPS = [
   'Experience',
@@ -1149,7 +1150,7 @@ export default function BookPage() {
                           <div
                             className="max-h-40 overflow-y-auto rounded-xl border border-brand-cream-dark bg-white px-3 py-3 text-sm text-brand-green/90 leading-relaxed"
                             dangerouslySetInnerHTML={{
-                              __html: consentForm.body_html,
+                              __html: sanitizeConsentHtml(consentForm.body_html),
                             }}
                           />
                           <label className="flex items-start gap-2 text-sm text-brand-green cursor-pointer">

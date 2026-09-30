@@ -889,11 +889,10 @@ export const mockDb = {
 
   listAccountBookings(userId: string, email?: string | null) {
     const emailNorm = (email || '').trim().toLowerCase()
-    return this.listBookings().filter(
-      (b) =>
-        b.client_user_id === userId ||
-        (emailNorm && b.client_email.toLowerCase() === emailNorm)
-    )
+    return this.listBookings().filter((b) => {
+      if (b.client_user_id) return b.client_user_id === userId
+      return Boolean(emailNorm && b.client_email.toLowerCase() === emailNorm)
+    })
   },
 
   listAllDrivers() {
@@ -1216,12 +1215,11 @@ export const mockDb = {
     isAdmin = false
   ) {
     const emailNorm = (email || '').trim().toLowerCase()
-    const list = this.listBookings().filter(
-      (b) =>
-        isAdmin ||
-        b.client_user_id === userId ||
-        (emailNorm && b.client_email.toLowerCase() === emailNorm)
-    )
+    const list = this.listBookings().filter((b) => {
+      if (isAdmin) return true
+      if (b.client_user_id) return b.client_user_id === userId
+      return Boolean(emailNorm && b.client_email.toLowerCase() === emailNorm)
+    })
     const b = list.find((x) => x.id === id)
     if (!b) return null
     return {

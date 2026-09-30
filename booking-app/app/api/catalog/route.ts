@@ -2,12 +2,21 @@ import { NextResponse } from 'next/server'
 import { mockDb, useMockStore } from '@/lib/mock-store'
 import { supabaseAdmin } from '@/lib/supabase-server'
 import { DEFAULT_BOOKING_SETTINGS, parseBookingSettings } from '@/lib/pricing'
+import { publicTourAdminMeta } from '@/lib/seasonalVisibility'
 
 export async function GET() {
   if (useMockStore()) {
     const catalog = mockDb.catalog()
     return NextResponse.json({
       ...catalog,
+      drivers: (catalog.drivers || []).map((driver) => {
+        const { user_id: _userId, ...rest } = driver
+        return rest
+      }),
+      tours: (catalog.tours || []).map((tour) => ({
+        ...tour,
+        admin_meta: publicTourAdminMeta(tour.admin_meta),
+      })),
       yoco_public_key: process.env.NEXT_PUBLIC_YOCO_PUBLIC_KEY || null,
     })
   }

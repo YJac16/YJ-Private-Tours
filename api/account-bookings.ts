@@ -204,7 +204,7 @@ function ownsBooking(
   isAdmin: boolean
 ) {
   if (isAdmin) return true
-  if (booking.client_user_id && booking.client_user_id === userId) return true
+  if (booking.client_user_id) return booking.client_user_id === userId
   if (
     email &&
     booking.client_email &&

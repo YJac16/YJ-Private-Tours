@@ -4,7 +4,6 @@ import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import PasswordField from '../components/PasswordField'
 import { useAuth } from '../lib/auth'
-import { passwordRecoveryStartedThisLoad } from '../lib/passwordRecovery'
 
 export default function SignupPage() {
   const { signUp, supabaseConfigured, user, loading, passwordRecoveryPending } =
@@ -21,8 +20,7 @@ export default function SignupPage() {
   if (
     !loading &&
     user &&
-    passwordRecoveryPending &&
-    passwordRecoveryStartedThisLoad()
+    passwordRecoveryPending
   ) {
     return <Navigate to="/reset-password" replace />
   }

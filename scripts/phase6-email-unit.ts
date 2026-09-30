@@ -19,6 +19,25 @@ import {
 
 process.env.BOOKING_MOCK = '1'
 delete process.env.RESEND_API_KEY
+process.env.MAILERSEND_API_KEY = 'test-mailersend-key'
+process.env.EMAIL_FROM =
+  'KhayrCape Experiences <hello.khayrcapeexperiences@gmail.com>'
+
+const mailerCalls: Array<{ url: string; body: Record<string, unknown> }> = []
+let mailerSeq = 0
+
+globalThis.fetch = async (input: string | URL, init?: { body?: string }) => {
+  mailerSeq += 1
+  const url = String(input)
+  const body = init?.body
+    ? (JSON.parse(String(init.body)) as Record<string, unknown>)
+    : {}
+  mailerCalls.push({ url, body })
+  return new Response('', {
+    status: 202,
+    headers: { 'x-message-id': `ms-msg-${mailerSeq}` },
+  })
+}
 
 let passed = 0
 let failed = 0
@@ -101,15 +120,28 @@ async function main() {
     assert.equal(listOutboxMemory().length, 1)
   })
 
-  await check('notifyBookingEvent enqueues driver+guest and mock-drains', async () => {
+  await check('notifyBookingEvent enqueues driver+guest and MailerSend marks them sent', async () => {
     resetOutboxMemoryForTests()
+    mailerCalls.length = 0
     const result = await notifyBookingEvent(sample, 'created', { drain: true })
     assert.equal(result.enqueued, 2)
     const rows = listOutboxMemory()
     assert.equal(rows.length, 2)
     assert.ok(rows.every((r) => r.status === 'sent'))
-    assert.ok(rows.some((r) => r.audience === 'guest'))
-    assert.ok(rows.some((r) => r.audience === 'driver'))
+    assert.ok(rows.some((r) => r.audience === 'guest' && r.provider_id?.startsWith('ms-msg-')))
+    assert.ok(rows.some((r) => r.audience === 'driver' && r.provider_id?.startsWith('ms-msg-')))
+    assert.equal(mailerCalls.length, 2)
+    assert.ok(mailerCalls.every((call) => call.url === 'https://api.mailersend.com/v1/email'))
+    assert.ok(
+      mailerCalls.every((call) => {
+        const from = call.body.from as { email?: string; name?: string }
+        return (
+          from.email === 'hello.khayrcapeexperiences@gmail.com' &&
+          from.name === 'KhayrCape Experiences'
+        )
+      })
+    )
+    assert.ok(!mailerCalls.some((call) => call.url.includes('resend.com')))
   })
 
   await check('duplicate notify does not re-enqueue', async () => {
@@ -134,6 +166,29 @@ async function main() {
     assert.equal(drain.processed, 1)
     assert.equal(drain.sent, 1)
     assert.equal(listOutboxMemory()[0].status, 'sent')
+    assert.ok(listOutboxMemory()[0].provider_id?.startsWith('ms-msg-'))
+  })
+
+  await check('missing MailerSend key leaves the row pending', async () => {
+    resetOutboxMemoryForTests()
+    delete process.env.MAILERSEND_API_KEY
+    const before = mailerCalls.length
+    await enqueueNotification({
+      dedupeKey: 'ops:no-key',
+      audience: 'guest',
+      kind: 'created',
+      toEmail: 'ada@test.khayrcape.com',
+      subject: 'hold',
+      bodyText: 'not sent',
+    })
+    const drain = await drainEmailOutbox(null)
+    assert.equal(drain.sent, 0)
+    assert.equal(drain.failed, 1)
+    const row = listOutboxMemory()[0]
+    assert.equal(row.status, 'pending')
+    assert.match(row.last_error || '', /MAILERSEND_API_KEY not set/)
+    assert.equal(mailerCalls.length, before)
+    process.env.MAILERSEND_API_KEY = 'test-mailersend-key'
   })
 
   console.log(`\n${passed} passed, ${failed} failed`)

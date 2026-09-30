@@ -30,7 +30,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         success: true,
         booking_id: booking.id,
-        booking_reference: booking.booking_reference ?? null,
         status: booking.status,
         payment_status: booking.payment_status ?? booking.status,
         paid: booking.status === 'paid',
@@ -43,9 +42,7 @@ export async function POST(request: NextRequest) {
 
     const { data: booking, error } = await sb
       .from('bookings')
-      .select(
-        'id, status, payment_status, booking_reference, grand_total_cents, final_price_cents'
-      )
+      .select('id, status, payment_status')
       .eq('id', bookingId)
       .maybeSingle()
 
@@ -56,10 +53,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       booking_id: booking.id,
-      booking_reference: booking.booking_reference ?? null,
       status: booking.status,
       payment_status: booking.payment_status ?? null,
-      amount_cents: booking.grand_total_cents ?? booking.final_price_cents ?? null,
       paid: booking.status === 'paid',
       confirmed_via: 'status_only',
     })
