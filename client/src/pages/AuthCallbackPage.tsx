@@ -2,14 +2,11 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
-import { supabase, supabaseConfigured } from '../lib/supabaseClient'
-
-/** Same-origin relative paths only — blocks open redirects. */
-function safeNextPath(raw: string | null): string {
-  if (!raw) return '/account'
-  if (!raw.startsWith('/') || raw.startsWith('//')) return '/account'
-  return raw
-}
+import { supabase, supabaseConfigured, whenAuthUrlReady } from '../lib/supabaseClient'
+import {
+  destinationAfterAuthCallback,
+  isPasswordRecoveryPending,
+} from '../lib/passwordRecovery'
 
 /**
  * Handles Supabase email confirmation, email-change, and password-recovery redirects.
@@ -32,43 +29,67 @@ export default function AuthCallbackPage() {
 
       try {
         const url = new URL(window.location.href)
-        const next = safeNextPath(url.searchParams.get('next'))
-        const isRecovery = next.startsWith('/reset-password')
-        if (isRecovery) {
+        const hashParams = new URLSearchParams(url.hash.replace(/^#/, ''))
+        const hashError = hashParams.get('error_description')
+        const hashType = hashParams.get('type')
+        const queryType = url.searchParams.get('type')
+        const looksLikeRecovery =
+          hashType === 'recovery' ||
+          queryType === 'recovery' ||
+          isPasswordRecoveryPending()
+        if (looksLikeRecovery) {
           setTitle('Password reset')
           setStatus('Verifying reset link…')
         }
 
         const code = url.searchParams.get('code')
-        const hashParams = new URLSearchParams(url.hash.replace(/^#/, ''))
-        const hashError = hashParams.get('error_description')
-        const hashType = hashParams.get('type')
 
         if (hashError) {
           throw new Error(decodeURIComponent(hashError.replace(/\+/g, ' ')))
         }
 
+        await whenAuthUrlReady()
+        if (cancelled) return
+
         if (code) {
-          const { error: exchangeError } =
-            await supabase.auth.exchangeCodeForSession(code)
-          if (exchangeError) throw exchangeError
+          // detectSessionInUrl may already have exchanged this code.
+          const { data: existing, error: existingError } =
+            await supabase.auth.getSession()
+          if (existingError) throw existingError
+          if (!existing.session) {
+            const { error: exchangeError } =
+              await supabase.auth.exchangeCodeForSession(code)
+            if (exchangeError) throw exchangeError
+          }
         } else {
           // Hash / cookie session may already be established by detectSessionInUrl
           const { data, error: sessionError } = await supabase.auth.getSession()
           if (sessionError) throw sessionError
           if (!data.session) {
             throw new Error(
-              isRecovery
+              looksLikeRecovery
                 ? 'No reset session found. The link may have expired — request a new password reset.'
                 : 'No confirmation session found. The link may have expired — try signing in or resending confirmation.'
             )
           }
         }
 
+        // PASSWORD_RECOVERY is emitted on a timer after the URL session is saved.
+        await new Promise((resolve) => window.setTimeout(resolve, 0))
+        if (cancelled) return
+
+        const next = destinationAfterAuthCallback({
+          next: url.searchParams.get('next'),
+          hashType,
+          queryType,
+          recoveryPending: isPasswordRecoveryPending(),
+        })
+        const isRecovery = next === '/reset-password'
+
         // Sync profiles.email to Auth email after confirm / email change
         const { data: userData } = await supabase.auth.getUser()
         const authed = userData.user
-        if (authed?.email && !isRecovery && hashType !== 'recovery') {
+        if (authed?.email && !isRecovery) {
           await supabase
             .from('profiles')
             .update({
