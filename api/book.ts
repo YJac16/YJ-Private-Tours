@@ -255,7 +255,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         external_id: checkout.id,
         status: 'pending',
       })
-      void notifyDriverBooking(
+      await notifyDriverBooking(
         {
           bookingId: booking_reference || booking.id,
           status: 'pending',
@@ -509,7 +509,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .update({ yoco_payment_reference: checkout.id })
       .eq('id', booking.id)
 
-    void notifyDriverBooking(
+    await notifyDriverBooking(
       {
         bookingId: booking_reference || booking.id,
         status: 'pending',

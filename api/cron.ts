@@ -143,7 +143,7 @@ async function runDriverReminders(res: VercelResponse) {
         changeNote: 'Day-before reminder',
       }),
       'reminder',
-      { sb }
+      sb
     )
 
     await sb
@@ -183,15 +183,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (job === 'email-outbox') return runEmailOutbox(res)
     if (job === 'expire-pending') return runExpirePending(res)
 
-    // Daily combined run (Hobby: one cron/day)
-    const expired = useMockStore()
-      ? mockDb.expireStalePendingBookings()
-      : await expireStalePendingBookings(supabaseAdmin())
-    const email = await (async () => {
+    // Daily combined run (Hobby: one cron/day). Email drain is independent
+    // so a failure in expire or reminders still retries the outbox.
+    let expired: number | { error: string } = 0
+    try {
+      expired = useMockStore()
+        ? mockDb.expireStalePendingBookings()
+        : await expireStalePendingBookings(supabaseAdmin())
+    } catch (e) {
+      expired = { error: e instanceof Error ? e.message : 'expire failed' }
+    }
+
+    let email: Awaited<ReturnType<typeof drainEmailOutbox>> | { error: string }
+    try {
       const sb = useMockStore() ? null : supabaseAdmin()
-      return drainEmailOutbox(sb)
-    })()
-    // driver reminders via internal call path
+      email = await drainEmailOutbox(sb)
+    } catch (e) {
+      email = { error: e instanceof Error ? e.message : 'email drain failed' }
+    }
+
     const remindersRes = {
       statusCode: 200,
       body: null as unknown,
@@ -204,12 +214,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return this
       },
     }
-    await runDriverReminders(remindersRes as unknown as VercelResponse)
+    let reminders: unknown = null
+    try {
+      await runDriverReminders(remindersRes as unknown as VercelResponse)
+      reminders = remindersRes.body
+    } catch (e) {
+      reminders = { error: e instanceof Error ? e.message : 'reminders failed' }
+    }
     return res.status(200).json({
       ok: true,
       expired,
       email,
-      reminders: remindersRes.body,
+      reminders,
     })
   } catch (e: unknown) {
     return res.status(500).json({

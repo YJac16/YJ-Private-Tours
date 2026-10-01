@@ -3,11 +3,15 @@
  * Run: npx tsx scripts/phase6-email-unit.ts
  */
 import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
 import {
   backoffMinutes,
+  bookingFromMailbox,
+  DEFAULT_EMAIL_FROM,
   drainEmailOutbox,
   enqueueNotification,
   listOutboxMemory,
+  parseMailbox,
   resetOutboxMemoryForTests,
 } from '../booking-app/lib/email-outbox'
 import {
@@ -18,7 +22,7 @@ import {
 } from '../booking-app/lib/notify'
 
 process.env.BOOKING_MOCK = '1'
-delete process.env.RESEND_API_KEY
+delete process.env.MAILERSEND_API_KEY
 
 let passed = 0
 let failed = 0
@@ -118,6 +122,80 @@ async function main() {
     const second = await notifyBookingEvent(sample, 'paid', { drain: false })
     assert.equal(second.enqueued, 0)
     assert.equal(listOutboxMemory().length, 2)
+  })
+
+  await check('from mailbox defaults to the KhayrCape Gmail sender', () => {
+    delete process.env.EMAIL_FROM
+    assert.equal(
+      DEFAULT_EMAIL_FROM,
+      'KhayrCape Experiences <hello.khayrcapeexperiences@gmail.com>'
+    )
+    assert.deepEqual(bookingFromMailbox(), {
+      name: 'KhayrCape Experiences',
+      email: 'hello.khayrcapeexperiences@gmail.com',
+    })
+    assert.deepEqual(parseMailbox('Ops <ops@khayrcapeexperiences.com>'), {
+      name: 'Ops',
+      email: 'ops@khayrcapeexperiences.com',
+    })
+  })
+
+  await check('sender is MailerSend and does not call Resend', () => {
+    const src = readFileSync(
+      new URL('../booking-app/lib/email-outbox.ts', import.meta.url),
+      'utf8'
+    )
+    assert.match(src, /api\.mailersend\.com\/v1\/email/)
+    assert.equal(src.includes('api.resend.com'), false)
+    assert.equal(src.includes('RESEND_API_KEY'), false)
+  })
+
+  await check('missing MailerSend key retries instead of marking sent', async () => {
+    const prev = {
+      BOOKING_MOCK: process.env.BOOKING_MOCK,
+      NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+      SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+      VERCEL_ENV: process.env.VERCEL_ENV,
+      MAILERSEND_API_KEY: process.env.MAILERSEND_API_KEY,
+      EMAIL_FROM: process.env.EMAIL_FROM,
+    }
+    process.env.BOOKING_MOCK = '0'
+    process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://example.supabase.co'
+    process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-service-key'
+    delete process.env.VERCEL_ENV
+    delete process.env.MAILERSEND_API_KEY
+    delete process.env.EMAIL_FROM
+    try {
+      resetOutboxMemoryForTests()
+      await enqueueNotification({
+        dedupeKey: 'ops:no-key',
+        audience: 'ops',
+        kind: 'payment_alert',
+        toEmail: 'ops@test.khayrcape.com',
+        subject: 'alert',
+        bodyText: 'needs a key',
+      })
+      const drain = await drainEmailOutbox(null)
+      assert.equal(drain.processed, 1)
+      assert.equal(drain.sent, 0)
+      assert.equal(drain.failed, 1)
+      const row = listOutboxMemory()[0]
+      assert.equal(row.status, 'pending')
+      assert.equal(row.attempts, 1)
+      assert.match(row.last_error || '', /MAILERSEND_API_KEY not set/)
+    } finally {
+      process.env.BOOKING_MOCK = prev.BOOKING_MOCK
+      if (prev.NEXT_PUBLIC_SUPABASE_URL === undefined) delete process.env.NEXT_PUBLIC_SUPABASE_URL
+      else process.env.NEXT_PUBLIC_SUPABASE_URL = prev.NEXT_PUBLIC_SUPABASE_URL
+      if (prev.SUPABASE_SERVICE_ROLE_KEY === undefined) delete process.env.SUPABASE_SERVICE_ROLE_KEY
+      else process.env.SUPABASE_SERVICE_ROLE_KEY = prev.SUPABASE_SERVICE_ROLE_KEY
+      if (prev.VERCEL_ENV === undefined) delete process.env.VERCEL_ENV
+      else process.env.VERCEL_ENV = prev.VERCEL_ENV
+      if (prev.MAILERSEND_API_KEY === undefined) delete process.env.MAILERSEND_API_KEY
+      else process.env.MAILERSEND_API_KEY = prev.MAILERSEND_API_KEY
+      if (prev.EMAIL_FROM === undefined) delete process.env.EMAIL_FROM
+      else process.env.EMAIL_FROM = prev.EMAIL_FROM
+    }
   })
 
   await check('drainEmailOutbox processes pending', async () => {

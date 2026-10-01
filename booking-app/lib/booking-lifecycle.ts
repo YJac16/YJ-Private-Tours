@@ -296,7 +296,7 @@ export async function markBookingPaidFromVerifiedPayment(
     .eq('booking_id', row.id)
     .eq('status', 'pending')
 
-  void notifyDriverBooking(
+  await notifyDriverBooking(
     bookingRowToEmailDetails({
       ...row,
       status: 'paid',
@@ -593,7 +593,7 @@ export async function cancelBooking(
     },
   })
 
-  void notifyDriverBooking(
+  await notifyDriverBooking(
     bookingRowToEmailDetails({
       ...row,
       status: 'cancelled',

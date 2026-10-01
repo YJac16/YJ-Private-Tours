@@ -135,52 +135,81 @@ export async function enqueueNotification(
   return { inserted: Boolean(data?.id), id: data?.id || '' }
 }
 
-async function sendResendEmail(row: {
+/** Booking mail From address. Override with EMAIL_FROM. */
+export const DEFAULT_EMAIL_FROM =
+  'KhayrCape Experiences <hello.khayrcapeexperiences@gmail.com>'
+
+export function parseMailbox(raw: string): { email: string; name?: string } {
+  const trimmed = String(raw || '').trim()
+  const match = trimmed.match(/^(.*?)<([^>]+)>$/)
+  if (match) {
+    const name = match[1].trim().replace(/^["']|["']$/g, '')
+    const email = match[2].trim()
+    return name ? { email, name } : { email }
+  }
+  return { email: trimmed }
+}
+
+export function bookingFromMailbox(): { email: string; name?: string } {
+  return parseMailbox(process.env.EMAIL_FROM || DEFAULT_EMAIL_FROM)
+}
+
+async function sendMailerSendEmail(row: {
   to_email: string
   subject: string
   body_text: string
   body_html: string | null
 }): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
-  const key = process.env.RESEND_API_KEY
+  const key = process.env.MAILERSEND_API_KEY?.trim()
   if (!key) {
-    return { ok: false, error: 'RESEND_API_KEY not set' }
+    return { ok: false, error: 'MAILERSEND_API_KEY not set' }
   }
-  const from =
-    process.env.EMAIL_FROM || 'KhayrCape Bookings <onboarding@resend.dev>'
+  const from = bookingFromMailbox()
+  if (!from.email.includes('@')) {
+    return { ok: false, error: 'EMAIL_FROM is not a valid mailbox' }
+  }
+  const payload: Record<string, unknown> = {
+    from,
+    to: [{ email: row.to_email }],
+    reply_to: from,
+    subject: row.subject,
+    text: row.body_text,
+  }
+  if (row.body_html) payload.html = row.body_html
   try {
-    const res = await fetch('https://api.resend.com/emails', {
+    const res = await fetch('https://api.mailersend.com/v1/email', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${key}`,
         'Content-Type': 'application/json',
+        Accept: 'application/json',
       },
-      body: JSON.stringify({
-        from,
-        to: [row.to_email],
-        subject: row.subject,
-        html: row.body_html || undefined,
-        text: row.body_text,
-      }),
+      body: JSON.stringify(payload),
     })
-    const text = await res.text()
-    let parsed: { id?: string; message?: string } = {}
-    try {
-      parsed = text ? JSON.parse(text) : {}
-    } catch {
-      /* ignore */
-    }
-    if (!res.ok) {
+    if (res.status === 202) {
       return {
-        ok: false,
-        error: parsed.message || text || `Resend HTTP ${res.status}`,
+        ok: true,
+        id: res.headers.get('x-message-id') || 'mailersend-accepted',
       }
     }
-    if (!parsed.id) {
-      return { ok: false, error: 'Resend response missing id' }
+    const text = await res.text()
+    let message = text
+    try {
+      const parsed = text ? JSON.parse(text) : {}
+      if (typeof parsed.message === 'string' && parsed.message) {
+        message = parsed.message
+      } else if (parsed.errors) {
+        message = JSON.stringify(parsed.errors)
+      }
+    } catch {
+      /* keep raw body */
     }
-    return { ok: true, id: parsed.id }
+    return {
+      ok: false,
+      error: (message || `MailerSend HTTP ${res.status}`).slice(0, 2000),
+    }
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : 'Resend error' }
+    return { ok: false, error: e instanceof Error ? e.message : 'MailerSend error' }
   }
 }
 
@@ -275,8 +304,8 @@ export type DrainResult = {
 }
 
 /**
- * Drain due outbox rows via Resend.
- * Mock mode without RESEND_API_KEY: log and mark sent.
+ * Drain due outbox rows via MailerSend.
+ * Mock store: log and mark sent, and do not call MailerSend.
  */
 export async function drainEmailOutbox(
   sb?: SupabaseClient | null
@@ -287,7 +316,7 @@ export async function drainEmailOutbox(
   let failed = 0
 
   for (const row of due) {
-    if (!process.env.RESEND_API_KEY && useMockStore()) {
+    if (useMockStore()) {
       console.warn(
         `[outbox] mock send ${row.audience}/${row.kind} → ${row.to_email}: ${row.subject}`
       )
@@ -296,7 +325,7 @@ export async function drainEmailOutbox(
       continue
     }
 
-    const result = await sendResendEmail(row)
+    const result = await sendMailerSendEmail(row)
     if (result.ok) {
       await markSent(client, row.id, result.id, row.attempts)
       sent += 1
