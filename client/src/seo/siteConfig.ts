@@ -13,6 +13,10 @@ export const guideRegistration = {
 export const GUIDE_REGISTRATION_NUMBER = guideRegistration.number
 export const GUIDE_REGISTRATION_LABEL = guideRegistration.label
 
+/** Public CIPC company registration for footer / legal entity display. */
+export const COMPANY_REGISTRATION_LABEL =
+  'KhayrCape Experiences (Pty) Ltd · Reg. No. 2026/776333/07'
+
 export function guideRegistrationCredentialJsonLd(): Record<string, unknown> {
   return {
     '@type': 'EducationalOccupationalCredential',
