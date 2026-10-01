@@ -10,9 +10,17 @@ import {
 } from 'react'
 import type { Session, User } from '@supabase/supabase-js'
 import {
+  clearPasswordRecoveryPending,
+  isPasswordRecoveryPending,
+  locationStillHasAuthParams,
+  PASSWORD_RECOVERY_EVENT,
+  passwordRecoveryStartedThisLoad,
+} from './passwordRecovery'
+import {
   buildMockAccessToken,
   supabase,
   supabaseConfigured,
+  whenAuthUrlReady,
 } from './supabaseClient'
 
 export type UserRole = 'client' | 'driver' | 'admin'
@@ -34,6 +42,8 @@ type AuthState = {
   role: UserRole | null
   emailConfirmed: boolean
   supabaseConfigured: boolean
+  /** True after a reset link until the new password is saved or the session is signed out. */
+  passwordRecoveryPending: boolean
   signIn: (email: string, password: string) => Promise<UserRole>
   /** Returns whether a session was created immediately (false when email confirm is required). */
   signUp: (
@@ -44,7 +54,7 @@ type AuthState = {
   signOut: () => Promise<void>
   refreshProfile: () => Promise<void>
   resendEmailConfirmation: (email?: string) => Promise<void>
-  /** Send Supabase password-reset email (redirects to /auth/callback?next=/reset-password). */
+  /** Send Supabase password-reset email (redirects to /reset-password). */
   requestPasswordReset: (email: string) => Promise<void>
   /** Set a new password while a recovery session is active. */
   updatePassword: (password: string) => Promise<void>
@@ -74,6 +84,11 @@ function authCallbackUrl(nextPath?: string): string {
   const base = `${window.location.origin}/auth/callback`
   if (!nextPath) return base
   return `${base}?next=${encodeURIComponent(nextPath)}`
+}
+
+function passwordResetRedirectUrl(): string {
+  if (typeof window === 'undefined') return ''
+  return `${window.location.origin}/reset-password`
 }
 
 function readMock(): MockStored | null {
@@ -143,6 +158,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [accessToken, setAccessToken] = useState<string | null>(null)
+  const [passwordRecoveryPending, setPasswordRecoveryPending] = useState(() =>
+    isPasswordRecoveryPending()
+  )
 
   const applyMock = useCallback((m: MockStored | null) => {
     if (!m) {
@@ -192,7 +210,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const target = email.trim()
     if (!target) throw new Error('Email is required')
     const { error } = await supabase.auth.resetPasswordForEmail(target, {
-      redirectTo: authCallbackUrl('/reset-password'),
+      redirectTo: passwordResetRedirectUrl(),
     })
     if (error) throw error
   }, [])
@@ -204,6 +222,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     const { error } = await supabase.auth.updateUser({ password })
     if (error) throw error
+    clearPasswordRecoveryPending()
   }, [])
 
   const updateProfile = useCallback(
@@ -269,6 +288,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   )
 
   useEffect(() => {
+    const syncRecovery = () => setPasswordRecoveryPending(isPasswordRecoveryPending())
+    syncRecovery()
+    window.addEventListener(PASSWORD_RECOVERY_EVENT, syncRecovery)
+    return () => window.removeEventListener(PASSWORD_RECOVERY_EVENT, syncRecovery)
+  }, [])
+
+  useEffect(() => {
     let cancelled = false
     ;(async () => {
       if (!supabaseConfigured || !supabase) {
@@ -276,8 +302,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!cancelled) setLoading(false)
         return
       }
+      await whenAuthUrlReady()
+      if (cancelled) return
       const { data } = await supabase.auth.getSession()
       if (cancelled) return
+      await new Promise((resolve) => window.setTimeout(resolve, 0))
+      if (cancelled) return
+      const pending = isPasswordRecoveryPending()
+      const authParamsLeft = locationStillHasAuthParams(window.location.href)
+      if (pending && !passwordRecoveryStartedThisLoad()) {
+        clearPasswordRecoveryPending()
+      } else if (pending && !data.session && !authParamsLeft) {
+        clearPasswordRecoveryPending()
+      }
       setSession(data.session)
       setUser(data.session?.user ?? null)
       setAccessToken(data.session?.access_token ?? null)
@@ -317,6 +354,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       password,
     })
     if (error) throw error
+    clearPasswordRecoveryPending()
     const authed = data.user
     if (!authed) throw new Error('Sign in failed')
     setSession(data.session)
@@ -345,6 +383,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   )
 
   const signOut = useCallback(async () => {
+    clearPasswordRecoveryPending()
     writeMock(null)
     applyMock(null)
     if (supabase) await supabase.auth.signOut()
@@ -381,6 +420,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       role: profile?.role ?? (user ? 'client' : null),
       emailConfirmed,
       supabaseConfigured,
+      passwordRecoveryPending,
       signIn,
       signUp,
       signOut,
@@ -398,6 +438,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       profile,
       accessToken,
       emailConfirmed,
+      passwordRecoveryPending,
       signIn,
       signUp,
       signOut,
@@ -433,6 +474,7 @@ export function SsrAuthProvider({ children }: { children: ReactNode }) {
       role: null,
       emailConfirmed: false,
       supabaseConfigured: false,
+      passwordRecoveryPending: false,
       signIn: async () => 'client',
       signUp: async () => ({ sessionCreated: false }),
       signOut: async () => {},

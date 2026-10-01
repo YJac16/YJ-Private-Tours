@@ -25,6 +25,7 @@ import ScrollToTop from './components/ScrollToTop'
 import ScrollToHash from './components/ScrollToHash'
 import FloatingWhatsApp from './components/FloatingWhatsApp'
 import CookieBanner from './components/CookieBanner'
+import PasswordRecoveryGate from './components/PasswordRecoveryGate'
 import { DisplayCurrencyProvider } from './lib/displayCurrency/DisplayCurrencyContext'
 
 function App() {
@@ -32,6 +33,7 @@ function App() {
     <DisplayCurrencyProvider>
     <BrowserRouter>
       <ScrollToHash />
+      <PasswordRecoveryGate />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/book" element={<BookPage />} />

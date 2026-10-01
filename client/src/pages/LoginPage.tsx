@@ -2,7 +2,9 @@ import { type FormEvent, useState } from 'react'
 import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
+import PasswordField from '../components/PasswordField'
 import { useAuth, type UserRole } from '../lib/auth'
+import { passwordRecoveryStartedThisLoad } from '../lib/passwordRecovery'
 
 function hubForRole(role: UserRole | null, from: string) {
   if (role === 'admin') return '/admin/pricing'
@@ -14,8 +16,15 @@ function hubForRole(role: UserRole | null, from: string) {
 }
 
 export default function LoginPage() {
-  const { signIn, mockSignIn, supabaseConfigured, user, role, loading } =
-    useAuth()
+  const {
+    signIn,
+    mockSignIn,
+    supabaseConfigured,
+    user,
+    role,
+    loading,
+    passwordRecoveryPending,
+  } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const [searchParams] = useSearchParams()
@@ -29,6 +38,15 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+
+  if (
+    !loading &&
+    user &&
+    passwordRecoveryPending &&
+    passwordRecoveryStartedThisLoad()
+  ) {
+    return <Navigate to="/reset-password" replace />
+  }
 
   if (!loading && user) {
     return <Navigate to={hubForRole(role, from)} replace />
@@ -74,16 +92,13 @@ export default function LoginPage() {
               className="mt-1 w-full min-h-12 rounded-lg border border-brand-cream-dark px-3"
             />
           </label>
-          <label className="block text-sm text-brand-green">
-            Password
-            <input
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 w-full min-h-12 rounded-lg border border-brand-cream-dark px-3"
-            />
-          </label>
+          <PasswordField
+            label="Password"
+            value={password}
+            onChange={setPassword}
+            autoComplete="current-password"
+            required
+          />
           <button
             type="submit"
             disabled={busy || !supabaseConfigured}
