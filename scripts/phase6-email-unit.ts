@@ -181,7 +181,7 @@ async function main() {
       assert.equal(drain.failed, 1)
       const row = listOutboxMemory()[0]
       assert.equal(row.status, 'pending')
-      assert.equal(row.attempts, 1)
+      assert.equal(row.attempts, 0)
       assert.match(row.last_error || '', /MAILERSEND_API_KEY not set/)
     } finally {
       process.env.BOOKING_MOCK = prev.BOOKING_MOCK

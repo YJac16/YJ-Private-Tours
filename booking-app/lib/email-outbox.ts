@@ -271,6 +271,31 @@ async function markSent(
   await sb.from('notification_outbox').update(patch).eq('id', id)
 }
 
+function isMailConfigError(error: string): boolean {
+  return (
+    error === 'MAILERSEND_API_KEY not set' ||
+    error === 'EMAIL_FROM is not a valid mailbox'
+  )
+}
+
+/** Config gaps stay pending and do not consume the retry budget. */
+async function markConfigBlocked(
+  sb: SupabaseClient | null,
+  id: string,
+  error: string
+) {
+  const patch = {
+    status: 'pending' as const,
+    last_error: error.slice(0, 2000),
+  }
+  if (!sb || useMockStore()) {
+    const row = memory.find((r) => r.id === id)
+    if (row) Object.assign(row, patch)
+    return
+  }
+  await sb.from('notification_outbox').update(patch).eq('id', id)
+}
+
 async function markRetryOrFail(
   sb: SupabaseClient | null,
   id: string,
@@ -329,6 +354,9 @@ export async function drainEmailOutbox(
     if (result.ok) {
       await markSent(client, row.id, result.id, row.attempts)
       sent += 1
+    } else if (isMailConfigError(result.error)) {
+      await markConfigBlocked(client, row.id, result.error)
+      failed += 1
     } else {
       await markRetryOrFail(client, row.id, row.attempts, result.error)
       failed += 1
