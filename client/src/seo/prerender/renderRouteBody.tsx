@@ -241,7 +241,7 @@ function HomePrerender() {
         <h3>{HOME_CUSTOM_TOUR_FAQ.question}</h3>
         <p>
           {HOME_CUSTOM_TOUR_FAQ.answerBeforeLink}
-          <a href="/custom-tours">/custom-tours</a>
+          <a href={`${SITE}/custom-tours`}>{HOME_CUSTOM_TOUR_FAQ.answerLinkLabel}</a>
           {HOME_CUSTOM_TOUR_FAQ.answerAfterLink}
         </p>
       </section>

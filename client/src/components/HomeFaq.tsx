@@ -2,7 +2,8 @@ import { Link } from 'react-router-dom'
 import { HOME_CUSTOM_TOUR_FAQ } from '../data/customToursCopy'
 
 export default function HomeFaq() {
-  const { question, answerBeforeLink, answerAfterLink } = HOME_CUSTOM_TOUR_FAQ
+  const { question, answerBeforeLink, answerLinkLabel, answerAfterLink } =
+    HOME_CUSTOM_TOUR_FAQ
   return (
     <section id="faq" className="py-14 md:py-20 px-4 bg-brand-cream">
       <div className="max-w-3xl mx-auto">
@@ -13,8 +14,11 @@ export default function HomeFaq() {
           <h3 className="font-bold text-brand-green text-lg mb-2">{question}</h3>
           <p className="text-brand-green/90 text-sm sm:text-base leading-relaxed">
             {answerBeforeLink}
-            <Link to="/custom-tours" className="font-semibold underline underline-offset-2">
-              /custom-tours
+            <Link
+              to="/custom-tours"
+              className="font-semibold text-brand-green underline underline-offset-2"
+            >
+              {answerLinkLabel}
             </Link>
             {answerAfterLink}
           </p>
