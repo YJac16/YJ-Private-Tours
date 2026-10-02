@@ -35,7 +35,7 @@ Automated / browser pass against `https://khayrcapeexperiences.com` (mobile view
 - [ ] `NEXT_PUBLIC_SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` (API) and `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` (client) are set — **no mock store / mock auth in production**.
 - [ ] `YOCO_SECRET_KEY` (live) and matching `VITE_YOCO_PUBLIC_KEY` (live public key).
 - [ ] Optional but recommended: `YOCO_WEBHOOK_SECRET`, plus MailerSend (`MAILERSEND_API_KEY` and verified `EMAIL_FROM`) for booking emails (guest + driver). Default from mailbox: `hello.khayrcapeexperiences@gmail.com`.
-- [ ] `DRIVER_NOTIFY_EMAIL=yaseenjacobs97@gmail.com` (pending + paid booking emails to the driver).
+- [ ] `DRIVER_NOTIFY_EMAIL=yaseenjacobs@icloud.com` (booking alerts to the driver). Guest mail goes to the address on the booking. Both are sent from `hello.khayrcapeexperiences@gmail.com` through MailerSend.
 - [ ] Confirm `BOOKING_MOCK` is **not** set to `1` in production.
 
 ## Operator logins (Supabase Auth)

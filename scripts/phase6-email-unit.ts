@@ -17,6 +17,7 @@ import {
 import {
   buildDriverBookingEmail,
   buildGuestBookingEmail,
+  DEFAULT_DRIVER_NOTIFY_EMAIL,
   notifyBookingEvent,
   type BookingEmailDetails,
 } from '../booking-app/lib/notify'
@@ -107,13 +108,17 @@ async function main() {
 
   await check('notifyBookingEvent enqueues driver+guest and mock-drains', async () => {
     resetOutboxMemoryForTests()
+    delete process.env.DRIVER_NOTIFY_EMAIL
     const result = await notifyBookingEvent(sample, 'created', { drain: true })
     assert.equal(result.enqueued, 2)
     const rows = listOutboxMemory()
     assert.equal(rows.length, 2)
     assert.ok(rows.every((r) => r.status === 'sent'))
-    assert.ok(rows.some((r) => r.audience === 'guest'))
-    assert.ok(rows.some((r) => r.audience === 'driver'))
+    const guest = rows.find((r) => r.audience === 'guest')
+    const driver = rows.find((r) => r.audience === 'driver')
+    assert.equal(guest?.to_email, sample.clientEmail)
+    assert.equal(driver?.to_email, DEFAULT_DRIVER_NOTIFY_EMAIL)
+    assert.equal(DEFAULT_DRIVER_NOTIFY_EMAIL, 'yaseenjacobs@icloud.com')
   })
 
   await check('duplicate notify does not re-enqueue', async () => {

@@ -1,5 +1,9 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { bookingRowToEmailDetails, notifyDriverBooking } from './notify'
+import {
+  bookingRowToEmailDetails,
+  driverNotifyAddress,
+  notifyDriverBooking,
+} from './notify'
 
 export const PENDING_HOLD_MINUTES = 30
 
@@ -318,7 +322,7 @@ export async function alertOps(message: string, sb?: SupabaseClient | null) {
   console.error('[ops-alert]', message)
   try {
     const { enqueueNotification, drainEmailOutbox } = await import('./email-outbox')
-    const to = process.env.DRIVER_NOTIFY_EMAIL || 'yaseenjacobs@icloud.com'
+    const to = driverNotifyAddress()
     const dedupeKey = `ops:alert:${Date.now()}:${message.slice(0, 40)}`
     await enqueueNotification(
       {

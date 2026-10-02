@@ -23,6 +23,13 @@ export type BookingEmailDetails = {
   changeNote?: string | null
 }
 
+/** Driver inbox for booking alerts. Override with DRIVER_NOTIFY_EMAIL. */
+export const DEFAULT_DRIVER_NOTIFY_EMAIL = 'yaseenjacobs@icloud.com'
+
+export function driverNotifyAddress(): string {
+  return process.env.DRIVER_NOTIFY_EMAIL?.trim() || DEFAULT_DRIVER_NOTIFY_EMAIL
+}
+
 export type BookingNotifyKind =
   | 'created'
   | 'paid'
@@ -295,9 +302,7 @@ export async function notifyBookingEvent(
 
   for (const audience of audiences) {
     const to =
-      audience === 'driver'
-        ? process.env.DRIVER_NOTIFY_EMAIL || 'yaseenjacobs@icloud.com'
-        : details.clientEmail
+      audience === 'driver' ? driverNotifyAddress() : details.clientEmail
     if (!to) continue
 
     const built =
