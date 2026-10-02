@@ -347,12 +347,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         (body.start_time &&
           String(body.start_time).slice(0, 5) !== String(before.start_time).slice(0, 5))
       if (slotChanged) {
-        void notifyDriverBooking(
+        await notifyDriverBooking(
           bookingRowToEmailDetails({
             ...data,
             changeNote: `Was ${before.booking_date} ${String(before.start_time).slice(0, 5)} → now ${data.booking_date} ${String(data.start_time).slice(0, 5)}`,
           }),
-          'rescheduled'
+          'rescheduled',
+          sb
         )
       }
 

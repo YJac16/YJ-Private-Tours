@@ -143,7 +143,7 @@ async function runDriverReminders(res: VercelResponse) {
         changeNote: 'Day-before reminder',
       }),
       'reminder',
-      { sb }
+      sb
     )
 
     await sb

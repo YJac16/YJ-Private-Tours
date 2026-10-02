@@ -414,7 +414,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         const kind =
           nextDriver !== existing.driver_id ? 'assigned' : 'rescheduled'
-        void notifyDriverBooking(
+        await notifyDriverBooking(
           bookingRowToEmailDetails({
             id: data.id,
             status: data.status,
@@ -432,7 +432,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             driver: data.driver,
             changeNote: `Was ${existing.booking_date} ${String(existing.start_time).slice(0, 5)} → now ${nextDate} ${nextTime}`,
           }),
-          kind
+          kind,
+          sb
         )
       }
 
