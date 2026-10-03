@@ -135,28 +135,58 @@ export async function enqueueNotification(
   return { inserted: Boolean(data?.id), id: data?.id || '' }
 }
 
+/** Verified-domain From address. Override with EMAIL_FROM. */
+export const DEFAULT_EMAIL_FROM =
+  'KhayrCape Experiences <bookings@khayrcapeexperiences.com>'
+
+/** Public inbox guests can reply to. The From domain is send-only. */
+export const DEFAULT_REPLY_TO = 'hello.khayrcapeexperiences@gmail.com'
+
+export function parseMailbox(raw: string): { email: string; name?: string } {
+  const trimmed = String(raw || '').trim()
+  const match = trimmed.match(/^(.*?)<([^>]+)>$/)
+  if (match) {
+    const name = match[1].trim().replace(/^["']|["']$/g, '')
+    const email = match[2].trim()
+    return name ? { email, name } : { email }
+  }
+  return { email: trimmed }
+}
+
+export function bookingFromAddress(): string {
+  const parsed = parseMailbox(process.env.EMAIL_FROM || DEFAULT_EMAIL_FROM)
+  if (!parsed.email.includes('@')) return ''
+  return parsed.name ? `${parsed.name} <${parsed.email}>` : parsed.email
+}
+
 async function sendResendEmail(row: {
+  id: string
   to_email: string
   subject: string
   body_text: string
   body_html: string | null
 }): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
-  const key = process.env.RESEND_API_KEY
+  const key = process.env.RESEND_API_KEY?.trim()
   if (!key) {
     return { ok: false, error: 'RESEND_API_KEY not set' }
   }
-  const from =
-    process.env.EMAIL_FROM || 'KhayrCape Bookings <onboarding@resend.dev>'
+  const from = bookingFromAddress()
+  if (!from) {
+    return { ok: false, error: 'EMAIL_FROM is not a valid mailbox' }
+  }
+  const replyTo = (process.env.EMAIL_REPLY_TO || DEFAULT_REPLY_TO).trim()
   try {
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${key}`,
         'Content-Type': 'application/json',
+        'Idempotency-Key': `booking-notification/${row.id}`.slice(0, 256),
       },
       body: JSON.stringify({
         from,
         to: [row.to_email],
+        reply_to: replyTo.includes('@') ? replyTo : undefined,
         subject: row.subject,
         html: row.body_html || undefined,
         text: row.body_text,
@@ -172,7 +202,7 @@ async function sendResendEmail(row: {
     if (!res.ok) {
       return {
         ok: false,
-        error: parsed.message || text || `Resend HTTP ${res.status}`,
+        error: (parsed.message || text || `Resend HTTP ${res.status}`).slice(0, 2000),
       }
     }
     if (!parsed.id) {
@@ -242,6 +272,31 @@ async function markSent(
   await sb.from('notification_outbox').update(patch).eq('id', id)
 }
 
+function isMailConfigError(error: string): boolean {
+  return (
+    error === 'RESEND_API_KEY not set' ||
+    error === 'EMAIL_FROM is not a valid mailbox'
+  )
+}
+
+/** Config gaps stay pending and do not consume the retry budget. */
+async function markConfigBlocked(
+  sb: SupabaseClient | null,
+  id: string,
+  error: string
+) {
+  const patch = {
+    status: 'pending' as const,
+    last_error: error.slice(0, 2000),
+  }
+  if (!sb || useMockStore()) {
+    const row = memory.find((r) => r.id === id)
+    if (row) Object.assign(row, patch)
+    return
+  }
+  await sb.from('notification_outbox').update(patch).eq('id', id)
+}
+
 async function markRetryOrFail(
   sb: SupabaseClient | null,
   id: string,
@@ -276,7 +331,7 @@ export type DrainResult = {
 
 /**
  * Drain due outbox rows via Resend.
- * Mock mode without RESEND_API_KEY: log and mark sent.
+ * Mock store: log and mark sent, and do not call Resend.
  */
 export async function drainEmailOutbox(
   sb?: SupabaseClient | null
@@ -287,7 +342,7 @@ export async function drainEmailOutbox(
   let failed = 0
 
   for (const row of due) {
-    if (!process.env.RESEND_API_KEY && useMockStore()) {
+    if (useMockStore()) {
       console.warn(
         `[outbox] mock send ${row.audience}/${row.kind} → ${row.to_email}: ${row.subject}`
       )
@@ -300,6 +355,9 @@ export async function drainEmailOutbox(
     if (result.ok) {
       await markSent(client, row.id, result.id, row.attempts)
       sent += 1
+    } else if (isMailConfigError(result.error)) {
+      await markConfigBlocked(client, row.id, result.error)
+      failed += 1
     } else {
       await markRetryOrFail(client, row.id, row.attempts, result.error)
       failed += 1

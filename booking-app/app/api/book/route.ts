@@ -177,7 +177,7 @@ export async function POST(req: Request) {
         external_id: checkout.id,
         status: 'pending',
       })
-      void notifyDriverBooking(
+      await notifyDriverBooking(
         {
           bookingId: booking.id,
           status: 'pending',
@@ -288,7 +288,7 @@ export async function POST(req: Request) {
       .update({ yoco_payment_reference: checkout.id })
       .eq('id', booking.id)
 
-    void notifyDriverBooking(
+    await notifyDriverBooking(
       {
         bookingId: booking.id,
         status: 'pending',
@@ -303,7 +303,8 @@ export async function POST(req: Request) {
         notes: special_requests || notes,
         amountCents: breakdown.grand_total_cents,
       },
-      'created'
+      'created',
+      supabaseAdmin
     )
 
     return NextResponse.json({
