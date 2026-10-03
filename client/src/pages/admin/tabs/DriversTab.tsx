@@ -6,6 +6,7 @@ import {
   type DriverProfile,
 } from '../../../lib/authApi'
 import { cardClass, inputClass, labelClass } from '../adminShared'
+import PasswordField from '../../../components/PasswordField'
 
 type Props = { token: string }
 
@@ -195,17 +196,16 @@ export default function DriversTab({ token }: Props) {
                 }
               />
             </label>
-            <label className={labelClass}>
-              Invite password
-              <input
-                type="password"
-                className={inputClass}
-                value={form.invite_password}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, invite_password: e.target.value }))
-                }
-              />
-            </label>
+            <PasswordField
+              label="Invite password"
+              labelClassName={labelClass}
+              inputClassName="w-full min-h-11 rounded-lg border border-brand-cream-dark bg-white px-3 text-brand-green"
+              value={form.invite_password}
+              autoComplete="new-password"
+              onChange={(value) =>
+                setForm((f) => ({ ...f, invite_password: value }))
+              }
+            />
           </div>
         )}
 

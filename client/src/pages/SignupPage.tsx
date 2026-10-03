@@ -2,10 +2,13 @@ import { type FormEvent, useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
+import PasswordField from '../components/PasswordField'
 import { useAuth } from '../lib/auth'
+import { passwordRecoveryStartedThisLoad } from '../lib/passwordRecovery'
 
 export default function SignupPage() {
-  const { signUp, supabaseConfigured, user, loading } = useAuth()
+  const { signUp, supabaseConfigured, user, loading, passwordRecoveryPending } =
+    useAuth()
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -14,6 +17,15 @@ export default function SignupPage() {
   const [message, setMessage] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [awaitingConfirm, setAwaitingConfirm] = useState(false)
+
+  if (
+    !loading &&
+    user &&
+    passwordRecoveryPending &&
+    passwordRecoveryStartedThisLoad()
+  ) {
+    return <Navigate to="/reset-password" replace />
+  }
 
   if (!loading && user && !awaitingConfirm) {
     return <Navigate to="/account" replace />
@@ -107,17 +119,14 @@ export default function SignupPage() {
                   className="mt-1 w-full min-h-12 rounded-lg border border-brand-cream-dark px-3"
                 />
               </label>
-              <label className="block text-sm text-brand-green">
-                Password
-                <input
-                  type="password"
-                  required
-                  minLength={6}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="mt-1 w-full min-h-12 rounded-lg border border-brand-cream-dark px-3"
-                />
-              </label>
+              <PasswordField
+                label="Password"
+                value={password}
+                onChange={setPassword}
+                autoComplete="new-password"
+                required
+                minLength={6}
+              />
               <label className="flex items-start gap-3 text-sm text-brand-green cursor-pointer">
                 <span className="mt-0.5 inline-flex min-h-11 min-w-11 items-center justify-center shrink-0">
                   <input
