@@ -31,6 +31,59 @@
       ]
     }
   ],
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "www.khayrcapeexperiences.com" }],
+      "destination": "https://khayrcapeexperiences.com/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/admin",
+      "destination": "/admin/pricing",
+      "permanent": false
+    },
+    {
+      "source": "/tour/cape-peninsula",
+      "destination": "/experience/peninsula",
+      "permanent": true
+    },
+    {
+      "source": "/tour/bo-kaap",
+      "destination": "/experience/city",
+      "permanent": true
+    },
+    {
+      "source": "/tour/winelands",
+      "destination": "/experience/winelands",
+      "permanent": true
+    },
+    {
+      "source": "/tour/sunset",
+      "destination": "/experience/sunset",
+      "permanent": true
+    },
+    {
+      "source": "/tour/city",
+      "destination": "/experience/city",
+      "permanent": true
+    },
+    {
+      "source": "/tour/peninsula",
+      "destination": "/experience/peninsula",
+      "permanent": true
+    },
+    {
+      "source": "/tour/hermanus",
+      "destination": "/experience/hermanus",
+      "permanent": true
+    },
+    {
+      "source": "/tour/:tourId",
+      "destination": "/experience/:tourId",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     {
       "source": "/api/consent-form",
@@ -77,7 +130,6 @@
     { "source": "/driver", "destination": "/index.html" },
     { "source": "/admin/pricing", "destination": "/index.html" },
     { "source": "/thank-you", "destination": "/index.html" },
-    { "source": "/tour/:tourId", "destination": "/index.html" },
     { "source": "/checkout/:tourId", "destination": "/index.html" }
   ],
   "crons": [

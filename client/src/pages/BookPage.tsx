@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
@@ -36,7 +36,9 @@ import DisplayCurrencySwitcher from '../lib/displayCurrency/components/DisplayCu
 import FxDisclaimer from '../lib/displayCurrency/components/FxDisclaimer'
 import { useDisplayCurrency } from '../lib/displayCurrency/DisplayCurrencyContext'
 import { buildCreateBookingRequestBody } from '../../../booking-app/lib/book-create-request'
-import { MOBILE_FIXED_ABOVE_COOKIE_BOTTOM_CLASS, MOBILE_BOOK_DISCLAIMER_ABOVE_STICKY_CLASS } from '../lib/cookieDockOffset'
+import { MOBILE_FIXED_ABOVE_COOKIE_BOTTOM_CLASS } from '../lib/cookieDockOffset'
+import { BOOK_MOBILE_MAIN_PADDING_CLASS } from '../lib/bookStickyBar'
+import { useBookMobileBarHeight } from '../hooks/useBookMobileBarHeight'
 
 const STEPS = [
   'Experience',
@@ -458,12 +460,11 @@ export default function BookPage() {
     else void handlePay()
   }
 
+  const mobileBarRef = useRef<HTMLDivElement>(null)
+  useBookMobileBarHeight(mobileBarRef, showMobileBar && !loading)
+
   const mobileScrollPaddingClass =
-    showMobileBar && !loading
-      ? fxDisclaimerVisible
-        ? 'max-lg:pb-[calc(var(--cookie-dock-height,0px)+8.75rem+env(safe-area-inset-bottom,0px))]'
-        : 'max-lg:pb-[calc(var(--cookie-dock-height,0px)+4.75rem+env(safe-area-inset-bottom,0px))]'
-      : 'pb-36'
+    showMobileBar && !loading ? BOOK_MOBILE_MAIN_PADDING_CLASS : 'pb-36'
 
   if (successId) {
     return (
@@ -1285,18 +1286,17 @@ export default function BookPage() {
         </div>
       </main>
 
-      {showMobileBar && fxDisclaimerVisible && (
-        <div
-          className={`lg:hidden fixed inset-x-0 z-40 border-t border-brand-cream-dark bg-brand-cream/95 backdrop-blur px-3 py-1.5 shadow-[0_-4px_12px_rgba(0,0,0,0.06)] ${MOBILE_BOOK_DISCLAIMER_ABOVE_STICKY_CLASS}`}
-        >
-          <FxDisclaimer className="max-w-5xl mx-auto" />
-        </div>
-      )}
-
       {showMobileBar && (
         <div
+          ref={mobileBarRef}
+          data-testid="book-mobile-sticky-bar"
           className={`lg:hidden fixed inset-x-0 ${MOBILE_FIXED_ABOVE_COOKIE_BOTTOM_CLASS} z-40 border-t border-brand-cream-dark bg-brand-cream/95 backdrop-blur px-3 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-[0_-8px_24px_rgba(0,0,0,0.08)]`}
         >
+          {fxDisclaimerVisible && (
+            <FxDisclaimer
+              className="max-w-5xl mx-auto pb-1.5 text-[10px] leading-tight text-brand-green/70"
+            />
+          )}
           <div className="max-w-5xl mx-auto flex items-center gap-2 min-h-12">
             {step > 0 && (
               <button
@@ -1317,9 +1317,10 @@ export default function BookPage() {
                 </p>
               )}
               {(liveBreakdown || breakdown) && (
-                <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
+                <div className="flex items-center gap-1.5 min-w-0 flex-nowrap overflow-hidden">
                   <PublicPriceInline
                     compact
+                    className="min-w-0 shrink"
                     zarCents={
                       breakdown
                         ? breakdown.grand_total_cents

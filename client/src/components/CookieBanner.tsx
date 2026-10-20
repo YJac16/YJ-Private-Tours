@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 
 const STORAGE_KEY = 'cookie_consent'
 
@@ -11,6 +11,8 @@ function syncCookieDockHeight(height: number) {
 }
 
 export default function CookieBanner() {
+  const { pathname } = useLocation()
+  const compactBook = pathname === '/book'
   const [visible, setVisible] = useState(false)
   const dockRef = useRef<HTMLDivElement>(null)
 
@@ -70,23 +72,53 @@ export default function CookieBanner() {
       aria-label="Cookie notice"
       className="fixed bottom-0 inset-x-0 z-60"
     >
-      {/* Mobile: slim bottom bar */}
-      <div className="md:hidden border-t border-brand-cream-dark bg-brand-cream/98 backdrop-blur-sm px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
-        <div className="flex items-center gap-2 max-w-6xl mx-auto min-h-10">
-          <p className="text-[11px] leading-tight text-brand-green/90 flex-1 min-w-0">
-            Essential cookies only.{' '}
-            <Link to="/cookies" className="underline font-semibold text-brand-green">
-              Cookie Policy
-            </Link>
-            {' · '}
-            <Link to="/privacy" className="underline font-semibold text-brand-green whitespace-nowrap">
-              Privacy
-            </Link>
+      {/* Mobile: slim bottom bar (extra-compact on /book so it stays below the Continue bar) */}
+      <div
+        className={`md:hidden border-t border-brand-cream-dark bg-brand-cream/98 backdrop-blur-sm px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] ${
+          compactBook ? 'py-1' : 'py-2'
+        }`}
+      >
+        <div
+          className={`flex items-center gap-2 max-w-6xl mx-auto ${
+            compactBook ? 'min-h-8' : 'min-h-10'
+          }`}
+        >
+          <p
+            className={`leading-tight text-brand-green/90 flex-1 min-w-0 ${
+              compactBook ? 'text-[10px]' : 'text-[11px]'
+            }`}
+          >
+            {compactBook ? (
+              <>
+                Cookies.{' '}
+                <Link to="/cookies" className="underline font-semibold text-brand-green">
+                  Policy
+                </Link>
+              </>
+            ) : (
+              <>
+                Essential cookies only.{' '}
+                <Link to="/cookies" className="underline font-semibold text-brand-green">
+                  Cookie Policy
+                </Link>
+                {' · '}
+                <Link
+                  to="/privacy"
+                  className="underline font-semibold text-brand-green whitespace-nowrap"
+                >
+                  Privacy
+                </Link>
+              </>
+            )}
           </p>
           <button
             type="button"
             onClick={accept}
-            className="shrink-0 min-h-9 px-3 rounded-md bg-brand-green text-brand-cream text-xs font-semibold hover:opacity-95"
+            className={`shrink-0 rounded-md bg-brand-green text-brand-cream font-semibold hover:opacity-95 ${
+              compactBook
+                ? 'min-h-8 px-2.5 text-[11px]'
+                : 'min-h-9 px-3 text-xs'
+            }`}
           >
             Accept
           </button>

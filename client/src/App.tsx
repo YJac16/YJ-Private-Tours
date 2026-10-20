@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Home from './pages/Home'
 import ThankYou from './pages/ThankYou'
 import TourDetail from './pages/TourDetail'
@@ -48,6 +48,7 @@ function App() {
           element={<AccountReceiptPage />}
         />
         <Route path="/driver" element={<DriverSchedulePage />} />
+        <Route path="/admin" element={<Navigate to="/admin/pricing" replace />} />
         <Route path="/admin/pricing" element={<AdminPricingPage />} />
         <Route path="/thank-you" element={<ThankYou />} />
         <Route path="/experience/:slug" element={<ExperienceDetail />} />

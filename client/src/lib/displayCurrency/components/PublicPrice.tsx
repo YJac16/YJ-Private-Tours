@@ -84,10 +84,12 @@ export function PublicPriceInline({
   const approx = approxLineForZarCents(zarCents)
   if (compact) {
     return (
-      <span className={`inline-flex flex-wrap items-baseline gap-x-1.5 gap-y-0 leading-tight ${className}`}>
-        <span className="font-bold tabular-nums text-sm">{primary}</span>
+      <span
+        className={`inline-flex flex-nowrap items-baseline gap-x-1.5 leading-tight whitespace-nowrap min-w-0 ${className}`}
+      >
+        <span className="font-bold tabular-nums text-sm shrink-0">{primary}</span>
         {approx && (
-          <span className="text-[11px] font-normal text-brand-green/70 tabular-nums">
+          <span className="text-[11px] font-normal text-brand-green/70 tabular-nums truncate min-w-0">
             {approx}
           </span>
         )}

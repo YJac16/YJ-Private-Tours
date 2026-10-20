@@ -28,6 +28,7 @@
   html {
     scroll-behavior: smooth;
     --cookie-dock-height: 0px;
+    --book-mobile-bar-height: 0px;
     --cookie-dock-buffer: 1.5rem;
     --fab-dock-offset: 5.5rem;
     --navbar-height: 4rem;
